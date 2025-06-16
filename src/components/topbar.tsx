@@ -274,6 +274,21 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
               </ul>
             </li>
 
+            {/* Registro... */}
+            <li className="nav-item dropdown">
+              <button
+                className="nav-link dropdown-toggle"
+                data-bs-toggle="dropdown"
+              >
+                Registro
+              </button>
+              <ul className="dropdown-menu">
+                <li>
+                  <button className="dropdown-item">Sub...</button>
+                </li>
+              </ul>
+            </li>
+
             <li className="nav-item">
               <button className="nav-link">Clienti</button>
             </li>
@@ -285,19 +300,19 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
 
           {/* Right Side Icons */}
           <div className="d-flex align-items-center">
-            <button className="btn btn-link p-2">
+            <button className="topbar-icon-button">
               <i className="fa-solid fa-bell"></i>
             </button>
-            <button className="btn btn-link p-2">
+            <button className="topbar-icon-button">
               <i className="fa-solid fa-user"></i>
             </button>
             <button
-              className="btn btn-link p-2"
+              className="topbar-icon-button"
               onClick={() => navigate("/report-lavorazioni")}
             >
               <i className="fa-solid fa-chart-bar"></i>
             </button>
-            <button className="btn btn-link p-2">
+            <button className="topbar-icon-button">
               <i className="fa-solid fa-cog"></i>
             </button>
           </div>

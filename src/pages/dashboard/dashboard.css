@@ -155,25 +155,29 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    color: #333;
-    font-weight: bold;
-    min-width: 200px;
+    background-color: #f8f8f8;
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 150px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .date-box .day {
     color: red;
-    font-size: 18px;
+    font-size: 16px;
+    font-weight: bold;
     text-transform: uppercase;
 }
 
 .date-box .number {
-    font-size: 40px;
-    color: #333;
+    font-size: 36px;
+    color: black;
+    font-weight: bold;
 }
 
 .date-box .event {
     font-size: 14px;
-    color: gray;
+    color: #666;
 }
 
 /* Clock styles */
@@ -327,13 +331,15 @@ body {
 /* News styles */
 .service-news-box {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
+    flex-direction: row; /* mostra lista e dettaglio affiancati */
+    gap: 16px;
+  }
 
 .news-list {
-    max-height: 300px;
-    overflow-y: auto;
+  flex: 1;
+  max-width: 300px;
+  border-right: 1px solid #ccc;
+  padding-right: 12px;
 }
 
 .news-item {
@@ -357,7 +363,8 @@ body {
 }
 
 .news-detail {
-    margin-top: 20px;
+    flex: 2;
+    padding-left: 12px;
 }
 
 .news-content {
@@ -594,3 +601,112 @@ footer {
 .btn-primary:hover {
     background-color: #2980b9;
 }
+
+.search-container-news {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 999px; /* forma pillola */
+    padding: 6px 12px;
+    width: 100%;
+    max-width: 300px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  }
+  .search-icon-news {
+    color: #555;
+    margin-right: 8px;
+    font-size: 16px;
+  }
+  .search-input-news {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+    background: transparent;
+    color: #333;
+  }
+  .date-box.vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f8f8f8;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-width: 150px;
+  }
+  .date-box.improved {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: #f2f2f2;
+  border-radius: 10px;
+  padding: 20px 15px;
+  margin-top: 10px;
+  min-width: 160px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  height: 180px;
+}
+
+.date-box.improved .day-label {
+  background-color: white;
+  color: red;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.date-box.improved .number {
+  font-size: 40px;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 8px;
+}
+
+.date-box.improved .event {
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+}
+.date-box.improved {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #f2f2f2;
+    border-radius: 10px;
+    padding: 20px 15px;
+    margin-top: 10px;
+    min-width: 160px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    height: 180px;
+  }
+  
+  .date-box.improved .day-label {
+    background-color: white;
+    color: red;
+    font-weight: bold;
+    font-size: 25px;
+    padding: 5px 10px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  
+  .date-box.improved .number {
+    font-size: 40px;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 2px;
+  }
+  
+  .date-box.improved .event {
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+  }
+  

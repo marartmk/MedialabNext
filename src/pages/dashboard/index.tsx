@@ -260,8 +260,8 @@ const Dashboard: React.FC = () => {
 
           {/* Seconda Riga con Informazioni */}
           <div className="info-container">
-            <div className="date-box">
-              <span className="day">{currentDate.day}</span>
+            <div className="date-box improved">
+              <span className="day-label">{currentDate.day}</span>
               <span className="number">{currentDate.date}</span>
               <span className="event">Nessun evento oggi</span>
             </div>

@@ -182,3 +182,29 @@
     display: flex;
     align-items: center;
   }
+
+  /* Box icone nella topbar */
+.topbar-icon-button {
+  width: 40px;
+  height: 40px;
+  background-color: white;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.topbar-icon-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+}
+
+.topbar-icon-button i {
+  color: #222;
+  font-size: 16px;
+}
+

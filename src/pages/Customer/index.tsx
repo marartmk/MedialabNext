@@ -1,0 +1,433 @@
+import React, { useState, useEffect } from "react";
+import Sidebar from "../../components/sidebar";
+import Topbar from "../../components/topbar";
+import "./styles.css";
+import { CalendarDays } from "lucide-react";
+
+const Customer: React.FC = () => {
+  const [menuState, setMenuState] = useState<"open" | "closed">("open");
+  const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
+    date: "",
+    time: "",
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+
+  const [formData, setFormData] = useState({
+    tipo: "Privato",
+    cliente: true,
+    fornitore: false,
+    tipoCliente: "",
+    ragioneSociale: "",
+    indirizzo: "",
+    cognome: "",
+    nome: "",
+    cap: "",
+    regione: "",
+    provincia: "",
+    citta: "",
+    telefono: "",
+    email: "",
+    codiceFiscale: "",
+    partitaIva: "",
+    emailPec: "",
+    codiceSdi: "",
+    iban: "",
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const date = now.toLocaleDateString("it-IT", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+      const time = now.toLocaleTimeString("it-IT");
+      setDateTime({ date, time });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const toggleMenu = () => {
+    setMenuState(menuState === "open" ? "closed" : "open");
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    try {
+      const response = await fetch(
+        `https://localhost:7148/api/customer/search?query=${encodeURIComponent(
+          searchQuery
+        )}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setSearchResults(data);
+        setShowModal(true);
+      } else {
+        alert("Errore nella ricerca");
+      }
+    } catch (error) {
+      console.error("Errore durante la ricerca:", error);
+    }
+  };
+
+  const onSelectCustomer = (c: any) => {
+    setFormData({
+      tipo: c.tipologia === "1" ? "Privato" : "Azienda",
+      cliente: c.isCustomer ?? true,
+      fornitore: !c.isCustomer,
+      tipoCliente: c.tipoCliente || "",
+      ragioneSociale: c.ragioneSociale || "",
+      indirizzo: c.indirizzo || "",
+      cognome: c.cognome || "",
+      nome: c.nome || "",
+      cap: c.cap || "",
+      regione: c.regione || "",
+      provincia: c.provincia || "",
+      citta: c.citta || "",
+      telefono: c.telefono || "",
+      email: c.email || "",
+      codiceFiscale: c.fiscalCode || "",
+      partitaIva: c.pIva || "",
+      emailPec: c.emailPec || "",
+      codiceSdi: c.codiceSdi || "",
+      iban: c.iban || "",
+    });
+    setShowModal(false);
+  };
+
+  return (
+    <>
+      <div className="main-layout">
+        <Sidebar menuState={menuState} toggleMenu={toggleMenu} />
+        <div className="content-area">
+          <Topbar toggleMenu={toggleMenu} />
+
+          <div className="scheda-header">
+            <div className="left-block">
+              <div className="round-btn">
+                <span className="plus-icon">+</span>
+              </div>
+              <div className="date-box">
+                <CalendarDays className="calendar-icon" />
+                <div className="date-text-inline">
+                  <span>{dateTime.date}</span>
+                  <span>{dateTime.time}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="search-wrapper">
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Cerca cliente per nome, cognome o P.IVA..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button
+                className="btn btn-primary search-button"
+                onClick={handleSearch}
+              >
+                Cerca
+              </button>
+            </div>
+
+            <div className="breadcrumb">
+              <span className="breadcrumb-item">Home</span>
+              <span className="breadcrumb-separator"> &gt; </span>
+              <span className="breadcrumb-item">Anagrafica</span>
+              <span className="breadcrumb-separator"> &gt; </span>
+              <span className="breadcrumb-current">Aggiungi</span>
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="page-body">
+            <div
+              className="card bg-light card text-black"
+              style={{ borderRadius: "10px" }}
+            >
+              <div className="custom-card-header">Dati Cliente / Fornitore</div>
+              <div className="card-body customer-form">
+                <div className="row">
+                  <div className="col-md-3 field-group">
+                    <label>Tipo</label>
+                    <select
+                      className="form-control"
+                      value={formData.tipo}
+                      onChange={(e) =>
+                        setFormData({ ...formData, tipo: e.target.value })
+                      }
+                    >
+                      <option>Privato</option>
+                      <option>Azienda</option>
+                    </select>
+                  </div>
+                  <div className="col-md-3 d-flex align-items-center gap-3 pt-4">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={formData.cliente}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            cliente: e.target.checked,
+                          })
+                        }
+                      />{" "}
+                      Cliente
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={formData.fornitore}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            fornitore: e.target.checked,
+                          })
+                        }
+                      />{" "}
+                      Fornitore
+                    </label>
+                  </div>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-3 field-group">
+                    <label>
+                      {formData.tipo === "Privato"
+                        ? "Cognome e Nome"
+                        : "Ragione Sociale"}
+                    </label>
+                    <input
+                      className="form-control"
+                      value={
+                        formData.tipo === "1"
+                          ? formData.tipoCliente
+                          : formData.ragioneSociale || ""
+                      }
+                      onChange={(e) => {
+                        if (formData.tipo === "1") {
+                          setFormData({
+                            ...formData,
+                            tipoCliente: e.target.value,
+                          });
+                        } else {
+                          setFormData({
+                            ...formData,
+                            ragioneSociale: e.target.value,
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="col-md-3 field-group">
+                    <label>Indirizzo</label>
+                    <input
+                      className="form-control"
+                      value={formData.indirizzo}
+                      onChange={(e) =>
+                        setFormData({ ...formData, indirizzo: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3 field-group">
+                    <label>Cognome</label>
+                    <input
+                      className="form-control"
+                      value={formData.cognome}
+                      onChange={(e) =>
+                        setFormData({ ...formData, cognome: e.target.value })
+                      }
+                      disabled={formData.tipo !== "Privato"}
+                    />
+                  </div>
+                  <div className="col-md-3 field-group">
+                    <label>Nome</label>
+                    <input
+                      className="form-control"
+                      value={formData.nome}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nome: e.target.value })
+                      }
+                      disabled={formData.tipo !== "Privato"}
+                    />
+                  </div>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-3 field-group">
+                    <label>CAP</label>
+                    <input
+                      className="form-control"
+                      value={formData.cap}
+                      onChange={(e) =>
+                        setFormData({ ...formData, cap: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3 field-group">
+                    <label>Regione</label>
+                    <input
+                      className="form-control"
+                      value={formData.regione}
+                      onChange={(e) =>
+                        setFormData({ ...formData, regione: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3 field-group">
+                    <label>Provincia</label>
+                    <input
+                      className="form-control"
+                      value={formData.provincia}
+                      onChange={(e) =>
+                        setFormData({ ...formData, provincia: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3 field-group">
+                    <label>Città</label>
+                    <input
+                      className="form-control"
+                      value={formData.citta}
+                      onChange={(e) =>
+                        setFormData({ ...formData, citta: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-3 field-group">
+                    <label>Telefono</label>
+                    <input
+                      className="form-control"
+                      value={formData.telefono}
+                      onChange={(e) =>
+                        setFormData({ ...formData, telefono: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3 field-group">
+                    <label>Email</label>
+                    <input
+                      className="form-control"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3 field-group">
+                    <label>Codice Fiscale</label>
+                    <input
+                      className="form-control"
+                      value={formData.codiceFiscale}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          codiceFiscale: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3 field-group">
+                    <label>Partita IVA</label>
+                    <input
+                      className="form-control"
+                      value={formData.partitaIva}
+                      onChange={(e) =>
+                        setFormData({ ...formData, partitaIva: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-3 field-group">
+                    <label>Email PEC</label>
+                    <input
+                      className="form-control"
+                      value={formData.emailPec}
+                      onChange={(e) =>
+                        setFormData({ ...formData, emailPec: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3 field-group">
+                    <label>Codice SDI</label>
+                    <input
+                      className="form-control"
+                      value={formData.codiceSdi}
+                      onChange={(e) =>
+                        setFormData({ ...formData, codiceSdi: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3 field-group">
+                    <label>IBAN</label>
+                    <input
+                      className="form-control"
+                      value={formData.iban}
+                      onChange={(e) =>
+                        setFormData({ ...formData, iban: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="row mt-4">
+                  <div className="d-flex justify-content-center gap-2">
+                    <button className="btn btn-primary">SALVA</button>
+                    <button className="btn btn-success">SINCRONIZZA</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h4>Risultati ricerca</h4>
+            <ul>
+              {searchResults.map((c: any) => (
+                <li
+                  key={c.id}
+                  onClick={() => onSelectCustomer(c)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <strong>{c.ragioneSociale}</strong> - {c.telefono} -{" "}
+                  {c.indirizzo} - {c.citta} ({c.provincia})
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => setShowModal(false)}
+              className="btn btn-secondary"
+            >
+              Chiudi
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default Customer;

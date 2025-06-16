@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "@/pages/login/index";
-import Dashboard from "@/pages/dashboard";
+import Login from "@/pages/Login/index";
+import Dashboard from "@/pages/Dashboard";
+import AccettazioneSmart from "@/pages/AccettazioneSmart"; // ✅ nuova importazione
+import Customer from "./pages/Customer";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -14,12 +16,30 @@ const AppRoutes = () => {
       {/* Rotta pubblica */}
       <Route path="/" element={<Login />} />
 
-      {/* Rotta protetta */}
+      {/* Rotte protette */}
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/accettazione-smart"
+        element={
+          <ProtectedRoute>
+            <AccettazioneSmart />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/anagrafica-clienti"
+        element={
+          <ProtectedRoute>
+            <Customer />
           </ProtectedRoute>
         }
       />
