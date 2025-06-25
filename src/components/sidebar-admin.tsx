@@ -4,17 +4,12 @@ import {
   ArrowLeft,
   FilePlus,
   Search,
-  Calendar,
-  Truck,
-  FlaskConical,
+  Calendar,  
   Warehouse,
-  ShoppingCart,
-  FileText,
+  ShoppingCart,  
   Users,
   BarChart,
-  Settings,
-  Lock,
-  MonitorSmartphone,
+  Settings,  
   Store,
 } from "lucide-react";
 
@@ -51,17 +46,17 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         <button
           className="list-group-item"
           data-tooltip="Accettazione Smart"
-          onClick={() => navigate("/accettazione-smart")}
+          onClick={() => navigate("/master-company")}
         >
           <FilePlus className="icon" />
-          <span className="item-text">Accettazione Smart</span>
+          <span className="item-text">Anagrafica Azienda</span>
         </button>
         <button
           className="list-group-item"
           onClick={() => navigate("/ricerca-schede")}
         >
           <Search className="icon" />
-          <span className="item-text">Ricerca Schede</span>
+          <span className="item-text">Gestione Rete</span>
         </button>
         <button
           className="list-group-item"
@@ -69,21 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         >
           <Calendar className="icon" />
           <span className="item-text">Calendario Operatori</span>
-        </button>
-        <button
-          className="list-group-item"
-          onClick={() => navigate("/gestione-logistica")}
-        >
-          <Truck className="icon" />
-          <span className="item-text">Gestione Logistica</span>
-        </button>
-        <button
-          className="list-group-item"
-          onClick={() => navigate("/laboratorio")}
-        >
-          <FlaskConical className="icon" />
-          <span className="item-text">Laboratorio</span>
-        </button>
+        </button>       
         <button
           className="list-group-item"
           onClick={() => navigate("/magazzino-ricambi")}
@@ -114,62 +95,14 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         </button>
         <button
           className="list-group-item"
-          onClick={() => navigate("/documenti-trasporto")}
-        >
-          <FileText className="icon" />
-          <span className="item-text">Documenti Trasporto</span>
-        </button>
-        <button
-          className="list-group-item"
           onClick={() => navigate("/vendite")}
         >
           <Store className="icon" />
           <span className="item-text">Vendite</span>
         </button>
-        <button
-          className="list-group-item"
-          onClick={() => navigate("/estensioni")}
-        >
-          <Lock className="icon" />
-          <span className="item-text">Estensioni</span>
-        </button>
-        <button
-          className="list-group-item"
-          onClick={() => window.open("https://vendolo.dea40.it", "_blank")}
-        >
-          <ShoppingCart className="icon" />
-          <span className="item-text">Shop</span>
-        </button>
-        <button
-          className="list-group-item"
-          onClick={() =>
-            window.open(
-              "https://vendolo.dea40.it/smarttv3.aspx?code=KL-QTXEN",
-              "_blank"
-            )
-          }
-        >
-          <MonitorSmartphone className="icon" />
-          <span className="item-text">Smart Tv</span>
-        </button>
         <button className="list-group-item" onClick={() => navigate("/report")}>
           <BarChart className="icon" />
           <span className="item-text">Report</span>
-        </button>
-        <button
-          className="list-group-item"
-          onClick={() => navigate("/lavorazioni-esterne")}
-        >
-          <Truck className="icon" />
-          <span className="item-text">Lavorazioni Esterne</span>
-        </button>
-        <button
-          className="list-group-item"
-          onClick={() => navigate("/area-riservata")}
-        >
-          <Lock className="icon" />
-          <span className="item-text">Area Riservata</span>
-          
         </button>
       </div>
     </div>

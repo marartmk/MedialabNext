@@ -3,6 +3,10 @@ import Login from "@/pages/Login/index";
 import Dashboard from "@/pages/Dashboard";
 import AccettazioneSmart from "@/pages/AccettazioneSmart"; // ✅ nuova importazione
 import Customer from "./pages/Customer";
+import LoginAdmin from "./pages/LoginAdmin";
+import AreaRiservata from "./pages/ReservedArea";
+import DashboardAdmin from "./pages/ReservedArea/DashboardAdmin";
+import MasterCompany from "./pages/ReservedArea/AnagraficaMaster";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -15,6 +19,7 @@ const AppRoutes = () => {
     <Routes>
       {/* Rotta pubblica */}
       <Route path="/" element={<Login />} />
+      <Route path="/admin" element={<LoginAdmin />} />
 
       {/* Rotte protette */}
       <Route
@@ -40,6 +45,33 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Customer />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/area-riservata"
+        element={
+          <ProtectedRoute>
+            <AreaRiservata />
+          </ProtectedRoute>
+        }
+      />
+
+       <Route
+        path="/dashboard-admin"
+        element={
+          <ProtectedRoute>
+            <DashboardAdmin />
+          </ProtectedRoute>
+        }
+      />
+
+       <Route
+        path="/master-company"
+        element={
+          <ProtectedRoute>
+            <MasterCompany />
           </ProtectedRoute>
         }
       />

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import Sidebar from "../../components/sidebar";
-import Topbar from "../../components/topbar";
+import Sidebar from "../../../components/sidebar-admin";
+import Topbar from "../../../components/topbar";
 import "./styles.css";
 import { CalendarDays } from "lucide-react";
 
-const Customer: React.FC = () => {
+const CompanyMaster: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
   const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
     date: "",
@@ -15,10 +15,10 @@ const Customer: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const cognomeInputRef = useRef<HTMLInputElement>(null);
+  const ragioneSocialeInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    tipo: "Privato",
+    tipo: "Azienda",
     cliente: true,
     fornitore: false,
     tipoCliente: "",
@@ -58,7 +58,7 @@ const Customer: React.FC = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
   };
 
-  const handleSearch_old = async () => {
+  const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setLoading(true);
 
@@ -87,41 +87,10 @@ const Customer: React.FC = () => {
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    setLoading(true);
-
-    const multitenantId = localStorage.getItem("IdCompany"); // oppure recuperalo da un contesto o stato
-
-    try {
-      const response = await fetch(
-        `https://localhost:7148/api/customer/search?query=${encodeURIComponent(
-          searchQuery
-        )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data);
-        setShowModal(true);
-      } else {
-        alert("Errore nella ricerca");
-      }
-    } catch (error) {
-      console.error("Errore durante la ricerca:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const onSelectCustomer = (c: any) => {
     setCustomerId(c.id); // salva l'ID del cliente selezionato
     setFormData({
-      tipo: c.tipologia === "1" ? "Privato" : "Azienda",
+      tipo: "Azienda", // sempre Azienda
       cliente: c.isCustomer ?? true,
       fornitore: !c.isCustomer,
       tipoCliente: c.tipoCliente || "",
@@ -144,143 +113,8 @@ const Customer: React.FC = () => {
     setShowModal(false);
   };
 
-  const handleSaveCustomer_old = async () => {
-    if (!customerId) {
-      alert("Nessun cliente selezionato");
-      return;
-    }
-
-    if (!formData.tipo) {
-      alert("Selezionare un tipo di cliente");
-      return;
-    }
-
-    const isPrivato = formData.tipo === "Privato";
-    const tipologia = isPrivato ? "1" : "0";
-
-    const ragioneSociale = isPrivato
-      ? `${formData.cognome} ${formData.nome}`.trim()
-      : formData.ragioneSociale;
-
-    if (!isPrivato && ragioneSociale === "") {
-      alert("Inserire una ragione sociale");
-      return;
-    }
-
-    if (!formData.indirizzo) {
-      alert("Inserire un indirizzo");
-      return;
-    }
-
-    if (!formData.cap) {
-      alert("Inserire un CAP");
-      return;
-    }
-
-    if (!formData.regione) {
-      alert("Inserire una regione");
-      return;
-    }
-
-    if (!formData.provincia) {
-      alert("Inserire una provincia");
-      return;
-    }
-
-    if (!formData.citta) {
-      alert("Inserire una città");
-      return;
-    }
-
-    if (!formData.telefono) {
-      alert("Inserire un numero di telefono");
-      return;
-    }
-
-    if (!formData.email) {
-      alert("Inserire un'email");
-      return;
-    }
-
-    const payload = {
-      id: customerId,
-      tipologia: tipologia,
-      isCustomer: formData.cliente,
-      tipoCliente: formData.tipoCliente,
-      ragioneSociale: ragioneSociale,
-      indirizzo: formData.indirizzo,
-      cognome: isPrivato ? formData.cognome : null,
-      nome: isPrivato ? formData.nome : null,
-      cap: formData.cap,
-      regione: formData.regione,
-      provincia: formData.provincia,
-      citta: formData.citta,
-      telefono: formData.telefono,
-      email: formData.email,
-      fiscalCode: formData.codiceFiscale,
-      pIva: formData.partitaIva,
-      emailPec: formData.emailPec,
-      codiceSdi: formData.codiceSdi,
-      iban: formData.iban,
-    };
-
-    try {
-      const url = customerId
-        ? `https://localhost:7148/api/customer/${customerId}`
-        : `https://localhost:7148/api/customer`;
-
-      const method = customerId ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        alert(
-          customerId
-            ? "Cliente aggiornato con successo!"
-            : "Cliente creato con successo!"
-        );
-        // se è una creazione, imposta l'ID restituito
-        if (!customerId) {
-          const newCustomer = await response.json();
-          setCustomerId(newCustomer.id);
-        }
-      } else {
-        const errText = await response.text();
-        alert("Errore nel salvataggio:\n" + errText);
-      }
-    } catch (error) {
-      console.error("Errore PUT:", error);
-      alert("Errore durante il salvataggio");
-    }
-  };
-
   const handleSaveCustomer = async () => {
-    // Rimuovi questo controllo che blocca la creazione di nuovi clienti
-    // if (!customerId) {
-    //   alert("Nessun cliente selezionato");
-    //   return;
-    // }
-
-    if (!formData.tipo) {
-      alert("Selezionare un tipo di cliente");
-      return;
-    }
-
-    const isPrivato = formData.tipo === "Privato";
-    const tipologia = isPrivato ? "1" : "0";
-
-    const ragioneSociale = isPrivato
-      ? `${formData.cognome} ${formData.nome}`.trim()
-      : formData.ragioneSociale;
-
-    if (!isPrivato && ragioneSociale === "") {
+    if (!formData.ragioneSociale) {
       alert("Inserire una ragione sociale");
       return;
     }
@@ -323,13 +157,13 @@ const Customer: React.FC = () => {
     const payload = {
       // Includi l'ID solo se esiste (per gli aggiornamenti)
       ...(customerId && { id: customerId }),
-      tipologia: tipologia,
+      tipologia: "0", // sempre 0 per Azienda
       isCustomer: formData.cliente,
       tipoCliente: formData.tipoCliente,
-      ragioneSociale: ragioneSociale,
+      ragioneSociale: formData.ragioneSociale,
       indirizzo: formData.indirizzo,
-      cognome: isPrivato ? formData.cognome : null,
-      nome: isPrivato ? formData.nome : null,
+      cognome: null, // sempre null per Azienda
+      nome: null, // sempre null per Azienda
       cap: formData.cap,
       regione: formData.regione,
       provincia: formData.provincia,
@@ -341,7 +175,6 @@ const Customer: React.FC = () => {
       emailPec: formData.emailPec,
       codiceSdi: formData.codiceSdi,
       iban: formData.iban,
-      multitenantId: localStorage.getItem("IdCompany") || "",
     };
 
     try {
@@ -402,7 +235,7 @@ const Customer: React.FC = () => {
                 onClick={() => {
                   setCustomerId(null); // reset ID
                   setFormData({
-                    tipo: "Privato",
+                    tipo: "Azienda",
                     cliente: true,
                     fornitore: false,
                     tipoCliente: "",
@@ -423,9 +256,9 @@ const Customer: React.FC = () => {
                     iban: "",
                   });
 
-                  // Imposta il focus sul campo cognome
+                  // Imposta il focus sul campo ragione sociale
                   setTimeout(() => {
-                    cognomeInputRef.current?.focus();
+                    ragioneSocialeInputRef.current?.focus();
                   }, 0);
                 }}
               >
@@ -475,122 +308,33 @@ const Customer: React.FC = () => {
               <div className="custom-card-header">Dati Cliente / Fornitore</div>
               <div className="card-body customer-form">
                 <div className="row">
-                  <div className="col-md-3 field-group">
-                    <label>Tipo</label>
-                    <select
+                  <div className="col-md-6 field-group">
+                    <label>Ragione Sociale</label>
+                    <input
                       className="form-control"
-                      value={formData.tipo}
+                      value={formData.ragioneSociale}
+                      ref={ragioneSocialeInputRef}
                       onChange={(e) =>
-                        setFormData({ ...formData, tipo: e.target.value })
+                        setFormData({
+                          ...formData,
+                          ragioneSociale: e.target.value,
+                        })
                       }
-                    >
-                      <option>Privato</option>
-                      <option>Azienda</option>
-                    </select>
+                    />
                   </div>
-                  <div className="col-md-3 d-flex align-items-center gap-3 pt-4">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={formData.cliente}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            cliente: e.target.checked,
-                          })
-                        }
-                      />{" "}
-                      Cliente
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={formData.fornitore}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            fornitore: e.target.checked,
-                          })
-                        }
-                      />{" "}
-                      Fornitore
-                    </label>
+                  <div className="col-md-6 field-group">
+                    <label>Indirizzo</label>
+                    <input
+                      className="form-control"
+                      value={formData.indirizzo}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          indirizzo: e.target.value,
+                        })
+                      }
+                    />
                   </div>
-                </div>
-
-                <div className="row">
-                  {formData.tipo === "Azienda" ? (
-                    <>
-                      <div className="col-md-6 field-group">
-                        <label>Ragione Sociale</label>
-                        <input
-                          className="form-control"
-                          value={formData.ragioneSociale}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              ragioneSociale: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="col-md-6 field-group">
-                        <label>Indirizzo</label>
-                        <input
-                          className="form-control"
-                          value={formData.indirizzo}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              indirizzo: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="col-md-6 d-flex gap-3 align-items-end">
-                        <div className="field-group w-50">
-                          <label>Cognome</label>
-                          <input
-                            className="form-control"
-                            value={formData.cognome}
-                            ref={cognomeInputRef}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                cognome: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                        <div className="field-group w-50">
-                          <label>Nome</label>
-                          <input
-                            className="form-control"
-                            value={formData.nome}
-                            onChange={(e) =>
-                              setFormData({ ...formData, nome: e.target.value })
-                            }
-                          />
-                        </div>
-                      </div>
-                      <div className="col-md-6 field-group">
-                        <label>Indirizzo</label>
-                        <input
-                          className="form-control"
-                          value={formData.indirizzo}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              indirizzo: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                    </>
-                  )}
                 </div>
 
                 <div className="row">
@@ -760,4 +504,4 @@ const Customer: React.FC = () => {
   );
 };
 
-export default Customer;
+export default CompanyMaster;
