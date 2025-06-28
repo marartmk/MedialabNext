@@ -108,6 +108,7 @@ const Login: FC = () => {
     fullName: string;
     email: string;
     idCompany: string;
+    companyName: string;
   }
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
@@ -138,6 +139,7 @@ const Login: FC = () => {
       localStorage.setItem("token", result.token);
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("IdCompany", result.idCompany || "");
+      localStorage.setItem("fullName", result.companyName || "");
 
       // 🔍 Se vuoi decodificare il token JWT client-side (opzionale):
       const payload = JSON.parse(atob(result.token.split(".")[1]));

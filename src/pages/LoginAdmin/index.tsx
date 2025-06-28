@@ -83,7 +83,7 @@ const LoginAdmin: FC = () => {
       // ✅ Salvataggio dati utente
       localStorage.setItem("userId", formData.username);      
       localStorage.setItem("IdCompanyAdmin", result.idCompany);
-
+      
       // 🔍 Se vuoi decodificare il token JWT client-side (opzionale):
       const payload = JSON.parse(atob(result.token.split(".")[1]));
 

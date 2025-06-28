@@ -127,9 +127,10 @@ const DashboardAdmin: React.FC = () => {
         console.log("Inizio caricamento dati clienti...");
 
         const token = localStorage.getItem("token");
+        const multitenantId = localStorage.getItem("IdCompanyAdmin");
         console.log("Token presente:", !!token);
 
-        const response = await fetch("https://localhost:7148/api/customer", {
+        const response = await fetch(`https://localhost:7148/api/Customer/customeraffiliated?multitenantId=${multitenantId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -279,7 +280,7 @@ const DashboardAdmin: React.FC = () => {
           {/* Tabella Clienti con Design Monocromatico */}
           <div className="table-section">
             <div className="table-header">
-              <h3>Lista Clienti</h3>
+              <h3>Lista Affiliati</h3>
               <div className="table-controls">
                 <div className="search-container-table">
                   <i className="fa-solid fa-magnifying-glass search-icon-table"></i>
