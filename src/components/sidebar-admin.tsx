@@ -53,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         </button>
         <button
           className="list-group-item"
-          onClick={() => navigate("/ricerca-schede")}
+          onClick={() => navigate("/affiliate-management")}
         >
           <Search className="icon" />
           <span className="item-text">Gestione Rete</span>

@@ -50,11 +50,11 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         </button>
         <button
           className="list-group-item"
-          data-tooltip="Accettazione Smart"
-          onClick={() => navigate("/accettazione-smart")}
+          data-tooltip="Accettazione"
+          onClick={() => navigate("/accettazione")}
         >
           <FilePlus className="icon" />
-          <span className="item-text">Accettazione Smart</span>
+          <span className="item-text">Accettazione</span>
         </button>
         <button
           className="list-group-item"
@@ -65,7 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         </button>
         <button
           className="list-group-item"
-          onClick={() => navigate("/calendario-operatori")}
+          onClick={() => navigate("/testpage")}
         >
           <Calendar className="icon" />
           <span className="item-text">Calendario Operatori</span>
@@ -165,7 +165,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         </button>
         <button
           className="list-group-item"
-          onClick={() => navigate("/area-riservata")}
+          onClick={() => navigate("/login-local-admin")}
         >
           <Lock className="icon" />
           <span className="item-text">Area Riservata</span>

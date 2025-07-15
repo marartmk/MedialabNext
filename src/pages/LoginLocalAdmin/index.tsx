@@ -12,12 +12,12 @@ interface LoginResponse {
   isExternalUser: boolean;
 }
 
-const LoginAdmin: FC = () => {
+const LoginLocalAdmin: FC = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [message] = useState("Accedi Area Global Admin");
+  const [message] = useState("Accedi Area Riservata");
 
   /* redirect se già loggato */
   useEffect(() => {
@@ -59,7 +59,7 @@ const LoginAdmin: FC = () => {
     setLoading(true);
     setError("");
 
-    const urlLogin = `${API_URL}/api/auth/login-admin`;
+    const urlLogin = `${API_URL}/api/auth/login-user`;
 
     try {
       const res = await fetch(urlLogin, {
@@ -195,5 +195,5 @@ const LoginAdmin: FC = () => {
   );
 };
 
-export default LoginAdmin;
+export default LoginLocalAdmin;
 
