@@ -114,6 +114,13 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         </button>
         <button
           className="list-group-item"
+          onClick={() => navigate("/device-registry")}
+        >
+          <Users className="icon" />
+          <span className="item-text">Anagrafica Apparati</span>
+        </button>
+        <button
+          className="list-group-item"
           onClick={() => navigate("/documenti-trasporto")}
         >
           <FileText className="icon" />

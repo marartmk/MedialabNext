@@ -1,0 +1,645 @@
+/* Stili esistenti convertiti in CSS Modules */
+.mainLayout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.contentArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageBody {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.schedaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #ccc;
+  margin: 0 24px;
+}
+
+.leftBlock {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.roundBtn {
+  width: 55px !important;
+  height: 55px !important;
+  background-color: #444 !important;
+  border-radius: 15px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  border: none;
+  min-width: 55px;
+  min-height: 55px;
+  flex-shrink: 0;
+}
+
+.plusIcon {
+  color: white !important;
+  font-size: 52px !important;
+  font-weight: bold !important;
+  line-height: 0.8 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+  margin-top: -12px !important;
+}
+
+.dateBox {
+  display: flex;
+  flex-direction: row; 
+  align-items: center; 
+  justify-content: flex-start;
+  background-color: #444;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  gap: 8px;
+  max-width: fit-content;
+  min-width: 220px;
+  height: 55px;
+}
+
+.calendarIcon {
+  color: white;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.dateTextInline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 0.85rem;
+  font-weight: normal;
+  line-height: 1.2;
+}
+
+.breadcrumb {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbItem {
+  color: #007bff;
+}
+
+.breadcrumbCurrent {
+  font-weight: bold;
+}
+
+.breadcrumbSeparator {
+  margin: 0 5px;
+}
+
+/* Stili per il form */
+.repairFormContainer {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.pageTitle {
+  text-align: right;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 16px;
+}
+
+.pageTitle h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: #333;
+}
+
+.pageTitle p {
+  margin: 4px 0 0 0;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.pageContainer {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.topRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.formSection {
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fafafa;
+  margin-top: 15px;
+}
+
+.formSection h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.formGroup {
+  margin-bottom: 12px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.formControl {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.formControl:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.formControl[readonly] {
+  background-color: #f8f9fa;
+  color: #666;
+}
+
+/* Stili per la ricerca cliente */
+.searchContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  padding-right: 80px; /* Spazio per il pulsante add, clear e loading */
+}
+
+.addClientButton {
+  position: absolute;
+  right: 55px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #28a745;
+  border: none;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  z-index: 3;
+}
+
+.addClientButton:hover {
+  background: #218838;
+}
+
+.clearButton {
+  position: absolute;
+  right: 35px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.clearButton:hover {
+  color: #666;
+}
+
+.loadingIndicator {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Dropdown per i risultati della ricerca */
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.dropdownItem {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.dropdownItem:hover {
+  background-color: #f5f5f5;
+}
+
+.dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.customerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.customerName {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.customerDetails {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.customerAddress {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+/* Sezione diagnostica */
+.diagnosticaSection {
+  min-height: 300px;
+  grid-column: span 1;
+}
+
+.diagnosticaGrid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 6px;
+  justify-items: center;
+}
+
+.diagnosticaItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 0.8rem;
+  width: 70px;
+  height: 70px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.diagnosticaIcon {
+  font-size: 1.5rem;
+  filter: grayscale(100%);
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.diagnosticaItem.active {
+  background: #e8f5e8;
+  border-color: #28a745;
+}
+
+.diagnosticaItem.active .diagnosticaIcon {
+  filter: grayscale(100%);
+  opacity: 1;
+}
+
+.diagnosticaItem.active::after {
+  content: "✓";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: #28a745;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+.diagnosticaItemWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: 90px;
+}
+
+.diagnosticaLabel {
+  font-size: 0.7rem;
+  text-align: center;
+  line-height: 1.1;
+  color: #333;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.inactive {
+  background: white;
+  border-color: #ddd;
+}
+
+/* Info generazione automatica */
+.autoGenerationInfo {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+/* Bottoni azioni */
+.formActions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid #ddd;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btnSuccess {
+  background: #28a745;
+  color: white;
+}
+
+.btnSuccess:hover {
+  background: #218838;
+}
+
+.btnSecondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btnSecondary:hover {
+  background: #5a6268;
+}
+
+.btnDark {
+  background: #343a40;
+  color: white;
+}
+
+.btnDark:hover {
+  background: #23272b;
+}
+
+/* Classi per stati */
+.active {
+  /* Stile per elementi attivi nella diagnostica */
+}
+
+/* Stili per il modal di nuovo cliente */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 8px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #ddd;
+}
+
+.modalHeader h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.modalCloseButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalCloseButton:hover {
+  color: #666;
+}
+
+.modalBody {
+  padding: 24px;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #ddd;
+}
+
+/* Stili per la form del cliente nel modal */
+.customerForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formRow {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.formCol3 {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.formCol6 {
+  flex: 1;
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+}
+
+.nameGroup {
+  display: flex;
+  gap: 12px;
+}
+
+.nameGroup .formCol6 {
+  min-width: 120px;
+}
+
+.checkboxGroup {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.checkboxGroup label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.checkboxGroup input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.btnPrimary {
+  background: #007bff;
+  color: white;
+}
+
+.btnPrimary:hover {
+  background: #0056b3;
+}
+
+.btnPrimary:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .pageContainer {
+    grid-template-columns: 1fr;
+  }
+  
+  .topRow {
+    grid-template-columns: 1fr;
+  }
+  
+  .diagnosticaGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .topRow {
+    grid-template-columns: 1fr;
+  }
+  
+  .diagnosticaGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .formActions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}

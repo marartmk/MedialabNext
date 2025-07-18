@@ -12,6 +12,7 @@ import AffiliateManagement from "./pages/ReservedArea/AffiliateManagement";
 import DashboarLocaldAdmin from "./pages/LocalAreaConfig/DashboardLocalAdmin";
 import LoginLocalAdmin from "./pages/LoginLocalAdmin";
 import TestPage from "./pages/TestPage";
+import Device from "./pages/DeviceRegistry";
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
@@ -112,6 +113,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <DashboarLocaldAdmin />
+          </ProtectedRoute>
+        }
+      />
+
+       <Route
+        path="/device-registry"
+        element={
+          <ProtectedRoute>
+            <Device />
           </ProtectedRoute>
         }
       />
