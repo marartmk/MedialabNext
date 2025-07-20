@@ -3,6 +3,7 @@ import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import styles from "./styles.module.css";
 import { CalendarDays } from "lucide-react";
+import BottomBar from "../../components/BottomBar";
 
 // Definizione dei tipi per la diagnostica
 interface DiagnosticItem {
@@ -33,6 +34,25 @@ interface CustomerData {
   iban: string;
 }
 
+// Tipo per i dati del dispositivo
+interface DeviceData {
+  id: number;
+  deviceId: string;
+  customerId?: string;
+  companyId?: string;
+  multitenantId?: string;
+  serialNumber: string;
+  brand: string;
+  model: string;
+  deviceType: string;
+  purchaseDate?: string;
+  receiptNumber?: string;
+  retailer?: string;
+  notes?: string;
+  createdAt: string;
+  isDeleted: boolean;
+}
+
 const Accettazione: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
   const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
@@ -49,10 +69,22 @@ const Accettazione: React.FC = () => {
     null
   );
 
-  // Refs per gestire il dropdown
+  // Stati per la ricerca dispositivo
+  const [deviceSearchQuery, setDeviceSearchQuery] = useState("");
+  const [deviceSearchResults, setDeviceSearchResults] = useState<DeviceData[]>(
+    []
+  );
+  const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
+  const [deviceLoading, setDeviceLoading] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState<DeviceData | null>(null);
+
+  // Refs per gestire i dropdown
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const deviceSearchInputRef = useRef<HTMLInputElement>(null);
+  const deviceDropdownRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
+  const deviceDebounceRef = useRef<NodeJS.Timeout>();
 
   // Stati per i campi del form cliente
   const [clienteData, setClienteData] = useState({
@@ -63,8 +95,20 @@ const Accettazione: React.FC = () => {
     cap: "",
   });
 
-  // Stati per il modal di inserimento nuovo cliente
+  // Stati per i campi del form dispositivo
+  const [dispositivoData, setDispositivoData] = useState({
+    serialNumber: "",
+    brand: "",
+    model: "",
+    deviceType: "Mobile",
+    color: "",
+    unlockCode: "",
+    courtesyPhone: "",
+  });
+
+  // Stati per i modal
   const [showNewClientModal, setShowNewClientModal] = useState(false);
+  const [showNewDeviceModal, setShowNewDeviceModal] = useState(false);
   const [newClientData, setNewClientData] = useState({
     tipo: "Privato",
     cliente: true,
@@ -86,7 +130,51 @@ const Accettazione: React.FC = () => {
     codiceSdi: "",
     iban: "",
   });
+
+  // Stati per il nuovo dispositivo
+  const [newDeviceData, setNewDeviceData] = useState({
+    deviceId: "",
+    customerId: "",
+    companyId: "",
+    multitenantId: "",
+    serialNumber: "",
+    brand: "",
+    model: "",
+    deviceType: "Mobile",
+    purchaseDate: "",
+    receiptNumber: "",
+    retailer: "",
+    notes: "",
+  });
+
   const [savingNewClient, setSavingNewClient] = useState(false);
+  const [savingNewDevice, setSavingNewDevice] = useState(false);
+
+  // Nuovi stati per la gestione della riparazione
+  const [repairData, setRepairData] = useState({
+    faultDeclared: "",
+    repairAction: "",
+    technicianCode: "",
+    technicianName: "",
+    estimatedPrice: 0,
+    paymentType: "",
+    billingInfo: "",
+    unlockCode: "",
+    courtesyPhone: "",
+  });
+
+  const [operators, setOperators] = useState<any[]>([]);
+  const [selectedOperator, setSelectedOperator] = useState<any>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [isCreatingRepair, setIsCreatingRepair] = useState(false);
+  const [repairComponent, setRepairComponent] = useState("");
+
+  // Tipi di dispositivo
+  const deviceTypes = [
+    { value: "Mobile", label: "📱 Mobile" },
+    { value: "TV", label: "📺 TV" },
+    { value: "Other", label: "🔧 Altro" },
+  ];
 
   // Stato per gli elementi diagnostici
   const [diagnosticItems, setDiagnosticItems] = useState<DiagnosticItem[]>([
@@ -135,9 +223,15 @@ const Accettazione: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Effetto per gestire i click fuori dal dropdown
+  // Carica gli operatori al mount del componente
+  useEffect(() => {
+    loadOperators();
+  }, []);
+
+  // Effetto per gestire i click fuori dai dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Dropdown cliente
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node) &&
@@ -145,6 +239,16 @@ const Accettazione: React.FC = () => {
         !searchInputRef.current.contains(event.target as Node)
       ) {
         setShowDropdown(false);
+      }
+
+      // Dropdown dispositivo
+      if (
+        deviceDropdownRef.current &&
+        !deviceDropdownRef.current.contains(event.target as Node) &&
+        deviceSearchInputRef.current &&
+        !deviceSearchInputRef.current.contains(event.target as Node)
+      ) {
+        setShowDeviceDropdown(false);
       }
     };
 
@@ -156,29 +260,163 @@ const Accettazione: React.FC = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
   };
 
+  // Funzione per caricare gli operatori
+  const loadOperators_base = async () => {
+    try {
+      const response = await fetch("https://localhost:7148/api/operator", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const operatorsData = await response.json();
+        setOperators(operatorsData);
+      } else {
+        console.error("Errore nel caricamento operatori");
+      }
+    } catch (error) {
+      console.error("Errore durante il caricamento operatori:", error);
+    }
+  };
+
+  const loadOperators = async () => {
+    try {
+      // Per ora usiamo dati fake, poi sostituiremo con la vera API
+      const fakeOperators = [
+        {
+          id: "1",
+          firstName: "Mario",
+          lastName: "Rossi",
+          codiceDipendente: "TEC001",
+          email: "mario.rossi@medialab.it",
+          phoneNumber: "+39 333 1234567",
+        },
+        {
+          id: "2",
+          firstName: "Luigi",
+          lastName: "Verdi",
+          codiceDipendente: "TEC002",
+          email: "luigi.verdi@medialab.it",
+          phoneNumber: "+39 333 2345678",
+        },
+        {
+          id: "3",
+          firstName: "Giuseppe",
+          lastName: "Bianchi",
+          codiceDipendente: "TEC003",
+          email: "giuseppe.bianchi@medialab.it",
+          phoneNumber: "+39 333 3456789",
+        },
+      ];
+
+      // Simula un piccolo delay come se fosse una vera chiamata API
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      setOperators(fakeOperators);
+      console.log("Operatori fake caricati:", fakeOperators);
+
+      /* 
+    // Questo sarà il codice vero quando avremo l'API:
+    const response = await fetch('https://localhost:7148/api/operator', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (response.ok) {
+      const operatorsData = await response.json();
+      setOperators(operatorsData);
+    } else {
+      console.error('Errore nel caricamento operatori');
+    }
+    */
+    } catch (error) {
+      console.error("Errore durante il caricamento operatori:", error);
+
+      // In caso di errore, usa comunque i dati fake
+      const fakeOperators = [
+        {
+          id: "1",
+          firstName: "Mario",
+          lastName: "Rossi",
+          codiceDipendente: "TEC001",
+          email: "mario.rossi@medialab.it",
+          phoneNumber: "+39 333 1234567",
+        },
+        {
+          id: "2",
+          firstName: "Luigi",
+          lastName: "Verdi",
+          codiceDipendente: "TEC002",
+          email: "luigi.verdi@medialab.it",
+          phoneNumber: "+39 333 2345678",
+        },
+        {
+          id: "3",
+          firstName: "Giuseppe",
+          lastName: "Bianchi",
+          codiceDipendente: "TEC003",
+          email: "giuseppe.bianchi@medialab.it",
+          phoneNumber: "+39 333 3456789",
+        },
+      ];
+
+      setOperators(fakeOperators);
+    }
+  };
+
+  // Genera GUID
+  const generateGuid = (): string => {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      }
+    );
+  };
+
   // Funzione per la ricerca cliente con debouncing
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
 
-    // Clear previous timeout
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
-    // Se il campo è vuoto, nascondi il dropdown
     if (!value.trim()) {
       setShowDropdown(false);
       setSearchResults([]);
       return;
     }
 
-    // Imposta un nuovo timeout per la ricerca
     debounceRef.current = setTimeout(() => {
       performSearch(value);
-    }, 300); // 300ms di debouncing
+    }, 300);
   };
 
-  // Funzione per eseguire la ricerca
+  // Funzione per la ricerca dispositivo con debouncing
+  const handleDeviceSearchChange = (value: string) => {
+    setDeviceSearchQuery(value);
+
+    if (deviceDebounceRef.current) {
+      clearTimeout(deviceDebounceRef.current);
+    }
+
+    if (!value.trim()) {
+      setShowDeviceDropdown(false);
+      setDeviceSearchResults([]);
+      return;
+    }
+
+    deviceDebounceRef.current = setTimeout(() => {
+      performDeviceSearch(value);
+    }, 300);
+  };
+
+  // Funzione per eseguire la ricerca cliente
   const performSearch = async (query: string) => {
     if (!query.trim()) return;
 
@@ -213,13 +451,47 @@ const Accettazione: React.FC = () => {
     }
   };
 
+  // Funzione per eseguire la ricerca dispositivo
+  const performDeviceSearch = async (query: string) => {
+    if (!query.trim()) return;
+
+    setDeviceLoading(true);
+    const multitenantId = localStorage.getItem("IdCompany");
+
+    try {
+      const response = await fetch(
+        `https://localhost:7148/api/device/search?query=${encodeURIComponent(
+          query
+        )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setDeviceSearchResults(data);
+        setShowDeviceDropdown(true);
+      } else {
+        console.error("Errore nella ricerca dispositivo");
+        setDeviceSearchResults([]);
+      }
+    } catch (error) {
+      console.error("Errore durante la ricerca dispositivo:", error);
+      setDeviceSearchResults([]);
+    } finally {
+      setDeviceLoading(false);
+    }
+  };
+
   // Funzione per selezionare un cliente
   const onSelectCustomer = (customer: CustomerData) => {
     setSelectedCustomer(customer);
     setSearchQuery(customer.ragioneSociale);
     setShowDropdown(false);
 
-    // Popola i campi del form cliente
     setClienteData({
       email: customer.email || "",
       nome: customer.nome || "",
@@ -229,7 +501,26 @@ const Accettazione: React.FC = () => {
     });
   };
 
-  // Funzione per cancellare la selezione
+  // Funzione per selezionare un dispositivo
+  const onSelectDevice = (device: DeviceData) => {
+    setSelectedDevice(device);
+    setDeviceSearchQuery(
+      `${device.brand} ${device.model} - ${device.serialNumber}`
+    );
+    setShowDeviceDropdown(false);
+
+    setDispositivoData({
+      serialNumber: device.serialNumber,
+      brand: device.brand,
+      model: device.model,
+      deviceType: device.deviceType,
+      color: "",
+      unlockCode: "",
+      courtesyPhone: "",
+    });
+  };
+
+  // Funzione per cancellare la selezione cliente
   const clearSelection = () => {
     setSelectedCustomer(null);
     setSearchQuery("");
@@ -239,6 +530,21 @@ const Accettazione: React.FC = () => {
       cognome: "",
       telefono: "",
       cap: "",
+    });
+  };
+
+  // Funzione per cancellare la selezione dispositivo
+  const clearDeviceSelection = () => {
+    setSelectedDevice(null);
+    setDeviceSearchQuery("");
+    setDispositivoData({
+      serialNumber: "",
+      brand: "",
+      model: "",
+      deviceType: "Mobile",
+      color: "",
+      unlockCode: "",
+      courtesyPhone: "",
     });
   };
 
@@ -275,6 +581,369 @@ const Accettazione: React.FC = () => {
       iban: "",
     });
     setShowNewClientModal(true);
+  };
+
+  // Funzione per aprire il modal di nuovo dispositivo
+  const openNewDeviceModal = () => {
+    setNewDeviceData({
+      deviceId: generateGuid(),
+      customerId: selectedCustomer?.id || "",
+      companyId: "",
+      multitenantId: localStorage.getItem("IdCompany") || "",
+      serialNumber: "",
+      brand: "",
+      model: "",
+      deviceType: "Mobile",
+      purchaseDate: "",
+      receiptNumber: "",
+      retailer: "",
+      notes: "",
+    });
+    setShowNewDeviceModal(true);
+  };
+
+  // Funzione di validazione completa
+  const validateForm = (): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+
+    // Validazione Cliente
+    if (!selectedCustomer) {
+      errors.push("Selezionare o creare un cliente");
+    } else {
+      if (!clienteData.email || !/\S+@\S+\.\S+/.test(clienteData.email)) {
+        errors.push("Inserire un'email valida per il cliente");
+      }
+      if (!clienteData.nome?.trim()) {
+        errors.push("Inserire il nome del cliente");
+      }
+      if (!clienteData.cognome?.trim()) {
+        errors.push("Inserire il cognome del cliente");
+      }
+      if (!clienteData.telefono?.trim()) {
+        errors.push("Inserire il telefono del cliente");
+      }
+    }
+
+    // Validazione Dispositivo
+    if (!selectedDevice && !dispositivoData.serialNumber?.trim()) {
+      errors.push(
+        "Selezionare un dispositivo esistente o inserire i dati del nuovo dispositivo"
+      );
+    }
+
+    if (!selectedDevice) {
+      if (!dispositivoData.serialNumber?.trim()) {
+        errors.push("Inserire il numero seriale/IMEI del dispositivo");
+      }
+      if (!dispositivoData.brand?.trim()) {
+        errors.push("Inserire la marca del dispositivo");
+      }
+      if (!dispositivoData.model?.trim()) {
+        errors.push("Inserire il modello del dispositivo");
+      }
+      if (!dispositivoData.deviceType) {
+        errors.push("Selezionare il tipo di dispositivo");
+      }
+    }
+
+    // Validazione Riparazione
+    if (!repairComponent) {
+      errors.push("Selezionare il componente/tipo di riparazione");
+    }
+
+    if (!repairData.faultDeclared?.trim()) {
+      errors.push("Inserire la descrizione del problema");
+    }
+
+    if (!selectedOperator) {
+      errors.push("Assegnare la riparazione a un tecnico");
+    }
+
+    if (repairData.estimatedPrice <= 0) {
+      errors.push("Inserire un prezzo preventivo valido");
+    }
+
+    // Validazione diagnostica - almeno un elemento deve essere selezionato
+    const activeDiagnosticItems = diagnosticItems.filter((item) => item.active);
+    if (activeDiagnosticItems.length === 0) {
+      errors.push(
+        "Selezionare almeno un elemento nella diagnostica di ricezione"
+      );
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  };
+
+  // Funzione per preparare i dati della riparazione
+  const prepareRepairPayload = () => {
+    const multitenantId = localStorage.getItem("IdCompany");
+
+    // Prepara i dati del cliente (se nuovo)
+    let customerPayload = null;
+    if (!selectedCustomer) {
+      customerPayload = {
+        tipo: "Privato",
+        cliente: true,
+        fornitore: false,
+        ragioneSociale: `${clienteData.cognome} ${clienteData.nome}`.trim(),
+        cognome: clienteData.cognome,
+        nome: clienteData.nome,
+        email: clienteData.email,
+        telefono: clienteData.telefono,
+        cap: clienteData.cap,
+        multitenantId: multitenantId,
+        indirizzo: "",
+        citta: "",
+        provincia: "",
+        regione: "",
+        fiscalCode: "",
+        pIva: "",
+        emailPec: "",
+        codiceSdi: "",
+        iban: "",
+      };
+    }
+
+    // Prepara i dati del dispositivo (se nuovo)
+    let devicePayload = null;
+    if (!selectedDevice) {
+      devicePayload = {
+        serialNumber: dispositivoData.serialNumber,
+        brand: dispositivoData.brand,
+        model: dispositivoData.model,
+        deviceType: dispositivoData.deviceType,
+        color: dispositivoData.color || null,
+        purchaseDate: null,
+        receiptNumber: null,
+        retailer: null,
+        notes: null,
+      };
+    }
+
+    // Prepara i dati della riparazione
+    const repairPayload = {
+      faultDeclared: repairData.faultDeclared,
+      repairAction: repairData.repairAction || null,
+      technicianCode:
+        selectedOperator?.codiceDipendente ||
+        selectedOperator?.internalCode ||
+        null,
+      technicianName:
+        `${selectedOperator?.firstName || ""} ${
+          selectedOperator?.lastName || ""
+        }`.trim() || null,
+      estimatedPrice: repairData.estimatedPrice,
+      paymentType: repairData.paymentType || null,
+      billingInfo: repairData.billingInfo || null,
+      unlockCode: dispositivoData.unlockCode || null,
+      courtesyPhone: dispositivoData.courtesyPhone || null,
+    };
+
+    // Prepara il test di ingresso
+    const incomingTestPayload = {
+      companyId: multitenantId,
+      multitenantId: multitenantId,
+      deviceInfo:
+        diagnosticItems.find((item) => item.id === "device-info")?.active ||
+        false,
+      applePay:
+        diagnosticItems.find((item) => item.id === "apple-pay")?.active ||
+        false,
+      battery:
+        diagnosticItems.find((item) => item.id === "battery")?.active || false,
+      bluetooth:
+        diagnosticItems.find((item) => item.id === "bluetooth")?.active ||
+        false,
+      camera:
+        diagnosticItems.find((item) => item.id === "camera")?.active || false,
+      cellular:
+        diagnosticItems.find((item) => item.id === "cellular")?.active || false,
+      clock:
+        diagnosticItems.find((item) => item.id === "clock")?.active || false,
+      sim: diagnosticItems.find((item) => item.id === "sim")?.active || false,
+      faceId:
+        diagnosticItems.find((item) => item.id === "face-id")?.active || false,
+      scanner:
+        diagnosticItems.find((item) => item.id === "scanner")?.active || false,
+      magSafe:
+        diagnosticItems.find((item) => item.id === "magsafe")?.active || false,
+      sensors:
+        diagnosticItems.find((item) => item.id === "sensors")?.active || false,
+      services:
+        diagnosticItems.find((item) => item.id === "services")?.active || false,
+      software:
+        diagnosticItems.find((item) => item.id === "software")?.active || false,
+      system:
+        diagnosticItems.find((item) => item.id === "system")?.active || false,
+      wiFi: diagnosticItems.find((item) => item.id === "wifi")?.active || false,
+      rfCellular:
+        diagnosticItems.find((item) => item.id === "rf-cellular")?.active ||
+        false,
+      wirelessProblem:
+        diagnosticItems.find((item) => item.id === "wireless-problem")
+          ?.active || false,
+    };
+
+    // Prepara gli elementi diagnostici
+    const diagnosticItemsPayload = diagnosticItems
+      .filter((item) => item.active)
+      .map((item) => ({
+        id: item.id,
+        label: item.label,
+        active: item.active,
+      }));
+
+    return {
+      customerId: selectedCustomer?.id || null,
+      newCustomer: customerPayload,
+      deviceId: selectedDevice?.id || null,
+      newDevice: devicePayload,
+      repairData: repairPayload,
+      incomingTest: incomingTestPayload,
+      diagnosticItems: diagnosticItemsPayload,
+      notes: repairData.billingInfo || null,
+      multitenantId: multitenantId,
+    };
+  };
+
+  // Funzione principale per creare la riparazione
+  const handleCreateRepair = async (
+    actionType: "email" | "print" | "label" | "lab"
+  ) => {
+    // Esegui validazione
+    const validation = validateForm();
+
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
+      alert("Errori di validazione:\n\n" + validation.errors.join("\n"));
+      return;
+    }
+
+    // Pulisci errori di validazione precedenti
+    setValidationErrors([]);
+    setIsCreatingRepair(true);
+
+    try {
+      // Prepara il payload
+      const payload = prepareRepairPayload();
+
+      console.log("Payload riparazione:", payload);
+
+      // Chiama l'API per creare la riparazione
+      const response = await fetch("https://localhost:7148/api/repair", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        console.log("Riparazione creata:", result);
+
+        // Mostra messaggio di successo
+        alert(
+          `Riparazione creata con successo!\n\nCodice: ${result.repairCode}\nID: ${result.repairId}\nStato: ${result.status}`
+        );
+
+        // Gestisci l'azione specifica
+        await handlePostCreateAction(actionType, result);
+
+        // Reset del form o reindirizzamento
+        if (confirm("Vuoi creare un'altra riparazione?")) {
+          resetForm();
+        } else {
+          // Reindirizza alla lista riparazioni o dashboard
+          // window.location.href = '/riparazioni';
+        }
+      } else {
+        const errorText = await response.text();
+        console.error("Errore risposta API:", errorText);
+        alert("Errore nella creazione della riparazione:\n" + errorText);
+      }
+    } catch (error) {
+      console.error("Errore durante la creazione:", error);
+      alert("Errore durante la creazione della riparazione. Riprova.");
+    } finally {
+      setIsCreatingRepair(false);
+    }
+  };
+
+  // Funzione per gestire le azioni post-creazione
+  const handlePostCreateAction = async (
+    actionType: "email" | "print" | "label" | "lab",
+    repairResult: any
+  ) => {
+    switch (actionType) {
+      case "email":
+        console.log("Invio email per riparazione:", repairResult.repairId);
+        alert("Email di conferma inviata al cliente!");
+        break;
+
+      case "print":
+        console.log("Stampa scheda riparazione:", repairResult.repairId);
+        alert("Stampa della scheda avviata!");
+        break;
+
+      case "label":
+        console.log("Stampa etichetta per:", repairResult.repairId);
+        alert("Stampa etichetta avviata!");
+        break;
+
+      case "lab":
+        console.log("Invio al laboratorio:", repairResult.repairId);
+        alert("Riparazione inviata al laboratorio!");
+        break;
+    }
+  };
+
+  // Funzione per resettare il form
+  const resetForm = () => {
+    setSelectedCustomer(null);
+    setSelectedDevice(null);
+    setSearchQuery("");
+    setDeviceSearchQuery("");
+    setClienteData({
+      email: "",
+      nome: "",
+      cognome: "",
+      telefono: "",
+      cap: "",
+    });
+    setDispositivoData({
+      serialNumber: "",
+      brand: "",
+      model: "",
+      deviceType: "Mobile",
+      color: "",
+      unlockCode: "",
+      courtesyPhone: "",
+    });
+    setRepairData({
+      faultDeclared: "",
+      repairAction: "",
+      technicianCode: "",
+      technicianName: "",
+      estimatedPrice: 0,
+      paymentType: "",
+      billingInfo: "",
+      unlockCode: "",
+      courtesyPhone: "",
+    });
+    setRepairComponent("");
+    setSelectedOperator(null);
+    setValidationErrors([]);
+
+    // Reset diagnostica
+    setDiagnosticItems((prevItems) =>
+      prevItems.map((item) => ({ ...item, active: true }))
+    );
   };
 
   // Funzione per salvare il nuovo cliente
@@ -369,7 +1038,6 @@ const Accettazione: React.FC = () => {
         const newCustomer = await response.json();
         alert("Cliente creato con successo!");
 
-        // Seleziona automaticamente il cliente appena creato
         const customerData: CustomerData = {
           id: newCustomer.id,
           tipologia: newCustomer.tipologia,
@@ -390,10 +1058,7 @@ const Accettazione: React.FC = () => {
           iban: newCustomer.iban || "",
         };
 
-        // Applica il cliente appena creato alla form
         onSelectCustomer(customerData);
-
-        // Chiudi il modal
         setShowNewClientModal(false);
       } else {
         const errText = await response.text();
@@ -404,6 +1069,105 @@ const Accettazione: React.FC = () => {
       alert("Errore durante il salvataggio");
     } finally {
       setSavingNewClient(false);
+    }
+  };
+
+  // Funzione per salvare il nuovo dispositivo
+  const handleSaveNewDevice = async () => {
+    if (!newDeviceData.serialNumber.trim()) {
+      alert("Inserire il numero seriale");
+      return;
+    }
+
+    if (!newDeviceData.brand.trim()) {
+      alert("Inserire la marca");
+      return;
+    }
+
+    if (!newDeviceData.model.trim()) {
+      alert("Inserire il modello");
+      return;
+    }
+
+    if (!newDeviceData.deviceType) {
+      alert("Selezionare un tipo di device");
+      return;
+    }
+
+    const payload = {
+      deviceId: newDeviceData.deviceId || generateGuid(),
+      customerId: selectedCustomer?.id || null,
+      companyId: newDeviceData.companyId || null,
+      multitenantId: localStorage.getItem("IdCompany") || null,
+      serialNumber: newDeviceData.serialNumber,
+      brand: newDeviceData.brand,
+      model: newDeviceData.model,
+      deviceType: newDeviceData.deviceType,
+      purchaseDate: newDeviceData.purchaseDate || null,
+      receiptNumber: newDeviceData.receiptNumber || null,
+      retailer: newDeviceData.retailer || null,
+      notes: newDeviceData.notes || null,
+    };
+
+    setSavingNewDevice(true);
+
+    try {
+      const response = await fetch("https://localhost:7148/api/device", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const newDevice = await response.json();
+        alert("Dispositivo creato con successo!");
+
+        const deviceData: DeviceData = {
+          id: newDevice.id,
+          deviceId: newDevice.deviceId,
+          customerId: newDevice.customerId,
+          companyId: newDevice.companyId,
+          multitenantId: newDevice.multitenantId,
+          serialNumber: newDevice.serialNumber,
+          brand: newDevice.brand,
+          model: newDevice.model,
+          deviceType: newDevice.deviceType,
+          purchaseDate: newDevice.purchaseDate,
+          receiptNumber: newDevice.receiptNumber,
+          retailer: newDevice.retailer,
+          notes: newDevice.notes,
+          createdAt: newDevice.createdAt,
+          isDeleted: false,
+        };
+
+        onSelectDevice(deviceData);
+        setShowNewDeviceModal(false);
+      } else {
+        const errText = await response.text();
+        alert("Errore nel salvataggio:\n" + errText);
+      }
+    } catch (error) {
+      console.error("Errore durante il salvataggio:", error);
+      alert("Errore durante il salvataggio");
+    } finally {
+      setSavingNewDevice(false);
+    }
+  };
+
+  // Funzione per ottenere l'icona del dispositivo
+  const getDeviceIcon = (deviceType: string) => {
+    switch (deviceType) {
+      case "Mobile":
+        return "📱";
+      case "TV":
+        return "📺";
+      case "Other":
+        return "🔧";
+      default:
+        return "📱";
     }
   };
 
@@ -470,7 +1234,6 @@ const Accettazione: React.FC = () => {
                           }}
                         />
 
-                        {/* Pulsante per aggiungere nuovo cliente */}
                         <button
                           type="button"
                           className={styles.addClientButton}
@@ -480,7 +1243,6 @@ const Accettazione: React.FC = () => {
                           +
                         </button>
 
-                        {/* Mostra X per cancellare la selezione */}
                         {selectedCustomer && (
                           <button
                             type="button"
@@ -492,14 +1254,13 @@ const Accettazione: React.FC = () => {
                           </button>
                         )}
 
-                        {/* Loading indicator */}
                         {loading && (
                           <div className={styles.loadingIndicator}>
                             <div className={styles.spinner}></div>
                           </div>
                         )}
 
-                        {/* Dropdown risultati */}
+                        {/* Dropdown risultati clienti */}
                         {showDropdown && searchResults.length > 0 && (
                           <div ref={dropdownRef} className={styles.dropdown}>
                             {searchResults.map((customer) => (
@@ -534,10 +1295,16 @@ const Accettazione: React.FC = () => {
 
                     {/* Campi cliente auto-compilati */}
                     <div className={styles.formGroup}>
-                      <label>E-Mail</label>
+                      <label>E-Mail *</label>
                       <input
                         type="email"
-                        className={styles.formControl}
+                        className={`${styles.formControl} ${
+                          validationErrors.includes(
+                            "Inserire un'email valida per il cliente"
+                          )
+                            ? styles.error
+                            : ""
+                        }`}
                         value={clienteData.email}
                         onChange={(e) =>
                           setClienteData({
@@ -547,12 +1314,23 @@ const Accettazione: React.FC = () => {
                         }
                         placeholder="E-mail del cliente"
                       />
+                      {validationErrors.includes(
+                        "Inserire un'email valida per il cliente"
+                      ) && (
+                        <div className={styles.errorText}>Email non valida</div>
+                      )}
                     </div>
                     <div className={styles.formGroup}>
-                      <label>Nome</label>
+                      <label>Nome *</label>
                       <input
                         type="text"
-                        className={styles.formControl}
+                        className={`${styles.formControl} ${
+                          validationErrors.includes(
+                            "Inserire il nome del cliente"
+                          )
+                            ? styles.error
+                            : ""
+                        }`}
                         value={clienteData.nome}
                         onChange={(e) =>
                           setClienteData({
@@ -562,12 +1340,25 @@ const Accettazione: React.FC = () => {
                         }
                         placeholder="Nome del cliente"
                       />
+                      {validationErrors.includes(
+                        "Inserire il nome del cliente"
+                      ) && (
+                        <div className={styles.errorText}>
+                          Campo obbligatorio
+                        </div>
+                      )}
                     </div>
                     <div className={styles.formGroup}>
-                      <label>Cognome</label>
+                      <label>Cognome *</label>
                       <input
                         type="text"
-                        className={styles.formControl}
+                        className={`${styles.formControl} ${
+                          validationErrors.includes(
+                            "Inserire il cognome del cliente"
+                          )
+                            ? styles.error
+                            : ""
+                        }`}
                         value={clienteData.cognome}
                         onChange={(e) =>
                           setClienteData({
@@ -577,12 +1368,25 @@ const Accettazione: React.FC = () => {
                         }
                         placeholder="Cognome del cliente"
                       />
+                      {validationErrors.includes(
+                        "Inserire il cognome del cliente"
+                      ) && (
+                        <div className={styles.errorText}>
+                          Campo obbligatorio
+                        </div>
+                      )}
                     </div>
                     <div className={styles.formGroup}>
-                      <label>Telefono</label>
+                      <label>Telefono *</label>
                       <input
                         type="tel"
-                        className={styles.formControl}
+                        className={`${styles.formControl} ${
+                          validationErrors.includes(
+                            "Inserire il telefono del cliente"
+                          )
+                            ? styles.error
+                            : ""
+                        }`}
                         value={clienteData.telefono}
                         onChange={(e) =>
                           setClienteData({
@@ -592,6 +1396,13 @@ const Accettazione: React.FC = () => {
                         }
                         placeholder="Numero di telefono"
                       />
+                      {validationErrors.includes(
+                        "Inserire il telefono del cliente"
+                      ) && (
+                        <div className={styles.errorText}>
+                          Campo obbligatorio
+                        </div>
+                      )}
                     </div>
                     <div className={styles.formGroup}>
                       <label>Cap</label>
@@ -613,41 +1424,229 @@ const Accettazione: React.FC = () => {
                   {/* Sezione Dispositivo */}
                   <div className={styles.formSection}>
                     <h3>Dispositivo</h3>
+
+                    {/* Campo di ricerca dispositivo con dropdown */}
                     <div className={styles.formGroup}>
-                      <label>Numero di serie/IMEI</label>
+                      <label>Cerca Dispositivo esistente</label>
+                      <div className={styles.searchContainer}>
+                        <input
+                          ref={deviceSearchInputRef}
+                          type="text"
+                          className={`${styles.formControl} ${styles.searchInput}`}
+                          placeholder="Digita marca, modello o numero seriale..."
+                          value={deviceSearchQuery}
+                          onChange={(e) =>
+                            handleDeviceSearchChange(e.target.value)
+                          }
+                          onFocus={() => {
+                            if (deviceSearchResults.length > 0) {
+                              setShowDeviceDropdown(true);
+                            }
+                          }}
+                        />
+
+                        <button
+                          type="button"
+                          className={styles.addClientButton}
+                          onClick={openNewDeviceModal}
+                          title="Aggiungi nuovo dispositivo"
+                        >
+                          +
+                        </button>
+
+                        {selectedDevice && (
+                          <button
+                            type="button"
+                            className={styles.clearButton}
+                            onClick={clearDeviceSelection}
+                            title="Cancella selezione"
+                          >
+                            ×
+                          </button>
+                        )}
+
+                        {deviceLoading && (
+                          <div className={styles.loadingIndicator}>
+                            <div className={styles.spinner}></div>
+                          </div>
+                        )}
+
+                        {/* Dropdown risultati dispositivi */}
+                        {showDeviceDropdown &&
+                          deviceSearchResults.length > 0 && (
+                            <div
+                              ref={deviceDropdownRef}
+                              className={styles.dropdown}
+                            >
+                              {deviceSearchResults.map((device) => (
+                                <div
+                                  key={device.id}
+                                  className={styles.dropdownItem}
+                                  onClick={() => onSelectDevice(device)}
+                                >
+                                  <div className={styles.customerInfo}>
+                                    <div className={styles.customerName}>
+                                      <strong>
+                                        {getDeviceIcon(device.deviceType)}{" "}
+                                        {device.brand} {device.model}
+                                      </strong>
+                                    </div>
+                                    <div className={styles.customerDetails}>
+                                      <span>
+                                        Seriale: {device.serialNumber}
+                                      </span>
+                                      <span> • Tipo: {device.deviceType}</span>
+                                    </div>
+                                    <div className={styles.customerAddress}>
+                                      {device.purchaseDate && (
+                                        <>
+                                          Acquisto:{" "}
+                                          {new Date(
+                                            device.purchaseDate
+                                          ).toLocaleDateString("it-IT")}
+                                        </>
+                                      )}
+                                      {device.retailer && (
+                                        <> • Rivenditore: {device.retailer}</>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label>Numero di serie/IMEI *</label>
                       <input
                         type="text"
-                        className={styles.formControl}
-                        defaultValue="359560232396424D"
+                        className={`${styles.formControl} ${
+                          validationErrors.includes(
+                            "Inserire il numero seriale/IMEI del dispositivo"
+                          )
+                            ? styles.error
+                            : ""
+                        }`}
+                        value={dispositivoData.serialNumber}
+                        onChange={(e) =>
+                          setDispositivoData({
+                            ...dispositivoData,
+                            serialNumber: e.target.value,
+                          })
+                        }
+                        placeholder="Numero seriale del dispositivo"
                       />
+                      {validationErrors.includes(
+                        "Inserire il numero seriale/IMEI del dispositivo"
+                      ) && (
+                        <div className={styles.errorText}>
+                          Campo obbligatorio
+                        </div>
+                      )}
                     </div>
                     <div className={styles.formGroup}>
-                      <label>Dispositivo</label>
-                      <select className={styles.formControl}>
-                        <option value="">-- Seleziona --</option>
-                        <option value="iPhone" selected>
-                          iPhone
-                        </option>
-                        <option value="iPad">iPad</option>
-                        <option value="Mac">Mac</option>
-                        <option value="Watch">Watch</option>
-                        <option value="AirPods">AirPods</option>
+                      <label>Dispositivo *</label>
+                      <select
+                        className={`${styles.formControl} ${
+                          validationErrors.includes(
+                            "Selezionare il tipo di dispositivo"
+                          )
+                            ? styles.error
+                            : ""
+                        }`}
+                        value={dispositivoData.deviceType}
+                        onChange={(e) =>
+                          setDispositivoData({
+                            ...dispositivoData,
+                            deviceType: e.target.value,
+                          })
+                        }
+                      >
+                        {deviceTypes.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
                       </select>
+                      {validationErrors.includes(
+                        "Selezionare il tipo di dispositivo"
+                      ) && (
+                        <div className={styles.errorText}>
+                          Campo obbligatorio
+                        </div>
+                      )}
                     </div>
                     <div className={styles.formGroup}>
-                      <label>Modello</label>
+                      <label>Marca *</label>
                       <input
                         type="text"
-                        className={styles.formControl}
-                        defaultValue="14 Pro"
+                        className={`${styles.formControl} ${
+                          validationErrors.includes(
+                            "Inserire la marca del dispositivo"
+                          )
+                            ? styles.error
+                            : ""
+                        }`}
+                        value={dispositivoData.brand}
+                        onChange={(e) =>
+                          setDispositivoData({
+                            ...dispositivoData,
+                            brand: e.target.value,
+                          })
+                        }
+                        placeholder="Marca del dispositivo"
                       />
+                      {validationErrors.includes(
+                        "Inserire la marca del dispositivo"
+                      ) && (
+                        <div className={styles.errorText}>
+                          Campo obbligatorio
+                        </div>
+                      )}
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Modello *</label>
+                      <input
+                        type="text"
+                        className={`${styles.formControl} ${
+                          validationErrors.includes(
+                            "Inserire il modello del dispositivo"
+                          )
+                            ? styles.error
+                            : ""
+                        }`}
+                        value={dispositivoData.model}
+                        onChange={(e) =>
+                          setDispositivoData({
+                            ...dispositivoData,
+                            model: e.target.value,
+                          })
+                        }
+                        placeholder="Modello del dispositivo"
+                      />
+                      {validationErrors.includes(
+                        "Inserire il modello del dispositivo"
+                      ) && (
+                        <div className={styles.errorText}>
+                          Campo obbligatorio
+                        </div>
+                      )}
                     </div>
                     <div className={styles.formGroup}>
                       <label>Colore</label>
                       <input
                         type="text"
                         className={styles.formControl}
-                        defaultValue="Oro Purple"
+                        value={dispositivoData.color}
+                        onChange={(e) =>
+                          setDispositivoData({
+                            ...dispositivoData,
+                            color: e.target.value,
+                          })
+                        }
+                        placeholder="Colore del dispositivo"
                       />
                     </div>
                     <div className={styles.formGroup}>
@@ -655,7 +1654,14 @@ const Accettazione: React.FC = () => {
                       <input
                         type="text"
                         className={styles.formControl}
-                        defaultValue="123456"
+                        value={dispositivoData.unlockCode}
+                        onChange={(e) =>
+                          setDispositivoData({
+                            ...dispositivoData,
+                            unlockCode: e.target.value,
+                          })
+                        }
+                        placeholder="Codice di sblocco"
                       />
                     </div>
                     <div className={styles.formGroup}>
@@ -663,7 +1669,14 @@ const Accettazione: React.FC = () => {
                       <input
                         type="text"
                         className={styles.formControl}
-                        defaultValue="SI"
+                        value={dispositivoData.courtesyPhone}
+                        onChange={(e) =>
+                          setDispositivoData({
+                            ...dispositivoData,
+                            courtesyPhone: e.target.value,
+                          })
+                        }
+                        placeholder="Telefono di cortesia"
                       />
                     </div>
                   </div>
@@ -696,120 +1709,295 @@ const Accettazione: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                  {validationErrors.includes(
+                    "Selezionare almeno un elemento nella diagnostica di ricezione"
+                  ) && (
+                    <div className={styles.errorText}>
+                      Selezionare almeno un elemento
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Colonna destra */}
               <div className={styles.rightColumn}>
-                {/* Info generazione automatica */}
+                {/* Info generazione automatica - AGGIORNATA */}
                 <div className={styles.autoGenerationInfo}>
                   <div className={styles.formGroup}>
                     <label>Data e ora di creazione</label>
                     <input
                       type="text"
                       className={styles.formControl}
-                      defaultValue="gg/mm/aa oo:mm generato automaticamente"
+                      value={`${dateTime.date} ${dateTime.time}`}
                       readOnly
                     />
                   </div>
+
                   <div className={styles.formGroup}>
                     <label>Cod. scheda</label>
                     <input
                       type="text"
                       className={styles.formControl}
-                      defaultValue="generato automaticamente"
+                      value="Generato automaticamente alla creazione"
                       readOnly
                     />
                   </div>
+
                   <div className={styles.formGroup}>
-                    <label>Assegnata a</label>
-                    <input
-                      type="text"
-                      className={styles.formControl}
-                      defaultValue="menu a tendina con lista tecnici"
-                    />
+                    <label>Assegnata a *</label>
+                    <select
+                      className={`${styles.formControl} ${
+                        validationErrors.includes(
+                          "Assegnare la riparazione a un tecnico"
+                        )
+                          ? styles.error
+                          : ""
+                      }`}
+                      value={selectedOperator?.id || ""}
+                      onChange={(e) => {
+                        const operator = operators.find(
+                          (op) => op.id === e.target.value
+                        );
+                        setSelectedOperator(operator || null);
+                      }}
+                    >
+                      <option value="">-- Seleziona Tecnico --</option>
+                      {operators.map((operator) => (
+                        <option key={operator.id} value={operator.id}>
+                          {operator.firstName} {operator.lastName} (
+                          {operator.codiceDipendente || "N/A"})
+                        </option>
+                      ))}
+                    </select>
+                    {validationErrors.includes(
+                      "Assegnare la riparazione a un tecnico"
+                    ) && (
+                      <div className={styles.errorText}>Campo obbligatorio</div>
+                    )}
                   </div>
+
                   <div className={styles.formGroup}>
                     <label>Gestita in</label>
                     <input
                       type="text"
                       className={styles.formControl}
-                      defaultValue="menu a tendina"
+                      value="Sede principale"
+                      readOnly
                     />
                   </div>
                 </div>
 
-                {/* Sezione Riparazione */}
+                {/* Sezione Riparazione - AGGIORNATA */}
                 <div className={styles.formSection}>
                   <h3>Riparazione</h3>
+
                   <div className={styles.formGroup}>
-                    <label>Componente/riparazione</label>
-                    <select className={styles.formControl}>
+                    <label>Componente/riparazione *</label>
+                    <select
+                      className={`${styles.formControl} ${
+                        validationErrors.includes(
+                          "Selezionare il componente/tipo di riparazione"
+                        )
+                          ? styles.error
+                          : ""
+                      }`}
+                      value={repairComponent}
+                      onChange={(e) => setRepairComponent(e.target.value)}
+                    >
                       <option value="">-- Seleziona --</option>
-                      <option value="Schermo">Schermo</option>
-                      <option value="Batteria">Batteria</option>
-                      <option value="Altri Danni">Altri Danni</option>
-                      <option value="Scheda Madre">Scheda Madre</option>
-                      <option value="Software">Software</option>
+                      <option value="Schermo">📱 Schermo</option>
+                      <option value="Batteria">🔋 Batteria</option>
+                      <option value="Altri Danni">🔧 Altri Danni</option>
+                      <option value="Scheda Madre">💾 Scheda Madre</option>
+                      <option value="Software">⚙️ Software</option>
+                      <option value="Riparazione Completa">
+                        🛠️ Riparazione Completa
+                      </option>
                     </select>
+                    {validationErrors.includes(
+                      "Selezionare il componente/tipo di riparazione"
+                    ) && (
+                      <div className={styles.errorText}>Campo obbligatorio</div>
+                    )}
                   </div>
+
                   <div className={styles.formGroup}>
-                    <label>Descrizione dell'intervento/problema</label>
+                    <label>Descrizione dell'intervento/problema *</label>
+                    <textarea
+                      className={`${styles.formControl} ${
+                        validationErrors.includes(
+                          "Inserire la descrizione del problema"
+                        )
+                          ? styles.error
+                          : ""
+                      }`}
+                      rows={4}
+                      value={repairData.faultDeclared}
+                      onChange={(e) =>
+                        setRepairData({
+                          ...repairData,
+                          faultDeclared: e.target.value,
+                        })
+                      }
+                      placeholder="Descrivi il problema riscontrato o l'intervento richiesto..."
+                    />
+                    {validationErrors.includes(
+                      "Inserire la descrizione del problema"
+                    ) && (
+                      <div className={styles.errorText}>Campo obbligatorio</div>
+                    )}
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Azione di riparazione</label>
                     <textarea
                       className={styles.formControl}
-                      rows={4}
-                      defaultValue="Sostituzione del vetro dello schermo"
-                    ></textarea>
+                      rows={3}
+                      value={repairData.repairAction}
+                      onChange={(e) =>
+                        setRepairData({
+                          ...repairData,
+                          repairAction: e.target.value,
+                        })
+                      }
+                      placeholder="Descrivi le azioni che verranno eseguite..."
+                    />
                   </div>
                 </div>
 
-                {/* Sezione Prezzo */}
+                {/* Sezione Prezzo - AGGIORNATA */}
                 <div className={styles.formSection}>
                   <h3>Prezzo</h3>
+
                   <div className={styles.formGroup}>
-                    <label>Prezzo Preventivo iva inclusa</label>
-                    <input
-                      type="text"
-                      className={styles.formControl}
-                      defaultValue="399,00 Eur"
-                    />
+                    <label>Prezzo Preventivo IVA inclusa *</label>
+                    <div className={styles.priceInputContainer}>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className={`${styles.formControl} ${
+                          validationErrors.includes(
+                            "Inserire un prezzo preventivo valido"
+                          )
+                            ? styles.error
+                            : ""
+                        }`}
+                        value={repairData.estimatedPrice}
+                        onChange={(e) =>
+                          setRepairData({
+                            ...repairData,
+                            estimatedPrice: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        placeholder="0.00"
+                      />
+                      <span className={styles.currencyLabel}>€</span>
+                    </div>
+                    {validationErrors.includes(
+                      "Inserire un prezzo preventivo valido"
+                    ) && (
+                      <div className={styles.errorText}>Campo obbligatorio</div>
+                    )}
                   </div>
+
                   <div className={styles.formGroup}>
                     <label>Tipo di Pagamento</label>
-                    <input
-                      type="text"
+                    <select
                       className={styles.formControl}
-                      defaultValue="Amex"
-                    />
+                      value={repairData.paymentType}
+                      onChange={(e) =>
+                        setRepairData({
+                          ...repairData,
+                          paymentType: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">-- Seleziona --</option>
+                      <option value="Contanti">💵 Contanti</option>
+                      <option value="Carta di Credito">
+                        💳 Carta di Credito
+                      </option>
+                      <option value="Bancomat">💳 Bancomat</option>
+                      <option value="Bonifico">🏦 Bonifico</option>
+                      <option value="Amex">💳 American Express</option>
+                      <option value="PayPal">💰 PayPal</option>
+                      <option value="Altro">🔄 Altro</option>
+                    </select>
                   </div>
+
                   <div className={styles.formGroup}>
                     <label>Informazioni per la fatturazione</label>
                     <textarea
                       className={styles.formControl}
                       rows={3}
-                    ></textarea>
+                      value={repairData.billingInfo}
+                      onChange={(e) =>
+                        setRepairData({
+                          ...repairData,
+                          billingInfo: e.target.value,
+                        })
+                      }
+                      placeholder="Note aggiuntive per la fatturazione..."
+                    />
                   </div>
                 </div>
+
+                {/* Mostra errori di validazione se presenti */}
+                {validationErrors.length > 0 && (
+                  <div className={styles.validationErrorsContainer}>
+                    <h4>⚠️ Errori di validazione:</h4>
+                    <ul>
+                      {validationErrors.map((error, index) => (
+                        <li key={index} className={styles.validationError}>
+                          {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Bottoni */}
+            {/* Bottoni azioni - AGGIORNATI */}
             <div className={styles.formActions}>
-              <button className={`${styles.btn} ${styles.btnSuccess}`}>
-                Crea/Invia E-Mail
+              <button
+                className={`${styles.btn} ${styles.btnSuccess}`}
+                onClick={() => handleCreateRepair("email")}
+                disabled={isCreatingRepair}
+              >
+                {isCreatingRepair ? "Creando..." : "📧 Crea/Invia E-Mail"}
               </button>
-              <button className={`${styles.btn} ${styles.btnSecondary}`}>
-                Crea/Stampa
+
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => handleCreateRepair("print")}
+                disabled={isCreatingRepair}
+              >
+                {isCreatingRepair ? "Creando..." : "🖨️ Crea/Stampa"}
               </button>
-              <button className={`${styles.btn} ${styles.btnSecondary}`}>
-                Crea/Stampa etichetta
+
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => handleCreateRepair("label")}
+                disabled={isCreatingRepair}
+              >
+                {isCreatingRepair ? "Creando..." : "🏷️ Crea/Stampa etichetta"}
               </button>
-              <button className={`${styles.btn} ${styles.btnDark}`}>
-                Crea/Stampa/Spedisci al Lab
+
+              <button
+                className={`${styles.btn} ${styles.btnDark}`}
+                onClick={() => handleCreateRepair("lab")}
+                disabled={isCreatingRepair}
+              >
+                {isCreatingRepair
+                  ? "Creando..."
+                  : "🔬 Crea/Stampa/Spedisci al Lab"}
               </button>
             </div>
           </div>
         </div>
+        <BottomBar />
       </div>
 
       {/* Modal per inserimento nuovo cliente */}
@@ -1133,6 +2321,197 @@ const Accettazione: React.FC = () => {
                 disabled={savingNewClient}
               >
                 {savingNewClient ? "Salvando..." : "Salva Cliente"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal per inserimento nuovo dispositivo */}
+      {showNewDeviceModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowNewDeviceModal(false)}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h4>📱 Aggiungi Nuovo Dispositivo</h4>
+              <button
+                type="button"
+                className={styles.modalCloseButton}
+                onClick={() => setShowNewDeviceModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div className={styles.customerForm}>
+                <div className={styles.formRow}>
+                  <div className={styles.formCol6}>
+                    <label>Device ID</label>
+                    <input
+                      className={styles.formControl}
+                      value={newDeviceData.deviceId}
+                      onChange={(e) =>
+                        setNewDeviceData({
+                          ...newDeviceData,
+                          deviceId: e.target.value,
+                        })
+                      }
+                      placeholder="Generato automaticamente"
+                      readOnly
+                    />
+                  </div>
+                  <div className={styles.formCol6}>
+                    <label>Numero Seriale *</label>
+                    <input
+                      className={styles.formControl}
+                      value={newDeviceData.serialNumber}
+                      onChange={(e) =>
+                        setNewDeviceData({
+                          ...newDeviceData,
+                          serialNumber: e.target.value,
+                        })
+                      }
+                      placeholder="IMEI, ESN o altro codice seriale"
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.formRow}>
+                  <div className={styles.formCol3}>
+                    <label>Marca *</label>
+                    <input
+                      className={styles.formControl}
+                      value={newDeviceData.brand}
+                      onChange={(e) =>
+                        setNewDeviceData({
+                          ...newDeviceData,
+                          brand: e.target.value,
+                        })
+                      }
+                      placeholder="es. Samsung, LG, Apple..."
+                    />
+                  </div>
+                  <div className={styles.formCol3}>
+                    <label>Modello *</label>
+                    <input
+                      className={styles.formControl}
+                      value={newDeviceData.model}
+                      onChange={(e) =>
+                        setNewDeviceData({
+                          ...newDeviceData,
+                          model: e.target.value,
+                        })
+                      }
+                      placeholder="es. Galaxy S21, iPhone 13..."
+                    />
+                  </div>
+                  <div className={styles.formCol3}>
+                    <label>Tipo Device *</label>
+                    <select
+                      className={styles.formControl}
+                      value={newDeviceData.deviceType}
+                      onChange={(e) =>
+                        setNewDeviceData({
+                          ...newDeviceData,
+                          deviceType: e.target.value,
+                        })
+                      }
+                    >
+                      {deviceTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.formRow}>
+                  <div className={styles.formCol3}>
+                    <label>Data Acquisto</label>
+                    <input
+                      type="date"
+                      className={styles.formControl}
+                      value={newDeviceData.purchaseDate}
+                      onChange={(e) =>
+                        setNewDeviceData({
+                          ...newDeviceData,
+                          purchaseDate: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className={styles.formCol3}>
+                    <label>Numero Scontrino</label>
+                    <input
+                      className={styles.formControl}
+                      value={newDeviceData.receiptNumber}
+                      onChange={(e) =>
+                        setNewDeviceData({
+                          ...newDeviceData,
+                          receiptNumber: e.target.value,
+                        })
+                      }
+                      placeholder="Numero per la garanzia"
+                    />
+                  </div>
+                  <div className={styles.formCol3}>
+                    <label>Rivenditore</label>
+                    <input
+                      className={styles.formControl}
+                      value={newDeviceData.retailer}
+                      onChange={(e) =>
+                        setNewDeviceData({
+                          ...newDeviceData,
+                          retailer: e.target.value,
+                        })
+                      }
+                      placeholder="Nome del negozio"
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.formRow}>
+                  <div className={styles.formCol6}>
+                    <label>Note</label>
+                    <textarea
+                      className={styles.formControl}
+                      value={newDeviceData.notes}
+                      onChange={(e) =>
+                        setNewDeviceData({
+                          ...newDeviceData,
+                          notes: e.target.value,
+                        })
+                      }
+                      placeholder="Note aggiuntive sul dispositivo..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => setShowNewDeviceModal(false)}
+              >
+                Annulla
+              </button>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={handleSaveNewDevice}
+                disabled={savingNewDevice}
+              >
+                {savingNewDevice ? "Salvando..." : "Salva Dispositivo"}
               </button>
             </div>
           </div>

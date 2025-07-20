@@ -24,8 +24,14 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           {/* Main Navigation */}
           <ul className="navbar-nav me-auto">
+            {/* 👈 Aggiungi navigazione solo qui */}
             <li className="nav-item">
-              <button className="nav-link">Home</button>
+              <button 
+                className="nav-link"
+                onClick={() => navigate('/dashboard')}
+              >
+                Home
+              </button>
             </li>
 
             {/* Gestionale Dropdown */}
@@ -39,12 +45,18 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
               </button>
               <ul className="dropdown-menu">
                 <li>
-                  <button className="dropdown-item">
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => navigate('/dashboard')}
+                  >
                     <i className="fa fa-home me-2"></i> Home
                   </button>
                 </li>
                 <li>
-                  <button className="dropdown-item">
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => navigate('/resoconto')}
+                  >
                     <i className="fa fa-cog me-2"></i> Resoconto
                   </button>
                 </li>
@@ -67,36 +79,66 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
                   </button>
                   <ul className="dropdown-menu">
                     <li>
-                      <button className="dropdown-item">Display</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/iphone/display')}
+                      >
+                        Display
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">Batteria</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/iphone/batteria')}
+                      >
+                        Batteria
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">Altri Danni</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/iphone/altri-danni')}
+                      >
+                        Altri Danni
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/iphone/chip-livello2')}
+                      >
                         Danni Chip II Livello
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/iphone/danni-liquido')}
+                      >
                         Danni Da Liquido
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/iphone/software')}
+                      >
                         Interventi Software
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni-attive')}
+                      >
                         Riparazioni Attive
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni-archivio')}
+                      >
                         Riparazioni in Archivio
                       </button>
                     </li>
@@ -108,36 +150,66 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
                   </button>
                   <ul className="dropdown-menu">
                     <li>
-                      <button className="dropdown-item">Display</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/imac/display')}
+                      >
+                        Display
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">Batteria</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/imac/batteria')}
+                      >
+                        Batteria
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">Altri Danni</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/imac/altri-danni')}
+                      >
+                        Altri Danni
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/imac/chip-livello2')}
+                      >
                         Danni Chip II Livello
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/imac/danni-liquido')}
+                      >
                         Danni Da Liquido
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/imac/software')}
+                      >
                         Interventi Software
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni-attive')}
+                      >
                         Riparazioni Attive
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni-archivio')}
+                      >
                         Riparazioni in Archivio
                       </button>
                     </li>
@@ -149,10 +221,20 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
                   </button>
                   <ul className="dropdown-menu">
                     <li>
-                      <button className="dropdown-item">MacBook Air</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/macbook/air')}
+                      >
+                        MacBook Air
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">MacBook Pro</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/macbook/pro')}
+                      >
+                        MacBook Pro
+                      </button>
                     </li>
                   </ul>
                 </li>
@@ -162,36 +244,66 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
                   </button>
                   <ul className="dropdown-menu">
                     <li>
-                      <button className="dropdown-item">Display</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/ipad/display')}
+                      >
+                        Display
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">Batteria</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/ipad/batteria')}
+                      >
+                        Batteria
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">Altri Danni</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/ipad/altri-danni')}
+                      >
+                        Altri Danni
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/ipad/chip-livello2')}
+                      >
                         Danni Chip II Livello
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/ipad/danni-liquido')}
+                      >
                         Danni Da Liquido
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/ipad/software')}
+                      >
                         Interventi Software
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni-attive')}
+                      >
                         Riparazioni Attive
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni-archivio')}
+                      >
                         Riparazioni in Archivio
                       </button>
                     </li>
@@ -203,18 +315,34 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
                   </button>
                   <ul className="dropdown-menu">
                     <li>
-                      <button className="dropdown-item">Display</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/apple-watch/display')}
+                      >
+                        Display
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">Batteria</button>
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni/apple-watch/batteria')}
+                      >
+                        Batteria
+                      </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni-attive')}
+                      >
                         Riparazioni Attive
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => navigate('/riparazioni-archivio')}
+                      >
                         Riparazioni in Archivio
                       </button>
                     </li>
@@ -242,7 +370,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
               </ul>
             </li>
 
-            {/* Altri menu... */}
+            {/* Vendite Dropdown */}
             <li className="nav-item dropdown">
               <button
                 className="nav-link dropdown-toggle"
@@ -252,29 +380,57 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
               </button>
               <ul className="dropdown-menu">
                 <li>
-                  <button className="dropdown-item">Accessorio (Rapido)</button>
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => navigate('/vendite/accessorio-rapido')}
+                  >
+                    Accessorio (Rapido)
+                  </button>
                 </li>
                 <li>
-                  <button className="dropdown-item">
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => navigate('/vendite/accessorio-garanzia')}
+                  >
                     Accessorio (Garanzia)
                   </button>
                 </li>
                 <li>
-                  <button className="dropdown-item">Software</button>
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => navigate('/vendite/software')}
+                  >
+                    Software
+                  </button>
                 </li>
                 <li>
-                  <button className="dropdown-item">Dispositivo Usato</button>
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => navigate('/vendite/dispositivo-usato')}
+                  >
+                    Dispositivo Usato
+                  </button>
                 </li>
                 <li>
-                  <button className="dropdown-item">Dispositivo Nuovo</button>
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => navigate('/vendite/dispositivo-nuovo')}
+                  >
+                    Dispositivo Nuovo
+                  </button>
                 </li>
                 <li>
-                  <button className="dropdown-item">Spesa</button>
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => navigate('/vendite/spesa')}
+                  >
+                    Spesa
+                  </button>
                 </li>
               </ul>
             </li>
 
-            {/* Registro... */}
+            {/* Registro Dropdown */}
             <li className="nav-item dropdown">
               <button
                 className="nav-link dropdown-toggle"
@@ -284,26 +440,49 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
               </button>
               <ul className="dropdown-menu">
                 <li>
-                  <button className="dropdown-item">Sub...</button>
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => navigate('/registro')}
+                  >
+                    Sub...
+                  </button>
                 </li>
               </ul>
             </li>
 
+            {/* Clienti */}
             <li className="nav-item">
-              <button className="nav-link">Clienti</button>
+              <button 
+                className="nav-link"
+                onClick={() => navigate('/anagrafica-clienti')}
+              >
+                Clienti
+              </button>
             </li>
 
+            {/* Fatture */}
             <li className="nav-item">
-              <button className="nav-link">Fatture</button>
+              <button 
+                className="nav-link"
+                onClick={() => navigate('/fatture')}
+              >
+                Fatture
+              </button>
             </li>
           </ul>
 
           {/* Right Side Icons */}
           <div className="d-flex align-items-center">
-            <button className="topbar-icon-button">
+            <button 
+              className="topbar-icon-button"
+              onClick={() => navigate('/notifiche')}
+            >
               <i className="fa-solid fa-bell"></i>
             </button>
-            <button className="topbar-icon-button">
+            <button 
+              className="topbar-icon-button"
+              onClick={() => navigate('/profilo')}
+            >
               <i className="fa-solid fa-user"></i>
             </button>
             <button
@@ -312,7 +491,10 @@ const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
             >
               <i className="fa-solid fa-chart-bar"></i>
             </button>
-            <button className="topbar-icon-button">
+            <button 
+              className="topbar-icon-button"
+              onClick={() => navigate('/impostazioni')}
+            >
               <i className="fa-solid fa-cog"></i>
             </button>
           </div>

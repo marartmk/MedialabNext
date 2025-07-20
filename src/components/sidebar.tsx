@@ -116,7 +116,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
           className="list-group-item"
           onClick={() => navigate("/device-registry")}
         >
-          <Users className="icon" />
+          <MonitorSmartphone className="icon" />
           <span className="item-text">Anagrafica Apparati</span>
         </button>
         <button
@@ -176,7 +176,6 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         >
           <Lock className="icon" />
           <span className="item-text">Area Riservata</span>
-          
         </button>
       </div>
     </div>
