@@ -9,7 +9,7 @@ import {
   flexRender,
   createColumnHelper,
 } from "@tanstack/react-table";
-import "./styles.css";
+import styles from "./styles.module.css";
 import Sidebar from "../../../components/sidebar-admin";
 import Topbar from "../../../components/topbar";
 
@@ -28,8 +28,6 @@ interface CustomerData {
 
 const DashboardAdmin: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
-  const [selectedNews, setSelectedNews] = useState<any>(null);
-  const [newsData, setNewsData] = useState<any[]>([]);
   const navigate = useNavigate();
   const [rowData, setRowData] = useState<CustomerData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -66,7 +64,7 @@ const DashboardAdmin: React.FC = () => {
     }),
     columnHelper.accessor("provincia", {
       header: "Provincia",
-     cell: (info) => (
+      cell: (info) => (
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           {info.getValue()}
         </div>
@@ -75,8 +73,7 @@ const DashboardAdmin: React.FC = () => {
     columnHelper.accessor("telefono", {
       header: "Telefono",
       cell: (info) => (
-        <div className="table-badge badge-phone">
-        
+        <div className={`${styles.tableBadge} ${styles.badgePhone}`}>
           {info.getValue()}
         </div>
       ),
@@ -84,8 +81,7 @@ const DashboardAdmin: React.FC = () => {
     columnHelper.accessor("emailAziendale", {
       header: "Email",
       cell: (info) => (
-        <div className="table-badge badge-email">
-         
+        <div className={`${styles.tableBadge} ${styles.badgeEmail}`}>
           {info.getValue()}
         </div>
       ),
@@ -93,7 +89,32 @@ const DashboardAdmin: React.FC = () => {
     columnHelper.accessor("pIva", {
       header: "Partita IVA",
       cell: (info) => (
-        <div className="table-badge badge-piva">{info.getValue()}</div>
+        <div className={`${styles.tableBadge} ${styles.badgePiva}`}>
+          {info.getValue()}
+        </div>
+      ),
+    }),
+    // Colonna Azioni
+    columnHelper.display({
+      id: "actions",
+      header: "Azioni",
+      cell: (info) => (
+        <div className={styles.actionButtons}>
+          <button
+            className={`${styles.actionBtn} ${styles.viewBtn}`}
+            onClick={() => handleViewCustomer(info.row.original)}
+            title="Visualizza dettagli"
+          >
+            <i className="fa-solid fa-eye"></i>
+          </button>
+          <button
+            className={`${styles.actionBtn} ${styles.editBtn}`}
+            onClick={() => handleEditCustomer(info.row.original)}
+            title="Modifica dati"
+          >
+            <i className="fa-solid fa-edit"></i>
+          </button>
+        </div>
       ),
     }),
   ];
@@ -130,12 +151,15 @@ const DashboardAdmin: React.FC = () => {
         const multitenantId = localStorage.getItem("IdCompanyAdmin");
         console.log("Token presente:", !!token);
 
-        const response = await fetch(`https://localhost:7148/api/Customer/customeraffiliated?multitenantId=${multitenantId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await fetch(
+          `https://localhost:7148/api/Customer/customeraffiliated?multitenantId=${multitenantId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         console.log("Response status:", response.status);
         console.log("Response ok:", response.ok);
@@ -161,36 +185,8 @@ const DashboardAdmin: React.FC = () => {
     fetchData();
   }, []);
 
-  // Simula il caricamento delle notizie
+  // Carica lo stato del menu dal localStorage
   useEffect(() => {
-    const loadNews = () => {
-      const mockNews = [
-        {
-          id: 1,
-          title: "Alcuni computer Mac con l'aggiornamento....",
-          date: new Date(Date.now() - 86400000),
-          content:
-            "Alcuni modelli di Mac potrebbero riscontrare ritardi nel caricamento di Diagnosi Apple o delle diagnostiche EFI di AST 2 dopo i seguenti aggiornamenti: Aggiornamento a macOS Big Sur 11.3 Aggiornamento del firmware del chip di sicurezza Apple T2 alla versione più recente dopo aver eseguito correttamente le suite Configurazione di sistema, Riattiva dispositivo o un ripristino con Apple Configurator 2 I modelli di Mac interessati si collegheranno alla Console di diagnostica di AST 2 e possono visualizzare il messaggio 'Attendo il supporto...' per diversi minuti.",
-        },
-        {
-          id: 2,
-          title: "Trasformazione di GSX - Fase 2: ...",
-          date: new Date(Date.now() - 172800000),
-          content: "Informazioni sulla fase 2......",
-        },
-        {
-          id: 3,
-          title: "Suggerimenti per ridurre l'impatto ambiantale ...",
-          date: new Date(Date.now() - 259200000),
-          content: "Suggerimenti per ridurre l'impatto ambientale...",
-        },
-      ];
-      setNewsData(mockNews);
-    };
-
-    loadNews();
-
-    // Carica lo stato del menu dal localStorage
     const savedMenuState = localStorage.getItem("menuState");
     if (savedMenuState === "closed") {
       setMenuState("closed");
@@ -204,10 +200,18 @@ const DashboardAdmin: React.FC = () => {
     localStorage.setItem("menuState", newState);
   };
 
-  // Gestione della selezione di una notizia
-  const handleSelectNews = (newsId: number) => {
-    const newsItem = newsData.find((item) => item.id === newsId);
-    setSelectedNews(newsItem);
+  // Gestione visualizzazione dettagli cliente
+  const handleViewCustomer = (customer: CustomerData) => {
+    console.log("Visualizza cliente:", customer);
+    // Qui aprirai la form di visualizzazione
+    // navigate(`/view-customer/${customer.id}`);
+  };
+
+  // Gestione modifica cliente
+  const handleEditCustomer = (customer: CustomerData) => {
+    console.log("Modifica cliente:", customer);
+    // Qui aprirai la form di modifica
+    // navigate(`/edit-customer/${customer.id}`);
   };
 
   // Navigazione alle varie pagine
@@ -278,17 +282,19 @@ const DashboardAdmin: React.FC = () => {
             </div>
           </div>
           {/* Tabella Clienti con Design Monocromatico */}
-          <div className="table-section">
-            <div className="table-header">
+          <div className={styles.tableSection}>
+            <div className={styles.tableHeader}>
               <h3>Lista Affiliati</h3>
-              <div className="table-controls">
-                <div className="search-container-table">
-                  <i className="fa-solid fa-magnifying-glass search-icon-table"></i>
+              <div className={styles.tableControls}>
+                <div className={styles.searchContainerTable}>
+                  <i
+                    className={`fa-solid fa-magnifying-glass ${styles.searchIconTable}`}
+                  ></i>
                   <input
                     type="text"
                     value={globalFilter ?? ""}
                     onChange={(e) => setGlobalFilter(e.target.value)}
-                    className="search-table-input"
+                    className={styles.searchTableInput}
                     placeholder="Cerca clienti..."
                   />
                 </div>
@@ -296,21 +302,21 @@ const DashboardAdmin: React.FC = () => {
             </div>
 
             {loading && (
-              <div className="loading-container">
-                <div className="loading-spinner"></div>
+              <div className={styles.loadingContainer}>
+                <div className={styles.loadingSpinner}></div>
                 <span>Caricamento clienti...</span>
               </div>
             )}
 
             {error && (
-              <div className="error-container">
+              <div className={styles.errorContainer}>
                 <i className="fa-solid fa-exclamation-triangle"></i>
                 <span>Errore: {error}</span>
               </div>
             )}
 
             {!loading && !error && rowData.length === 0 && (
-              <div className="empty-state">
+              <div className={styles.emptyState}>
                 <h4>Nessun cliente trovato</h4>
                 <p>Non ci sono clienti da visualizzare al momento.</p>
               </div>
@@ -318,7 +324,7 @@ const DashboardAdmin: React.FC = () => {
 
             {!loading && !error && rowData.length > 0 && (
               <div style={{ overflowX: "auto" }}>
-                <table className="modern-table">
+                <table className={styles.modernTable}>
                   <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
                       <tr key={headerGroup.id}>
@@ -340,7 +346,7 @@ const DashboardAdmin: React.FC = () => {
                                     header.column.columnDef.header,
                                     header.getContext()
                                   )}
-                              <span className="sort-indicator">
+                              <span className={styles.sortIndicator}>
                                 {{
                                   asc: "▲",
                                   desc: "▼",
@@ -369,8 +375,8 @@ const DashboardAdmin: React.FC = () => {
                 </table>
 
                 {/* Paginazione Monocromatica */}
-                <div className="pagination-container">
-                  <div className="pagination-info">
+                <div className={styles.paginationContainer}>
+                  <div className={styles.paginationInfo}>
                     Mostrando{" "}
                     <strong>
                       {table.getState().pagination.pageIndex *
@@ -389,11 +395,11 @@ const DashboardAdmin: React.FC = () => {
                     <strong>{table.getFilteredRowModel().rows.length}</strong>{" "}
                     risultati
                   </div>
-                  <div className="pagination-controls">
+                  <div className={styles.paginationControls}>
                     <button
                       onClick={() => table.setPageIndex(0)}
                       disabled={!table.getCanPreviousPage()}
-                      className="pagination-btn"
+                      className={styles.paginationBtn}
                       title="Prima pagina"
                     >
                       ⟪
@@ -401,12 +407,12 @@ const DashboardAdmin: React.FC = () => {
                     <button
                       onClick={() => table.previousPage()}
                       disabled={!table.getCanPreviousPage()}
-                      className="pagination-btn"
+                      className={styles.paginationBtn}
                       title="Pagina precedente"
                     >
                       ‹
                     </button>
-                    <span className="pagination-info-text">
+                    <span className={styles.paginationInfoText}>
                       Pagina{" "}
                       <strong>
                         {table.getState().pagination.pageIndex + 1}
@@ -416,7 +422,7 @@ const DashboardAdmin: React.FC = () => {
                     <button
                       onClick={() => table.nextPage()}
                       disabled={!table.getCanNextPage()}
-                      className="pagination-btn"
+                      className={styles.paginationBtn}
                       title="Pagina successiva"
                     >
                       ›
@@ -426,7 +432,7 @@ const DashboardAdmin: React.FC = () => {
                         table.setPageIndex(table.getPageCount() - 1)
                       }
                       disabled={!table.getCanNextPage()}
-                      className="pagination-btn"
+                      className={styles.paginationBtn}
                       title="Ultima pagina"
                     >
                       ⟫
@@ -435,73 +441,6 @@ const DashboardAdmin: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
-          <div className="main-container">
-            {/* Sinistra: News e Comunicazioni */}
-            <div className="left-panel">
-              <div className="card bg-light text-black">
-                <div className="custom-card-header-news">
-                  <span className="header-title">Service News</span>
-                  <div className="search-container-news">
-                    <span className="search-icon-news">
-                      <i className="fa-solid fa-magnifying-glass"></i>
-                    </span>
-                    <input
-                      type="text"
-                      className="search-input-news"
-                      placeholder="Cerca Service News"
-                    />
-                  </div>
-                </div>
-                <div className="card-body">
-                  <div className="service-news-box">
-                    <div className="news-list">
-                      {newsData.map((news) => (
-                        <div key={news.id} className="news-item">
-                          <button
-                            className="news-link"
-                            onClick={() => handleSelectNews(news.id)}
-                          >
-                            <strong>{news.title}</strong>
-                            <br />
-                            <small className="text-muted">
-                              {news.date.toLocaleDateString("it-IT")}
-                            </small>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="news-detail">
-                      {selectedNews && (
-                        <div className="news-content">
-                          <h4 className="fw-bold">{selectedNews.title}</h4>
-                          <small className="text-muted">
-                            {selectedNews.date.toLocaleDateString("it-IT")}
-                          </small>
-                          <hr />
-                          <p>{selectedNews.content}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Destra: Impegni */}
-            <div className="right-panel">
-              <div className="card bg-light text-black">
-                <div className="custom-card-header">Impegni</div>
-                <div className="card-body">
-                  <div className="service-news-box-right">
-                    <h5 className="card-title">
-                      Nessuna Comunicazione Disponibile
-                    </h5>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div>

@@ -13,6 +13,7 @@ import DashboarLocaldAdmin from "./pages/LocalAreaConfig/DashboardLocalAdmin";
 import LoginLocalAdmin from "./pages/LoginLocalAdmin";
 import TestPage from "./pages/TestPage";
 import Device from "./pages/DeviceRegistry";
+import RicercaSchede from "./pages/RicercaSchede";
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
@@ -134,6 +135,16 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+       <Route
+        path="/ricerca-schede"
+        element={
+          <ProtectedRoute>
+            <RicercaSchede />
+          </ProtectedRoute>
+        }
+      />
+
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />

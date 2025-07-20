@@ -208,6 +208,10 @@ const Accettazione: React.FC = () => {
     },
   ]);
 
+  const [isRepairCreated, setIsRepairCreated] = useState(false);
+  const [repairId, setRepairId] = useState<number | null>(null); // se serve per l'update
+  const [repairGuid, setRepairGuid] = useState<string | null>(null); // 🆕 Usa GUID
+
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -678,7 +682,7 @@ const Accettazione: React.FC = () => {
   };
 
   // Funzione per preparare i dati della riparazione
-  const prepareRepairPayload = () => {
+  const prepareRepairPayload_old = () => {
     const multitenantId = localStorage.getItem("IdCompany");
 
     // Prepara i dati del cliente (se nuovo)
@@ -809,8 +813,139 @@ const Accettazione: React.FC = () => {
     };
   };
 
+  const prepareRepairPayload = () => {
+    const multitenantId = localStorage.getItem("IdCompany");
+
+    // Prepara i dati del cliente (se nuovo)
+    let customerPayload = null;
+    if (!selectedCustomer) {
+      customerPayload = {
+        tipo: "Privato",
+        cliente: true,
+        fornitore: false,
+        ragioneSociale: `${clienteData.cognome} ${clienteData.nome}`.trim(),
+        cognome: clienteData.cognome,
+        nome: clienteData.nome,
+        email: clienteData.email,
+        telefono: clienteData.telefono,
+        cap: clienteData.cap,
+        multitenantId: multitenantId,
+        indirizzo: "",
+        citta: "",
+        provincia: "",
+        regione: "",
+        fiscalCode: "",
+        pIva: "",
+        emailPec: "",
+        codiceSdi: "",
+        iban: "",
+      };
+    }
+
+    // Prepara i dati del dispositivo (se nuovo)
+    let devicePayload = null;
+    if (!selectedDevice) {
+      devicePayload = {
+        serialNumber: dispositivoData.serialNumber,
+        brand: dispositivoData.brand,
+        model: dispositivoData.model,
+        deviceType: dispositivoData.deviceType,
+        color: dispositivoData.color || null,
+        purchaseDate: null,
+        receiptNumber: null,
+        retailer: null,
+        notes: null,
+      };
+    }
+
+    // Prepara i dati della riparazione
+    const repairPayload = {
+      faultDeclared: repairData.faultDeclared,
+      repairAction: repairData.repairAction || null,
+      technicianCode:
+        selectedOperator?.codiceDipendente ||
+        selectedOperator?.internalCode ||
+        null,
+      technicianName:
+        `${selectedOperator?.firstName || ""} ${
+          selectedOperator?.lastName || ""
+        }`.trim() || null,
+      estimatedPrice: repairData.estimatedPrice,
+      paymentType: repairData.paymentType || null,
+      billingInfo: repairData.billingInfo || null,
+      unlockCode: dispositivoData.unlockCode || null,
+      courtesyPhone: dispositivoData.courtesyPhone || null,
+    };
+
+    // Prepara il test di ingresso
+    const incomingTestPayload = {
+      companyId: multitenantId,
+      multitenantId: multitenantId,
+      deviceInfo:
+        diagnosticItems.find((item) => item.id === "device-info")?.active ||
+        false,
+      applePay:
+        diagnosticItems.find((item) => item.id === "apple-pay")?.active ||
+        false,
+      battery:
+        diagnosticItems.find((item) => item.id === "battery")?.active || false,
+      bluetooth:
+        diagnosticItems.find((item) => item.id === "bluetooth")?.active ||
+        false,
+      camera:
+        diagnosticItems.find((item) => item.id === "camera")?.active || false,
+      cellular:
+        diagnosticItems.find((item) => item.id === "cellular")?.active || false,
+      clock:
+        diagnosticItems.find((item) => item.id === "clock")?.active || false,
+      sim: diagnosticItems.find((item) => item.id === "sim")?.active || false,
+      faceId:
+        diagnosticItems.find((item) => item.id === "face-id")?.active || false,
+      scanner:
+        diagnosticItems.find((item) => item.id === "scanner")?.active || false,
+      magSafe:
+        diagnosticItems.find((item) => item.id === "magsafe")?.active || false,
+      sensors:
+        diagnosticItems.find((item) => item.id === "sensors")?.active || false,
+      services:
+        diagnosticItems.find((item) => item.id === "services")?.active || false,
+      software:
+        diagnosticItems.find((item) => item.id === "software")?.active || false,
+      system:
+        diagnosticItems.find((item) => item.id === "system")?.active || false,
+      wiFi: diagnosticItems.find((item) => item.id === "wifi")?.active || false,
+      rfCellular:
+        diagnosticItems.find((item) => item.id === "rf-cellular")?.active ||
+        false,
+      wirelessProblem:
+        diagnosticItems.find((item) => item.id === "wireless-problem")
+          ?.active || false,
+    };
+
+    // Prepara gli elementi diagnostici
+    const diagnosticItemsPayload = diagnosticItems
+      .filter((item) => item.active)
+      .map((item) => ({
+        id: item.id,
+        label: item.label,
+        active: item.active,
+      }));
+
+    return {
+      customerId: selectedCustomer?.id || null,
+      newCustomer: customerPayload,
+      deviceId: selectedDevice?.id || null, // ✅ Per il CREATE usa l'ID del registry
+      newDevice: devicePayload,
+      repairData: repairPayload,
+      incomingTest: incomingTestPayload,
+      diagnosticItems: diagnosticItemsPayload,
+      notes: repairData.billingInfo || null,
+      multitenantId: multitenantId,
+    };
+  };
+
   // Funzione principale per creare la riparazione
-  const handleCreateRepair = async (
+  const handleCreateRepair_old = async (
     actionType: "email" | "print" | "label" | "lab"
   ) => {
     // Esegui validazione
@@ -862,6 +997,72 @@ const Accettazione: React.FC = () => {
           // Reindirizza alla lista riparazioni o dashboard
           // window.location.href = '/riparazioni';
         }
+      } else {
+        const errorText = await response.text();
+        console.error("Errore risposta API:", errorText);
+        alert("Errore nella creazione della riparazione:\n" + errorText);
+      }
+    } catch (error) {
+      console.error("Errore durante la creazione:", error);
+      alert("Errore durante la creazione della riparazione. Riprova.");
+    } finally {
+      setIsCreatingRepair(false);
+    }
+  };
+
+  // Funzione principale per creare la riparazione
+  const handleCreateRepair = async (
+    actionType: "email" | "print" | "label" | "lab"
+  ) => {
+    if (isRepairCreated) {
+      alert(
+        "La riparazione è già stata creata. Usa il pulsante Aggiorna per modificare la scheda."
+      );
+      return;
+    }
+
+    // Esegui validazione
+    const validation = validateForm();
+
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
+      alert("Errori di validazione:\n\n" + validation.errors.join("\n"));
+      return;
+    }
+
+    // Pulisci errori di validazione precedenti
+    setValidationErrors([]);
+    setIsCreatingRepair(true);
+
+    try {
+      // Prepara il payload
+      const payload = prepareRepairPayload();
+
+      console.log("Payload riparazione:", payload);
+
+      // Chiama l'API per creare la riparazione
+      const response = await fetch("https://localhost:7148/api/repair", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        console.log("Riparazione creata:", result);
+
+        alert(
+          `Riparazione creata con successo!\n\nCodice: ${result.repairCode}\nID: ${result.repairId}\nStato: ${result.status}`
+        );
+
+        await handlePostCreateAction(actionType, result);
+
+        setIsRepairCreated(true);
+        setRepairGuid(result.repairGuid); // 🔧 FIX: Memorizza il GUID, non l'ID numerico
       } else {
         const errorText = await response.text();
         console.error("Errore risposta API:", errorText);
@@ -939,6 +1140,8 @@ const Accettazione: React.FC = () => {
     setRepairComponent("");
     setSelectedOperator(null);
     setValidationErrors([]);
+    setIsRepairCreated(false); // 🔧 Reset stato riparazione creata
+    setRepairGuid(null); // 🔧 Reset GUID riparazione
 
     // Reset diagnostica
     setDiagnosticItems((prevItems) =>
@@ -1169,6 +1372,91 @@ const Accettazione: React.FC = () => {
       default:
         return "📱";
     }
+  };
+
+  // Funzione per aggiornare la riparazione già creata
+  const handleUpdateRepair = async () => {
+    if (!repairGuid) {
+      // 🔧 Controlla il GUID invece dell'ID
+      alert("Nessuna riparazione da aggiornare.");
+      return;
+    }
+
+    const validation = validateForm();
+
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
+      alert("Errori di validazione:\n\n" + validation.errors.join("\n"));
+      return;
+    }
+
+    setIsCreatingRepair(true);
+
+    try {
+      const payload = prepareUpdateRepairPayload(); // 🔧 Usa payload specifico per update
+      console.log("Payload aggiornamento:", payload);
+
+      const response = await fetch(
+        `https://localhost:7148/api/repair/${repairGuid}`, // 🔧 FIX: Usa il GUID
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (response.ok) {
+        alert("Riparazione aggiornata con successo.");
+      } else {
+        const errorText = await response.text();
+        console.error("Errore aggiornamento API:", errorText);
+        alert("Errore durante aggiornamento:\n" + errorText);
+      }
+    } catch (error) {
+      console.error("Errore durante aggiornamento:", error);
+      alert("Errore durante aggiornamento riparazione. Riprova.");
+    } finally {
+      setIsCreatingRepair(false);
+    }
+  };
+
+  // Payload specifico per l'update (diverso dal create)
+  const prepareUpdateRepairPayload = () => {
+    // Per l'update, utilizziamo UpdateRepairRequestDto
+    const payload = {
+      customerId: selectedCustomer?.id || null, // ✅ GUID del cliente
+      deviceId: selectedDevice?.deviceId || null, // 🔧 FIX: Usa deviceId (GUID), non id (int)
+      repairData: {
+        faultDeclared: repairData.faultDeclared,
+        repairAction: repairData.repairAction || null,
+        technicianCode:
+          selectedOperator?.codiceDipendente ||
+          selectedOperator?.internalCode ||
+          null,
+        technicianName:
+          `${selectedOperator?.firstName || ""} ${
+            selectedOperator?.lastName || ""
+          }`.trim() || null,
+        estimatedPrice: repairData.estimatedPrice,
+        paymentType: repairData.paymentType || null,
+        billingInfo: repairData.billingInfo || null,
+        unlockCode: dispositivoData.unlockCode || null,
+        courtesyPhone: dispositivoData.courtesyPhone || null,
+      },
+      notes: repairData.billingInfo || null,
+      diagnosticItems: diagnosticItems
+        .filter((item) => item.active)
+        .map((item) => ({
+          id: item.id,
+          label: item.label,
+          active: item.active,
+        })),
+    };
+
+    return payload;
   };
 
   return (
@@ -1961,39 +2249,52 @@ const Accettazione: React.FC = () => {
 
             {/* Bottoni azioni - AGGIORNATI */}
             <div className={styles.formActions}>
-              <button
-                className={`${styles.btn} ${styles.btnSuccess}`}
-                onClick={() => handleCreateRepair("email")}
-                disabled={isCreatingRepair}
-              >
-                {isCreatingRepair ? "Creando..." : "📧 Crea/Invia E-Mail"}
-              </button>
+              {!isRepairCreated ? (
+                <>
+                  <button
+                    className={`${styles.btn} ${styles.btnSuccess}`}
+                    onClick={() => handleCreateRepair("email")}
+                    disabled={isCreatingRepair}
+                  >
+                    {isCreatingRepair ? "Creando..." : "📧 Crea/Invia E-Mail"}
+                  </button>
 
-              <button
-                className={`${styles.btn} ${styles.btnSecondary}`}
-                onClick={() => handleCreateRepair("print")}
-                disabled={isCreatingRepair}
-              >
-                {isCreatingRepair ? "Creando..." : "🖨️ Crea/Stampa"}
-              </button>
+                  <button
+                    className={`${styles.btn} ${styles.btnSecondary}`}
+                    onClick={() => handleCreateRepair("print")}
+                    disabled={isCreatingRepair}
+                  >
+                    {isCreatingRepair ? "Creando..." : "🖨️ Crea/Stampa"}
+                  </button>
 
-              <button
-                className={`${styles.btn} ${styles.btnSecondary}`}
-                onClick={() => handleCreateRepair("label")}
-                disabled={isCreatingRepair}
-              >
-                {isCreatingRepair ? "Creando..." : "🏷️ Crea/Stampa etichetta"}
-              </button>
+                  <button
+                    className={`${styles.btn} ${styles.btnSecondary}`}
+                    onClick={() => handleCreateRepair("label")}
+                    disabled={isCreatingRepair}
+                  >
+                    {isCreatingRepair
+                      ? "Creando..."
+                      : "🏷️ Crea/Stampa etichetta"}
+                  </button>
 
-              <button
-                className={`${styles.btn} ${styles.btnDark}`}
-                onClick={() => handleCreateRepair("lab")}
-                disabled={isCreatingRepair}
-              >
-                {isCreatingRepair
-                  ? "Creando..."
-                  : "🔬 Crea/Stampa/Spedisci al Lab"}
-              </button>
+                  <button
+                    className={`${styles.btn} ${styles.btnDark}`}
+                    onClick={() => handleCreateRepair("lab")}
+                    disabled={isCreatingRepair}
+                  >
+                    {isCreatingRepair
+                      ? "Creando..."
+                      : "🔬 Crea/Stampa/Spedisci al Lab"}
+                  </button>
+                </>
+              ) : (
+                <button
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  onClick={handleUpdateRepair}
+                >
+                  🔄 Aggiorna Scheda
+                </button>
+              )}
             </div>
           </div>
         </div>

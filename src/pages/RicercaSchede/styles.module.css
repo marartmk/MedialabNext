@@ -1,0 +1,1321 @@
+/* ✨ STILI TABELLA - VERSIONE MONOCROMATICA PULITA - CSS MODULES */
+
+/* Layout principale per le pagine */
+.mainLayout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.contentArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageBody {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.schedaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #ccc;
+  margin: 0 24px;
+}
+
+.leftBlock {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.roundBtn {
+  width: 55px !important;
+  height: 55px !important;
+  background-color: #444 !important;
+  border-radius: 15px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  border: none;
+  min-width: 55px;
+  min-height: 55px;
+  flex-shrink: 0;
+}
+
+.plusIcon {
+  color: white !important;
+  font-size: 32px !important;
+  font-weight: bold !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+}
+
+.dateBox {
+  display: flex;
+  flex-direction: row; 
+  align-items: center; 
+  justify-content: flex-start;
+  background-color: #444;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  gap: 8px;
+  max-width: fit-content;
+  min-width: 220px;
+  height: 55px;
+}
+
+.calendarIcon {
+  color: white;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.dateTextInline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 0.85rem;
+  font-weight: normal;
+  line-height: 1.2;
+}
+
+.breadcrumb {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbItem {
+  color: #007bff;
+}
+
+.breadcrumbCurrent {
+  font-weight: bold;
+}
+
+.breadcrumbSeparator {
+  margin: 0 5px;
+}
+
+/* TanStack Table Styles - Versione Nero/Bianco/Grigio */
+.tableSection {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin: 30px 0;
+  border: 1px solid #e5e5e5;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f5f5f5;
+}
+
+.tableHeader h3 {
+  margin: 0;
+  color: #1a1a1a;
+  font-weight: 700;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tableHeader h3::before {
+  content: "👥";
+  font-size: 1.2rem;
+}
+
+.tableControls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchTableInput {
+  padding: 12px 20px 12px 45px;
+  border: 2px solid #d1d1d1;
+  border-radius: 25px;
+  font-size: 14px;
+  outline: none;
+  width: 300px;
+  transition: all 0.3s ease;
+  background-color: #f8f8f8;
+  position: relative;
+  color: #333;
+}
+
+.searchTableInput:focus {
+  border-color: #666666;
+  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+  background-color: #ffffff;
+}
+
+.searchContainerTable {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIconTable {
+  position: absolute;
+  left: 15px;
+  color: #666666;
+  z-index: 1;
+  font-size: 14px;
+}
+
+/* Filtro per stato */
+.filterSelect {
+  padding: 10px 15px;
+  border: 2px solid #d1d1d1;
+  border-radius: 6px;
+  background-color: #f8f8f8;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 160px;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: #666666;
+  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+  background-color: #ffffff;
+}
+
+.filterSelect:hover {
+  border-color: #999999;
+}
+
+/* Tabella Moderna Monocromatica */
+.modernTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.modernTable thead {
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  color: white;
+}
+
+.modernTable th {
+  padding: 16px 20px !important;
+  text-align: left !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+  position: relative;
+}
+
+.modernTable th:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.modernTable th:first-child {
+  border-top-left-radius: 8px;
+}
+
+.modernTable th:last-child {
+  border-top-right-radius: 8px;
+}
+
+.modernTable tbody tr {
+  border-bottom: 1px solid #e8e8e8 !important;
+  transition: all 0.2s ease;
+}
+
+.modernTable tbody tr:hover {
+  background-color: #f5f5f5 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.modernTable tbody tr:last-child {
+  border-bottom: none !important;
+}
+
+.modernTable td {
+  padding: 16px 20px !important;
+  font-size: 14px !important;
+  color: #2a2a2a !important;
+  vertical-align: middle !important;
+  border: none !important;
+}
+
+.modernTable tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.modernTable tbody tr:nth-child(even):hover {
+  background-color: #f0f0f0 !important;
+}
+
+/* Sort indicators monocromatici */
+.sortIndicator {
+  font-size: 12px;
+  margin-left: 8px;
+  opacity: 0.8;
+  color: #ffffff;
+}
+
+/* Stili per celle specifiche delle riparazioni */
+.repairCodeCell {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-family: monospace;
+  font-size: 15px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusPending {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.statusInProgress {
+  background-color: #cce5ff;
+  color: #004085;
+  border: 1px solid #b3d7ff;
+}
+
+.statusCompleted {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.statusDelivered {
+  background-color: #e2e3e5;
+  color: #41464b;
+  border: 1px solid #d1ecf1;
+}
+
+.statusCancelled {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.statusDefault {
+  background-color: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
+.customerCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.customerName {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 14px;
+}
+
+.customerContact {
+  font-size: 12px;
+  color: #666;
+}
+
+.deviceCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deviceName {
+  font-weight: 500;
+  color: #1a1a1a;
+  font-size: 14px;
+}
+
+.deviceSerial {
+  font-size: 12px;
+  color: #666;
+  font-family: monospace;
+}
+
+.problemCell {
+  max-width: 200px;
+  line-height: 1.4;
+  color: #333;
+  font-size: 13px;
+}
+
+.technicianCell {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.dateCell {
+  font-family: monospace;
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.noData {
+  color: #999;
+  font-style: italic;
+  font-size: 12px;
+}
+
+/* Badge styles */
+.tableBadge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.badgePhone {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.badgeEmail {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.badgePiva {
+  background-color: #fafafa;
+  color: #404040;
+  border: 1px solid #e5e5e5;
+}
+
+/* Pulsanti Azioni */
+.actionButtons {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+}
+
+.actionBtn {
+  padding: 8px 10px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  outline: none !important;
+}
+
+.viewBtn {
+  background-color: #4a5568 !important;
+  color: white !important;
+}
+
+.viewBtn:hover {
+  background-color: #2d3748 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(74, 85, 104, 0.3);
+}
+
+.editBtn {
+  background-color: #1a1a1a !important;
+  color: white !important;
+}
+
+.editBtn:hover {
+  background-color: #000000 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(26, 26, 26, 0.3);
+}
+
+.printBtn {
+  background-color: #6c757d !important;
+  color: white !important;
+}
+
+.printBtn:hover {
+  background-color: #5a6268 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+.actionBtn i {
+  font-size: 14px;
+}
+
+/* Loading e Error states monocromatici */
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #666666;
+  background: #f8f8f8;
+  border-radius: 8px;
+  border: 2px dashed #cccccc;
+}
+
+.loadingSpinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e0e0e0;
+  border-top: 3px solid #333333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  gap: 12px;
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #f8f8f8 0%, #e8e8e8 100%);
+  border: 2px solid #cccccc;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.errorContainer i {
+  font-size: 18px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 80px 20px;
+  color: #666666;
+  background: #f8f8f8;
+  border-radius: 8px;
+  border: 2px dashed #cccccc;
+}
+
+.emptyState h4 {
+  margin: 0 0 12px 0;
+  color: #2a2a2a;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Paginazione monocromatica */
+.paginationContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding: 20px 0;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f8f8;
+  border-radius: 0 0 8px 8px;
+}
+
+.paginationInfo {
+  font-size: 14px;
+  color: #666666;
+  font-weight: 500;
+}
+
+.paginationControls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.paginationBtn {
+  padding: 8px 12px !important;
+  border: 2px solid #d1d1d1 !important;
+  border-radius: 6px !important;
+  background-color: #ffffff !important;
+  color: #2a2a2a !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  min-width: 40px !important;
+  outline: none !important;
+}
+
+.paginationBtn:hover:not(:disabled) {
+  border-color: #666666 !important;
+  background-color: #2a2a2a !important;
+  color: white !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.paginationBtn:disabled {
+  background-color: #f0f0f0 !important;
+  color: #999999 !important;
+  cursor: not-allowed !important;
+  border-color: #e0e0e0 !important;
+}
+
+.paginationInfoText {
+  padding: 0 16px;
+  font-size: 14px;
+  color: #666666;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pageBody {
+    padding: 16px;
+  }
+
+  .schedaHeader {
+    margin: 0 16px;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .leftBlock {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .dateBox {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .tableHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .tableControls {
+    width: 100%;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .searchTableInput {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .filterSelect {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .paginationContainer {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .modernTable {
+    font-size: 12px;
+  }
+  
+  .modernTable th,
+  .modernTable td {
+    padding: 12px 8px !important;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .actionBtn {
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 6px 8px !important;
+  }
+
+  .problemCell {
+    max-width: 150px;
+    font-size: 12px;
+  }
+
+  .customerCell,
+  .deviceCell {
+    gap: 2px;
+  }
+
+  .customerName,
+  .deviceName {
+    font-size: 12px;
+  }
+
+  .customerContact,
+  .deviceSerial {
+    font-size: 11px;
+  }
+
+  .statusBadge {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+/* Hover effects per le righe */
+@keyframes rowHover {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+.modernTable tbody tr:hover {
+  animation: rowHover 0.2s ease-out forwards;
+}
+.tableSection {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin: 30px 0;
+  border: 1px solid #e5e5e5;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f5f5f5;
+}
+
+.tableHeader h3 {
+  margin: 0;
+  color: #1a1a1a;
+  font-weight: 700;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tableHeader h3::before {
+  content: "👥";
+  font-size: 1.2rem;
+}
+
+.tableControls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchTableInput {
+  padding: 12px 20px 12px 45px;
+  border: 2px solid #d1d1d1;
+  border-radius: 25px;
+  font-size: 14px;
+  outline: none;
+  width: 300px;
+  transition: all 0.3s ease;
+  background-color: #f8f8f8;
+  position: relative;
+  color: #333;
+}
+
+.searchTableInput:focus {
+  border-color: #666666;
+  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+  background-color: #ffffff;
+}
+
+.searchContainerTable {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIconTable {
+  position: absolute;
+  left: 15px;
+  color: #666666;
+  z-index: 1;
+  font-size: 14px;
+}
+
+/* Filtro per stato */
+.filterSelect {
+  padding: 10px 15px;
+  border: 2px solid #d1d1d1;
+  border-radius: 6px;
+  background-color: #f8f8f8;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 160px;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: #666666;
+  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+  background-color: #ffffff;
+}
+
+.filterSelect:hover {
+  border-color: #999999;
+}
+
+/* Tabella Moderna Monocromatica */
+.modernTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.modernTable thead {
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  color: white;
+}
+
+.modernTable th {
+  padding: 16px 20px !important;
+  text-align: left !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+  position: relative;
+}
+
+.modernTable th:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.modernTable th:first-child {
+  border-top-left-radius: 8px;
+}
+
+.modernTable th:last-child {
+  border-top-right-radius: 8px;
+}
+
+.modernTable tbody tr {
+  border-bottom: 1px solid #e8e8e8 !important;
+  transition: all 0.2s ease;
+}
+
+.modernTable tbody tr:hover {
+  background-color: #f5f5f5 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.modernTable tbody tr:last-child {
+  border-bottom: none !important;
+}
+
+.modernTable td {
+  padding: 16px 20px !important;
+  font-size: 14px !important;
+  color: #2a2a2a !important;
+  vertical-align: middle !important;
+  border: none !important;
+}
+
+.modernTable tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.modernTable tbody tr:nth-child(even):hover {
+  background-color: #f0f0f0 !important;
+}
+
+/* Sort indicators monocromatici */
+.sortIndicator {
+  font-size: 12px;
+  margin-left: 8px;
+  opacity: 0.8;
+  color: #ffffff;
+}
+
+/* Stili per celle specifiche delle riparazioni */
+.repairCodeCell {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-family: monospace;
+  font-size: 15px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusPending {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.statusInProgress {
+  background-color: #cce5ff;
+  color: #004085;
+  border: 1px solid #b3d7ff;
+}
+
+.statusCompleted {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.statusDelivered {
+  background-color: #e2e3e5;
+  color: #41464b;
+  border: 1px solid #d1ecf1;
+}
+
+.statusCancelled {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.statusDefault {
+  background-color: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
+.customerCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.customerName {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 14px;
+}
+
+.customerContact {
+  font-size: 12px;
+  color: #666;
+}
+
+.deviceCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deviceName {
+  font-weight: 500;
+  color: #1a1a1a;
+  font-size: 14px;
+}
+
+.deviceSerial {
+  font-size: 12px;
+  color: #666;
+  font-family: monospace;
+}
+
+.problemCell {
+  max-width: 200px;
+  line-height: 1.4;
+  color: #333;
+  font-size: 13px;
+}
+
+.technicianCell {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.dateCell {
+  font-family: monospace;
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.noData {
+  color: #999;
+  font-style: italic;
+  font-size: 12px;
+}
+
+/* Badge styles */
+.tableBadge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.badgePhone {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.badgeEmail {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.badgePiva {
+  background-color: #fafafa;
+  color: #404040;
+  border: 1px solid #e5e5e5;
+}
+
+/* Pulsanti Azioni */
+.actionButtons {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+}
+
+.actionBtn {
+  padding: 8px 10px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  outline: none !important;
+}
+
+.viewBtn {
+  background-color: #4a5568 !important;
+  color: white !important;
+}
+
+.viewBtn:hover {
+  background-color: #2d3748 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(74, 85, 104, 0.3);
+}
+
+.editBtn {
+  background-color: #1a1a1a !important;
+  color: white !important;
+}
+
+.editBtn:hover {
+  background-color: #000000 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(26, 26, 26, 0.3);
+}
+
+.printBtn {
+  background-color: #6c757d !important;
+  color: white !important;
+}
+
+.printBtn:hover {
+  background-color: #5a6268 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+.actionBtn i {
+  font-size: 14px;
+}
+
+/* Loading e Error states monocromatici */
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #666666;
+  background: #f8f8f8;
+  border-radius: 8px;
+  border: 2px dashed #cccccc;
+}
+
+.loadingSpinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e0e0e0;
+  border-top: 3px solid #333333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  gap: 12px;
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #f8f8f8 0%, #e8e8e8 100%);
+  border: 2px solid #cccccc;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.errorContainer i {
+  font-size: 18px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 80px 20px;
+  color: #666666;
+  background: #f8f8f8;
+  border-radius: 8px;
+  border: 2px dashed #cccccc;
+}
+
+.emptyState h4 {
+  margin: 0 0 12px 0;
+  color: #2a2a2a;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Paginazione monocromatica */
+.paginationContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding: 20px 0;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f8f8;
+  border-radius: 0 0 8px 8px;
+}
+
+.paginationInfo {
+  font-size: 14px;
+  color: #666666;
+  font-weight: 500;
+}
+
+.paginationControls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.paginationBtn {
+  padding: 8px 12px !important;
+  border: 2px solid #d1d1d1 !important;
+  border-radius: 6px !important;
+  background-color: #ffffff !important;
+  color: #2a2a2a !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  min-width: 40px !important;
+  outline: none !important;
+}
+
+.paginationBtn:hover:not(:disabled) {
+  border-color: #666666 !important;
+  background-color: #2a2a2a !important;
+  color: white !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.paginationBtn:disabled {
+  background-color: #f0f0f0 !important;
+  color: #999999 !important;
+  cursor: not-allowed !important;
+  border-color: #e0e0e0 !important;
+}
+
+.paginationInfoText {
+  padding: 0 16px;
+  font-size: 14px;
+  color: #666666;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tableHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .tableControls {
+    width: 100%;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .searchTableInput {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .filterSelect {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .paginationContainer {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .modernTable {
+    font-size: 12px;
+  }
+  
+  .modernTable th,
+  .modernTable td {
+    padding: 12px 8px !important;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .actionBtn {
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 6px 8px !important;
+  }
+
+  .problemCell {
+    max-width: 150px;
+    font-size: 12px;
+  }
+
+  .customerCell,
+  .deviceCell {
+    gap: 2px;
+  }
+
+  .customerName,
+  .deviceName {
+    font-size: 12px;
+  }
+
+  .customerContact,
+  .deviceSerial {
+    font-size: 11px;
+  }
+
+  .statusBadge {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+/* Hover effects per le righe */
+@keyframes rowHover {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+.modernTable tbody tr:hover {
+  animation: rowHover 0.2s ease-out forwards;
+}
