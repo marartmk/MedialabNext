@@ -43,12 +43,19 @@ interface RepairData {
     deviceType: string;
   };
   customer?: {
-    ragioneSociale: string;
-    nome: string;
-    cognome: string;
-    telefono: string;
-    emailAziendale: string;
-  };
+  id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  address: string | null;
+  city: string | null;
+  province: string | null;
+  postalCode: string | null;
+  region: string | null;
+  fiscalCode: string | null;
+  vatNumber: string | null;
+  customerType: string;
+};
 }
 
 const RicercaSchede: React.FC = () => {
@@ -67,6 +74,7 @@ const RicercaSchede: React.FC = () => {
   // Stati per i filtri
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [dateFilter, setDateFilter] = useState<string>("");
+  const [searchInput, setSearchInput] = useState("");
 
   // Definisci le colonne usando createColumnHelper
   const columnHelper = createColumnHelper<RepairData>();
@@ -103,7 +111,8 @@ const RicercaSchede: React.FC = () => {
           <div className={styles.customerCell}>
             <div className={styles.customerName}>
               {customer.ragioneSociale ||
-                `${customer.cognome} ${customer.nome}`}
+                customer.name ||
+                "Cliente sconosciuto"}
             </div>
             <div className={styles.customerContact}>
               {customer.telefono && <span>📞 {customer.telefono}</span>}
@@ -241,7 +250,7 @@ const RicercaSchede: React.FC = () => {
   // Carica le riparazioni al mount del componente
   useEffect(() => {
     fetchRepairs();
-  }, [statusFilter]);
+  }, [statusFilter, globalFilter]);
 
   const toggleMenu = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
@@ -260,21 +269,27 @@ const RicercaSchede: React.FC = () => {
         throw new Error("ID azienda non trovato");
       }
 
-      let url = `https://localhost:7148/api/Repair?multitenantId=${encodeURIComponent(
-        multitenantId
-      )}`;
+      const searchPayload = {
+        multitenantId: multitenantId,
+        statusCode: statusFilter || null,
+        searchQuery: globalFilter || null,
+        page: 1, // se vuoi paginare lato server
+        pageSize: 100, // numero massimo records da ricevere
+        sortBy: "CreatedAt",
+        sortDescending: true,
+      };
 
-      // Aggiungi filtro per stato se selezionato
-      if (statusFilter) {
-        url += `&status=${encodeURIComponent(statusFilter)}`;
-      }
-
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        "https://localhost:7148/api/repair/search/light",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(searchPayload),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Errore ${response.status}: ${response.statusText}`);
@@ -410,6 +425,7 @@ const RicercaSchede: React.FC = () => {
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
                   <option value="">Tutti gli stati</option>
+                  <option value="received">📥 Ricevuto</option>
                   <option value="pending">⏳ In Attesa</option>
                   <option value="in progress">🔧 In Lavorazione</option>
                   <option value="completed">✅ Completato</option>
@@ -422,8 +438,14 @@ const RicercaSchede: React.FC = () => {
                   <i className="fa-solid fa-magnifying-glass search-icon-table"></i>
                   <input
                     type="text"
-                    value={globalFilter ?? ""}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchInput(value);
+                      if (value.length >= 3 || value.length === 0) {
+                        setGlobalFilter(value);
+                      }
+                    }}
                     className={styles.searchTableInput}
                     placeholder="Cerca per codice, cliente, dispositivo..."
                   />
