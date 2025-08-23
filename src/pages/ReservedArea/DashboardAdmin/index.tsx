@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -28,7 +27,7 @@ interface CustomerData {
 
 const DashboardAdmin: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
   const [rowData, setRowData] = useState<CustomerData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -215,9 +214,9 @@ const DashboardAdmin: React.FC = () => {
   };
 
   // Navigazione alle varie pagine
-  const navigateTo = (path: string) => {
-    navigate(path);
-  };
+  // const navigateTo = (path: string) => {
+  //   navigate(path);
+  // };
 
   return (
     <div

@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -27,10 +26,8 @@ interface CustomerData {
 }
 
 const AffiliateManagement: React.FC = () => {
-  const [menuState, setMenuState] = useState<"open" | "closed">("open");
-  const [selectedNews, setSelectedNews] = useState<any>(null);
-  const [newsData, setNewsData] = useState<any[]>([]);
-  const navigate = useNavigate();
+  const [menuState, setMenuState] = useState<"open" | "closed">("open");  
+  //const [newsData, setNewsData] = useState<any[]>([]); 
   const [rowData, setRowData] = useState<CustomerData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -150,9 +147,13 @@ const AffiliateManagement: React.FC = () => {
         console.log("Primo record:", data[0]);
 
         setRowData(data);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Errore nel caricamento dei clienti:", error);
-        setError(error.message);
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError("Errore sconosciuto");
+        }
       } finally {
         setLoading(false);
       }
@@ -162,40 +163,40 @@ const AffiliateManagement: React.FC = () => {
   }, []);
 
   // Simula il caricamento delle notizie
-  useEffect(() => {
-    const loadNews = () => {
-      const mockNews = [
-        {
-          id: 1,
-          title: "Alcuni computer Mac con l'aggiornamento....",
-          date: new Date(Date.now() - 86400000),
-          content:
-            "Alcuni modelli di Mac potrebbero riscontrare ritardi nel caricamento di Diagnosi Apple o delle diagnostiche EFI di AST 2 dopo i seguenti aggiornamenti: Aggiornamento a macOS Big Sur 11.3 Aggiornamento del firmware del chip di sicurezza Apple T2 alla versione più recente dopo aver eseguito correttamente le suite Configurazione di sistema, Riattiva dispositivo o un ripristino con Apple Configurator 2 I modelli di Mac interessati si collegheranno alla Console di diagnostica di AST 2 e possono visualizzare il messaggio 'Attendo il supporto...' per diversi minuti.",
-        },
-        {
-          id: 2,
-          title: "Trasformazione di GSX - Fase 2: ...",
-          date: new Date(Date.now() - 172800000),
-          content: "Informazioni sulla fase 2......",
-        },
-        {
-          id: 3,
-          title: "Suggerimenti per ridurre l'impatto ambiantale ...",
-          date: new Date(Date.now() - 259200000),
-          content: "Suggerimenti per ridurre l'impatto ambientale...",
-        },
-      ];
-      setNewsData(mockNews);
-    };
+  // useEffect(() => {
+  //   const loadNews = () => {
+  //     const mockNews = [
+  //       {
+  //         id: 1,
+  //         title: "Alcuni computer Mac con l'aggiornamento....",
+  //         date: new Date(Date.now() - 86400000),
+  //         content:
+  //           "Alcuni modelli di Mac potrebbero riscontrare ritardi nel caricamento di Diagnosi Apple o delle diagnostiche EFI di AST 2 dopo i seguenti aggiornamenti: Aggiornamento a macOS Big Sur 11.3 Aggiornamento del firmware del chip di sicurezza Apple T2 alla versione più recente dopo aver eseguito correttamente le suite Configurazione di sistema, Riattiva dispositivo o un ripristino con Apple Configurator 2 I modelli di Mac interessati si collegheranno alla Console di diagnostica di AST 2 e possono visualizzare il messaggio 'Attendo il supporto...' per diversi minuti.",
+  //       },
+  //       {
+  //         id: 2,
+  //         title: "Trasformazione di GSX - Fase 2: ...",
+  //         date: new Date(Date.now() - 172800000),
+  //         content: "Informazioni sulla fase 2......",
+  //       },
+  //       {
+  //         id: 3,
+  //         title: "Suggerimenti per ridurre l'impatto ambiantale ...",
+  //         date: new Date(Date.now() - 259200000),
+  //         content: "Suggerimenti per ridurre l'impatto ambientale...",
+  //       },
+  //     ];
+  //     //setNewsData(mockNews);
+  //   };
 
-    loadNews();
+  //   loadNews();
 
-    // Carica lo stato del menu dal localStorage
-    const savedMenuState = localStorage.getItem("menuState");
-    if (savedMenuState === "closed") {
-      setMenuState("closed");
-    }
-  }, []);
+  //   // Carica lo stato del menu dal localStorage
+  //   const savedMenuState = localStorage.getItem("menuState");
+  //   if (savedMenuState === "closed") {
+  //     setMenuState("closed");
+  //   }
+  // }, []);
 
   // Gestione del toggle del menu
   const toggleMenu = () => {
@@ -205,15 +206,15 @@ const AffiliateManagement: React.FC = () => {
   };
 
   // Gestione della selezione di una notizia
-  const handleSelectNews = (newsId: number) => {
-    const newsItem = newsData.find((item) => item.id === newsId);
-    setSelectedNews(newsItem);
-  };
+  // const handleSelectNews = (newsId: number) => {
+  //   const newsItem = newsData.find((item) => item.id === newsId);
+  //   setSelectedNews(newsItem);
+  // };
 
   // Navigazione alle varie pagine
-  const navigateTo = (path: string) => {
-    navigate(path);
-  };
+  // const navigateTo = (path: string) => {
+  //   navigate(path);
+  // };
 
   return (
     <div

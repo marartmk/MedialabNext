@@ -8,7 +8,7 @@ interface TopbarProps {
   toggleMenu: () => void;
 }
 
-const Topbar: React.FC<TopbarProps> = ({ toggleMenu }) => {
+const Topbar: React.FC<TopbarProps> = () => {
   const navigate = useNavigate();
 
   return (

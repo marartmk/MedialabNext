@@ -1,3 +1,4 @@
+import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "@/pages/Login/index";
 import Dashboard from "@/pages/Dashboard";
@@ -15,7 +16,7 @@ import TestPage from "./pages/TestPage";
 import Device from "./pages/DeviceRegistry";
 import RicercaSchede from "./pages/RicercaSchede";
 // Componente per proteggere le route
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
   return isAuthenticated ? children : <Navigate to="/" replace />;
 };
