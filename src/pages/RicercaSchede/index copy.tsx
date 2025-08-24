@@ -13,7 +13,6 @@ import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import BottomBar from "../../components/BottomBar";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { useNavigate } from "react-router-dom";
 
 // Interfaccia per i dati delle riparazioni
 interface RepairData {
@@ -138,95 +137,8 @@ interface RepairDetailModal extends RepairData {
   };
 }
 
-// Estendi l'interfaccia RepairDetailModal esistente aggiungendo questi campi:
-interface RepairDetailModalExtended extends RepairDetailModal {
-  incomingTest?: IncomingTestDto;
-  exitTest?: ExitTestDto;
-}
-
-interface IncomingTestDto {
-  id?: number;
-  repairId?: string;
-  companyId: string;
-  multitenantId: string;
-  // Test base (gruppi FE)
-  deviceInfo?: boolean;
-  applePay?: boolean;
-  battery?: boolean;
-  bluetooth?: boolean;
-  camera?: boolean;
-  cellular?: boolean;
-  clock?: boolean;
-  sim?: boolean;
-  faceId?: boolean;
-  scanner?: boolean; // alias per TouchId
-  magSafe?: boolean;
-  sensors?: boolean;
-  services?: boolean;
-  software?: boolean;
-  system?: boolean;
-  wiFi?: boolean;
-  rfCellular?: boolean;
-  wirelessProblem?: boolean;
-
-  // Test specifici hardware (campi DB diretti)
-  telefonoSpento?: boolean;
-  vetroRotto?: boolean;
-  touchscreen?: boolean;
-  lcd?: boolean;
-  frameScollato?: boolean;
-  dockDiRicarica?: boolean;
-  backCover?: boolean;
-  telaio?: boolean;
-  tastiVolumeMuto?: boolean;
-  tastoStandbyPower?: boolean;
-  microfonoChiamate?: boolean;
-  microfonoAmbientale?: boolean;
-  altoparlantteChiamata?: boolean;
-  speakerBuzzer?: boolean;
-  vetroFotocameraPosteriore?: boolean;
-  tastoHome?: boolean;
-  touchId?: boolean;
-  chiamata?: boolean;
-  vetroPosteriore?: boolean;
-}
-
-interface ExitTestDto {
-  id?: number;
-  repairId?: string;
-  companyId: string;
-  multitenantId: string;
-  vetroRotto?: boolean;
-  touchscreen?: boolean;
-  lcd?: boolean;
-  frameScollato?: boolean;
-  batteria?: boolean;
-  dockDiRicarica?: boolean;
-  backCover?: boolean;
-  telaio?: boolean;
-  tastiVolumeMuto?: boolean;
-  tastoStandbyPower?: boolean;
-  sensoreDiProssimita?: boolean;
-  microfonoChiamate?: boolean;
-  microfonoAmbientale?: boolean;
-  altoparlanteChiamata?: boolean;
-  speakerBuzzer?: boolean;
-  vetroFotocameraPosteriore?: boolean;
-  fotocameraPosteriore?: boolean;
-  fotocameraAnteriore?: boolean;
-  tastoHome?: boolean;
-  touchId?: boolean;
-  faceId?: boolean;
-  wiFi?: boolean;
-  rete?: boolean;
-  chiamata?: boolean;
-  schedaMadre?: boolean;
-  vetroPosteriore?: boolean;
-}
-
 const RicercaSchede: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
-  const navigate = useNavigate();
 
   // Stati per la tabella
   const [allData, setAllData] = useState<RepairData[]>([]); // Tutti i dati
@@ -255,13 +167,6 @@ const RicercaSchede: React.FC = () => {
     useState<RepairDetailModal | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
-
-  // Nuovi stati per dettagli riparazione estesi (test ingresso/uscita)
-  const [incomingTestLoading, setIncomingTestLoading] = useState(false);
-  const [exitTestLoading, setExitTestLoading] = useState(false);
-  const [incomingTestData, setIncomingTestData] =
-    useState<IncomingTestDto | null>(null);
-  const [exitTestData, setExitTestData] = useState<ExitTestDto | null>(null);
 
   // --- RIEPILOGO STATI (per donut + cards) ---
   const COLORS = [
@@ -746,11 +651,8 @@ const RicercaSchede: React.FC = () => {
     setDetailLoading(true);
     setDetailError(null);
     setShowDetailModal(true);
-    setIncomingTestData(null);
-    setExitTestData(null);
 
     try {
-      // Carica i dettagli della riparazione
       const response = await fetch(
         `https://localhost:7148/api/repair/${repair.id}`,
         {
@@ -763,9 +665,6 @@ const RicercaSchede: React.FC = () => {
       if (response.ok) {
         const detailData = await response.json();
         setSelectedRepairDetail(detailData);
-
-        // Carica i dati diagnostici in parallelo
-        await loadDiagnosticData(detailData.repairId || repair.repairId);
       } else {
         throw new Error("Errore nel caricamento dei dettagli");
       }
@@ -781,8 +680,6 @@ const RicercaSchede: React.FC = () => {
     setShowDetailModal(false);
     setSelectedRepairDetail(null);
     setDetailError(null);
-    setIncomingTestData(null);
-    setExitTestData(null);
   };
 
   const formatDetailDate = (dateString: string | undefined | null): string => {
@@ -819,17 +716,7 @@ const RicercaSchede: React.FC = () => {
   };
 
   const handleEditRepair = (repair: RepairData) => {
-    // Passo sia nello state di React Router che in query string (robusto ai refresh)
-    const rid = repair.repairId; // GUID usato dai nuovi endpoint
-    const id = repair.id; // id numerico interno (usato dal dettaglio)
-
-    navigate(`/modifica-schede?rid=${encodeURIComponent(rid)}&id=${id}`, {
-      state: {
-        repairGuid: rid,
-        id,
-        repairCode: repair.repairCode, // utile per header pagina
-      },
-    });
+    console.log("Modifica riparazione:", repair);
   };
 
   const handlePrintRepair = (repair: RepairData) => {
@@ -974,256 +861,6 @@ const RicercaSchede: React.FC = () => {
       month: "2-digit",
       year: "numeric",
     });
-
-  const loadDiagnosticData = async (repairId: string) => {
-    const token = localStorage.getItem("token");
-
-    if (!token) return;
-
-    // Carica diagnostica in ingresso
-    setIncomingTestLoading(true);
-    try {
-      const incomingResponse = await fetch(
-        `https://localhost:7148/api/repair/${repairId}/incoming-test`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (incomingResponse.ok) {
-        const incomingData = await incomingResponse.json();
-        setIncomingTestData(incomingData);
-      } else if (incomingResponse.status !== 404) {
-        console.error("Errore nel caricamento diagnostica in ingresso");
-      }
-    } catch (error) {
-      console.error("Errore nel caricamento diagnostica in ingresso:", error);
-    } finally {
-      setIncomingTestLoading(false);
-    }
-
-    // Carica diagnostica in uscita
-    setExitTestLoading(true);
-    try {
-      const exitResponse = await fetch(
-        `https://localhost:7148/api/repair/${repairId}/exit-test`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (exitResponse.ok) {
-        const exitData = await exitResponse.json();
-        setExitTestData(exitData);
-      } else if (exitResponse.status !== 404) {
-        console.error("Errore nel caricamento diagnostica in uscita");
-      }
-    } catch (error) {
-      console.error("Errore nel caricamento diagnostica in uscita:", error);
-    } finally {
-      setExitTestLoading(false);
-    }
-  };
-
-  // Mappa alias noti dalla UI al payload restituito dal BE
-  const mapAliasKey = (key: string): string => {
-    // UI -> BE
-    if (key === "scanner") return "touchId"; // alias
-    if (key === "altoparlanteChiamata") return "altoparlantteChiamata"; // sicurezza: doppia "tt"
-    return key;
-  };
-
-  // Converte il valore in boolean coerente (accetta true/false, 1/0, "true"/"false")
-  const asBool = (obj: any, key: string): boolean | null => {
-    if (!obj) return null;
-    const realKey = mapAliasKey(key);
-    const v = obj[realKey];
-    if (v === true || v === false) return v;
-    if (v === 1 || v === 0) return Boolean(v);
-    if (v === "true") return true;
-    if (v === "false") return false;
-    return null; // non presente o non definito
-  };
-
-  // Ritorna true se la chiave esiste ed è impostata (true o false)
-  const isSet = (obj: any, key: string) => asBool(obj, key) !== null;
-
-  // Funzione per renderizzare i test diagnostici - VERSIONE CORRETTA
-  const renderDiagnosticTests = (
-    tests: IncomingTestDto | ExitTestDto | null,
-    title: string,
-    isLoading: boolean
-  ) => {
-    if (isLoading) {
-      return (
-        <div className={styles.repairDetailSection}>
-          <h3>🔬 {title}</h3>
-          <div className={styles.repairDetailLoading}>
-            <div className={styles.loadingSpinner}></div>
-            <span>Caricamento diagnostica...</span>
-          </div>
-        </div>
-      );
-    }
-
-    if (!tests) {
-      return (
-        <div className={styles.repairDetailSection}>
-          <h3>🔬 {title}</h3>
-          <div className={styles.diagnosticNotAvailable}>
-            <p>Diagnostica non disponibile per questa riparazione.</p>
-          </div>
-        </div>
-      );
-    }
-
-    // Raggruppa i test per categoria
-    const testCategories = [
-      {
-        name: "Test Base Sistema",
-        items: [
-          { key: "deviceInfo", label: "Info Dispositivo", icon: "📱" },
-          { key: "battery", label: "Batteria", icon: "🔋" },
-          { key: "system", label: "Sistema", icon: "⚙️" },
-          { key: "software", label: "Software", icon: "💻" },
-          { key: "services", label: "Servizi", icon: "🔧" },
-        ],
-      },
-      {
-        name: "Connettività",
-        items: [
-          { key: "wiFi", label: "Wi-Fi", icon: "📶" },
-          { key: "bluetooth", label: "Bluetooth", icon: "🔵" },
-          { key: "cellular", label: "Rete Cellulare", icon: "📱" },
-          { key: "rfCellular", label: "RF Cellulare", icon: "📡" },
-          { key: "sim", label: "SIM", icon: "🗃️" },
-        ],
-      },
-      {
-        name: "Hardware Avanzato",
-        items: [
-          { key: "camera", label: "Fotocamera", icon: "📷" },
-          { key: "faceId", label: "Face ID", icon: "😊" },
-          { key: "touchId", label: "Touch ID", icon: "👆" },
-          { key: "scanner", label: "Scanner", icon: "🔍" },
-          { key: "sensors", label: "Sensori", icon: "🎯" },
-          { key: "magSafe", label: "MagSafe", icon: "🧲" },
-          { key: "applePay", label: "Apple Pay", icon: "💳" },
-        ],
-      },
-      {
-        name: "Componenti Fisici",
-        items: [
-          { key: "vetroRotto", label: "Vetro Rotto", icon: "📸" },
-          { key: "touchscreen", label: "Touchscreen", icon: "👆" },
-          { key: "lcd", label: "Display LCD", icon: "📺" },
-          { key: "frameScollato", label: "Frame Scollato", icon: "📱" },
-          { key: "backCover", label: "Back Cover", icon: "🔄" },
-          { key: "telaio", label: "Telaio", icon: "🗂️" },
-        ],
-      },
-      {
-        name: "Audio e Controlli",
-        items: [
-          { key: "microfonoChiamate", label: "Microfono Chiamate", icon: "🎤" },
-          {
-            key: "microfonoAmbientale",
-            label: "Microfono Ambientale",
-            icon: "🎙️",
-          },
-          { key: "altoparlantteChiamata", label: "Altoparlante", icon: "🔊" },
-          { key: "speakerBuzzer", label: "Speaker/Buzzer", icon: "📢" },
-          { key: "tastiVolumeMuto", label: "Tasti Volume/Muto", icon: "🔘" },
-          { key: "tastoStandbyPower", label: "Tasto Power", icon: "⏻" },
-          { key: "tastoHome", label: "Tasto Home", icon: "🏠" },
-        ],
-      },
-    ];
-
-    return (
-      <div className={styles.repairDetailSection}>
-        <h3>🔬 {title}</h3>
-
-        <div className={styles.diagnosticCategoriesGrid}>
-          {testCategories.map((category) => {
-            const categoryTests = category.items.filter(
-              (item) => asBool(tests, item.key) !== null // mostra sia true che false
-            );
-
-            if (categoryTests.length === 0) return null;
-
-            return (
-              <div key={category.name} className={styles.diagnosticCategory}>
-                <h4 className={styles.diagnosticCategoryTitle}>
-                  {category.name}
-                </h4>
-                <div className={styles.diagnosticGrid}>
-                  {categoryTests.map((item) => {
-                    const v = asBool(tests, item.key);
-                    const isOk = v === true;
-                    return (
-                      <div
-                        key={item.key}
-                        className={`${styles.diagnosticItem} ${
-                          isOk
-                            ? styles.diagnosticItemOk
-                            : styles.diagnosticItemKo
-                        }`}
-                      >
-                        <span className={styles.diagnosticIcon}>
-                          {item.icon}
-                        </span>
-                        <span className={styles.diagnosticLabel}>
-                          {item.label}
-                        </span>
-                        <span
-                          className={`${styles.diagnosticStatus} ${
-                            isOk ? styles.diagnosticOk : styles.diagnosticKo
-                          }`}
-                        >
-                          {isOk ? "✓" : "✕"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Mostra tutti i test che sono stati eseguiti */}
-        {(() => {
-          const ALL_KEYS = testCategories.flatMap((c) =>
-            c.items.map((i) => i.key)
-          );
-          const vals = ALL_KEYS.map((k) => asBool(tests, k)).filter(
-            (v) => v !== null
-          ) as boolean[];
-          const ok = vals.filter((v) => v === true).length;
-          const ko = vals.filter((v) => v === false).length;
-          return (
-            <div className={styles.diagnosticSummaryStats}>
-              <div className={styles.diagnosticStat}>
-                <span className={styles.diagnosticStatNumber}>{ok}</span>
-                <span className={styles.diagnosticStatLabel}>
-                  Test Eseguiti
-                </span>
-              </div>
-              <div className={styles.diagnosticStat}>
-                <span className={styles.diagnosticStatNumber}>{ko}</span>
-                <span className={styles.diagnosticStatLabel}>Test Falliti</span>
-              </div>
-            </div>
-          );
-        })()}
-      </div>
-    );
-  };
 
   return (
     <div className={styles.mainLayout}>
@@ -1942,20 +1579,112 @@ const RicercaSchede: React.FC = () => {
                       </div>
 
                       {/* Diagnostica */}
+                      {selectedRepairDetail.hasDiagnostic &&
+                        selectedRepairDetail.diagnosticDetails && (
+                          <div className={styles.repairDetailSection}>
+                            <h3>🔍 Diagnostica di Ricezione</h3>
+                            {selectedRepairDetail.diagnosticSummary && (
+                              <div className={styles.diagnosticSummary}>
+                                <strong>Riepilogo:</strong>{" "}
+                                {selectedRepairDetail.diagnosticSummary}
+                              </div>
+                            )}
 
-                      {/* Diagnostica In Ingresso */}
-                      {renderDiagnosticTests(
-                        incomingTestData,
-                        "Diagnostica In Ingresso",
-                        incomingTestLoading
-                      )}
+                            <div className={styles.diagnosticGrid}>
+                              {/* Diagnostica Base */}
+                              {selectedRepairDetail.diagnosticDetails
+                                .deviceInfo && (
+                                <div className={styles.diagnosticItem}>
+                                  <span className={styles.diagnosticIcon}>
+                                    📱
+                                  </span>
+                                  <span>Info dispositivo</span>
+                                </div>
+                              )}
+                              {selectedRepairDetail.diagnosticDetails
+                                .battery && (
+                                <div className={styles.diagnosticItem}>
+                                  <span className={styles.diagnosticIcon}>
+                                    🔋
+                                  </span>
+                                  <span>Batteria</span>
+                                </div>
+                              )}
+                              {selectedRepairDetail.diagnosticDetails
+                                .camera && (
+                                <div className={styles.diagnosticItem}>
+                                  <span className={styles.diagnosticIcon}>
+                                    📷
+                                  </span>
+                                  <span>Fotocamera</span>
+                                </div>
+                              )}
+                              {selectedRepairDetail.diagnosticDetails.wiFi && (
+                                <div className={styles.diagnosticItem}>
+                                  <span className={styles.diagnosticIcon}>
+                                    📶
+                                  </span>
+                                  <span>Wi-Fi</span>
+                                </div>
+                              )}
+                              {selectedRepairDetail.diagnosticDetails
+                                .bluetooth && (
+                                <div className={styles.diagnosticItem}>
+                                  <span className={styles.diagnosticIcon}>
+                                    🔵
+                                  </span>
+                                  <span>Bluetooth</span>
+                                </div>
+                              )}
+                              {selectedRepairDetail.diagnosticDetails
+                                .faceId && (
+                                <div className={styles.diagnosticItem}>
+                                  <span className={styles.diagnosticIcon}>
+                                    😊
+                                  </span>
+                                  <span>Face ID</span>
+                                </div>
+                              )}
+                              {selectedRepairDetail.diagnosticDetails
+                                .touchId && (
+                                <div className={styles.diagnosticItem}>
+                                  <span className={styles.diagnosticIcon}>
+                                    👆
+                                  </span>
+                                  <span>Touch ID</span>
+                                </div>
+                              )}
 
-                      {/* Diagnostica In Uscita */}
-                      {renderDiagnosticTests(
-                        exitTestData,
-                        "Diagnostica In Uscita",
-                        exitTestLoading
-                      )}
+                              {/* Diagnostica Estesa */}
+                              {selectedRepairDetail.diagnosticDetails
+                                .vetroRotto && (
+                                <div className={styles.diagnosticItem}>
+                                  <span className={styles.diagnosticIcon}>
+                                    💔
+                                  </span>
+                                  <span>Vetro rotto</span>
+                                </div>
+                              )}
+                              {selectedRepairDetail.diagnosticDetails
+                                .touchscreen && (
+                                <div className={styles.diagnosticItem}>
+                                  <span className={styles.diagnosticIcon}>
+                                    👆
+                                  </span>
+                                  <span>Touchscreen</span>
+                                </div>
+                              )}
+                              {selectedRepairDetail.diagnosticDetails.lcd && (
+                                <div className={styles.diagnosticItem}>
+                                  <span className={styles.diagnosticIcon}>
+                                    📺
+                                  </span>
+                                  <span>LCD</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>

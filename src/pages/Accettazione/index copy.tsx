@@ -83,8 +83,8 @@ const Accettazione: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const deviceSearchInputRef = useRef<HTMLInputElement>(null);
   const deviceDropdownRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const deviceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceRef = useRef<NodeJS.Timeout>();
+  const deviceDebounceRef = useRef<NodeJS.Timeout>();
 
   // Stati per i campi del form cliente
   const [clienteData, setClienteData] = useState({
@@ -162,20 +162,9 @@ const Accettazione: React.FC = () => {
     unlockCode: "",
     courtesyPhone: "",
   });
-  
-  // Define a type for Operator
-  interface Operator {
-    id: string;
-    firstName: string;
-    lastName: string;
-    codiceDipendente?: string;
-    internalCode?: string;
-    email?: string;
-    phoneNumber?: string;
-  }
-  
-  const [operators, setOperators] = useState<Operator[]>([]);
-  const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
+
+  const [operators, setOperators] = useState<any[]>([]);
+  const [selectedOperator, setSelectedOperator] = useState<any>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isCreatingRepair, setIsCreatingRepair] = useState(false);
   const [repairComponent, setRepairComponent] = useState("");
@@ -219,7 +208,8 @@ const Accettazione: React.FC = () => {
     },
   ]);
 
-  const [isRepairCreated, setIsRepairCreated] = useState(false);  
+  const [isRepairCreated, setIsRepairCreated] = useState(false);
+  const [repairId, setRepairId] = useState<number | null>(null); // se serve per l'update
   const [repairGuid, setRepairGuid] = useState<string | null>(null); // 🆕 Usa GUID
 
   useEffect(() => {
@@ -272,6 +262,26 @@ const Accettazione: React.FC = () => {
 
   const toggleMenu = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
+  };
+
+  // Funzione per caricare gli operatori
+  const loadOperators_base = async () => {
+    try {
+      const response = await fetch("https://localhost:7148/api/operator", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const operatorsData = await response.json();
+        setOperators(operatorsData);
+      } else {
+        console.error("Errore nel caricamento operatori");
+      }
+    } catch (error) {
+      console.error("Errore durante il caricamento operatori:", error);
+    }
   };
 
   const loadOperators = async () => {
@@ -671,144 +681,334 @@ const Accettazione: React.FC = () => {
     };
   };
 
-  // Costruisce SOLO i campi che finiscono in dbo.IncomingTests (camelCase del DTO)
-  const buildIncomingTestDtoDBOnly = (
-    items: { id: string; active: boolean }[]
-  ) => {
-    const on = (id: string) => items.find((x) => x.id === id)?.active ?? false;
+  // Funzione per preparare i dati della riparazione
+  const prepareRepairPayload_old = () => {
+    const multitenantId = localStorage.getItem("IdCompany");
+
+    // Prepara i dati del cliente (se nuovo)
+    let customerPayload = null;
+    if (!selectedCustomer) {
+      customerPayload = {
+        tipo: "Privato",
+        cliente: true,
+        fornitore: false,
+        ragioneSociale: `${clienteData.cognome} ${clienteData.nome}`.trim(),
+        cognome: clienteData.cognome,
+        nome: clienteData.nome,
+        email: clienteData.email,
+        telefono: clienteData.telefono,
+        cap: clienteData.cap,
+        multitenantId: multitenantId,
+        indirizzo: "",
+        citta: "",
+        provincia: "",
+        regione: "",
+        fiscalCode: "",
+        pIva: "",
+        emailPec: "",
+        codiceSdi: "",
+        iban: "",
+      };
+    }
+
+    // Prepara i dati del dispositivo (se nuovo)
+    let devicePayload = null;
+    if (!selectedDevice) {
+      devicePayload = {
+        serialNumber: dispositivoData.serialNumber,
+        brand: dispositivoData.brand,
+        model: dispositivoData.model,
+        deviceType: dispositivoData.deviceType,
+        color: dispositivoData.color || null,
+        purchaseDate: null,
+        receiptNumber: null,
+        retailer: null,
+        notes: null,
+      };
+    }
+
+    // Prepara i dati della riparazione
+    const repairPayload = {
+      faultDeclared: repairData.faultDeclared,
+      repairAction: repairData.repairAction || null,
+      technicianCode:
+        selectedOperator?.codiceDipendente ||
+        selectedOperator?.internalCode ||
+        null,
+      technicianName:
+        `${selectedOperator?.firstName || ""} ${
+          selectedOperator?.lastName || ""
+        }`.trim() || null,
+      estimatedPrice: repairData.estimatedPrice,
+      paymentType: repairData.paymentType || null,
+      billingInfo: repairData.billingInfo || null,
+      unlockCode: dispositivoData.unlockCode || null,
+      courtesyPhone: dispositivoData.courtesyPhone || null,
+    };
+
+    // Prepara il test di ingresso
+    const incomingTestPayload = {
+      companyId: multitenantId,
+      multitenantId: multitenantId,
+      deviceInfo:
+        diagnosticItems.find((item) => item.id === "device-info")?.active ||
+        false,
+      applePay:
+        diagnosticItems.find((item) => item.id === "apple-pay")?.active ||
+        false,
+      battery:
+        diagnosticItems.find((item) => item.id === "battery")?.active || false,
+      bluetooth:
+        diagnosticItems.find((item) => item.id === "bluetooth")?.active ||
+        false,
+      camera:
+        diagnosticItems.find((item) => item.id === "camera")?.active || false,
+      cellular:
+        diagnosticItems.find((item) => item.id === "cellular")?.active || false,
+      clock:
+        diagnosticItems.find((item) => item.id === "clock")?.active || false,
+      sim: diagnosticItems.find((item) => item.id === "sim")?.active || false,
+      faceId:
+        diagnosticItems.find((item) => item.id === "face-id")?.active || false,
+      scanner:
+        diagnosticItems.find((item) => item.id === "scanner")?.active || false,
+      magSafe:
+        diagnosticItems.find((item) => item.id === "magsafe")?.active || false,
+      sensors:
+        diagnosticItems.find((item) => item.id === "sensors")?.active || false,
+      services:
+        diagnosticItems.find((item) => item.id === "services")?.active || false,
+      software:
+        diagnosticItems.find((item) => item.id === "software")?.active || false,
+      system:
+        diagnosticItems.find((item) => item.id === "system")?.active || false,
+      wiFi: diagnosticItems.find((item) => item.id === "wifi")?.active || false,
+      rfCellular:
+        diagnosticItems.find((item) => item.id === "rf-cellular")?.active ||
+        false,
+      wirelessProblem:
+        diagnosticItems.find((item) => item.id === "wireless-problem")
+          ?.active || false,
+    };
+
+    // Prepara gli elementi diagnostici
+    const diagnosticItemsPayload = diagnosticItems
+      .filter((item) => item.active)
+      .map((item) => ({
+        id: item.id,
+        label: item.label,
+        active: item.active,
+      }));
 
     return {
-      // Se non hai un toggle dedicato, imposta false o aggiungi uno switch in UI (es. "device-off")
-      telefonoSpento: false,
-
-      // Campi che hai già in UI (mappati ai nomi DB via DTO camelCase)
-      batteria: on("battery"),
-      wiFi: on("wifi"),
-      faceId: on("face-id"),
-      touchId: on("scanner"), // alias: “scanner” → touch_id
-      sensoreDiProssimita: on("sensors"),
-      schedaMadre: on("system"),
-      rete: on("cellular") || on("rf-cellular"),
-      chiamata: on("cellular"), // se hai un toggle specifico “call” usa quello
-      // Fotocamere: se hai un solo toggle “camera” lo riutilizzi per entrambe:
-      fotocameraPosteriore: on("camera"),
-      fotocameraAnteriore: on("camera"),
-
-      // Questi campi non li hai (ancora) a UI → li lasci a false (o omettili)
-      vetroRotto: false,
-      touchscreen: false,
-      lcd: false,
-      frameScollato: false,
-      dockDiRicarica: false,
-      backCover: false,
-      telaio: false,
-      tastiVolumeMuto: false,
-      tastoStandbyPower: false,
-      microfonoChiamate: false,
-      microfonoAmbientale: false,
-      altoparlantteChiamata: false, // ⚠️ nel DTO è scritto con doppia “tt”
-      speakerBuzzer: false,
-      vetroFotocameraPosteriore: false,
-      tastoHome: false,
-      vetroPosteriore: false,
+      customerId: selectedCustomer?.id || null,
+      newCustomer: customerPayload,
+      deviceId: selectedDevice?.id || null,
+      newDevice: devicePayload,
+      repairData: repairPayload,
+      incomingTest: incomingTestPayload,
+      diagnosticItems: diagnosticItemsPayload,
+      notes: repairData.billingInfo || null,
+      multitenantId: multitenantId,
     };
   };
 
-  const upsertIncomingTest = async (
-    repairGuid: string,
-    items: { id: string; active: boolean }[]
+  const prepareRepairPayload = () => {
+    const multitenantId = localStorage.getItem("IdCompany");
+
+    // Prepara i dati del cliente (se nuovo)
+    let customerPayload = null;
+    if (!selectedCustomer) {
+      customerPayload = {
+        tipo: "Privato",
+        cliente: true,
+        fornitore: false,
+        ragioneSociale: `${clienteData.cognome} ${clienteData.nome}`.trim(),
+        cognome: clienteData.cognome,
+        nome: clienteData.nome,
+        email: clienteData.email,
+        telefono: clienteData.telefono,
+        cap: clienteData.cap,
+        multitenantId: multitenantId,
+        indirizzo: "",
+        citta: "",
+        provincia: "",
+        regione: "",
+        fiscalCode: "",
+        pIva: "",
+        emailPec: "",
+        codiceSdi: "",
+        iban: "",
+      };
+    }
+
+    // Prepara i dati del dispositivo (se nuovo)
+    let devicePayload = null;
+    if (!selectedDevice) {
+      devicePayload = {
+        serialNumber: dispositivoData.serialNumber,
+        brand: dispositivoData.brand,
+        model: dispositivoData.model,
+        deviceType: dispositivoData.deviceType,
+        color: dispositivoData.color || null,
+        purchaseDate: null,
+        receiptNumber: null,
+        retailer: null,
+        notes: null,
+      };
+    }
+
+    // Prepara i dati della riparazione
+    const repairPayload = {
+      faultDeclared: repairData.faultDeclared,
+      repairAction: repairData.repairAction || null,
+      technicianCode:
+        selectedOperator?.codiceDipendente ||
+        selectedOperator?.internalCode ||
+        null,
+      technicianName:
+        `${selectedOperator?.firstName || ""} ${
+          selectedOperator?.lastName || ""
+        }`.trim() || null,
+      estimatedPrice: repairData.estimatedPrice,
+      paymentType: repairData.paymentType || null,
+      billingInfo: repairData.billingInfo || null,
+      unlockCode: dispositivoData.unlockCode || null,
+      courtesyPhone: dispositivoData.courtesyPhone || null,
+    };
+
+    // Prepara il test di ingresso
+    const incomingTestPayload = {
+      companyId: multitenantId,
+      multitenantId: multitenantId,
+      deviceInfo:
+        diagnosticItems.find((item) => item.id === "device-info")?.active ||
+        false,
+      applePay:
+        diagnosticItems.find((item) => item.id === "apple-pay")?.active ||
+        false,
+      battery:
+        diagnosticItems.find((item) => item.id === "battery")?.active || false,
+      bluetooth:
+        diagnosticItems.find((item) => item.id === "bluetooth")?.active ||
+        false,
+      camera:
+        diagnosticItems.find((item) => item.id === "camera")?.active || false,
+      cellular:
+        diagnosticItems.find((item) => item.id === "cellular")?.active || false,
+      clock:
+        diagnosticItems.find((item) => item.id === "clock")?.active || false,
+      sim: diagnosticItems.find((item) => item.id === "sim")?.active || false,
+      faceId:
+        diagnosticItems.find((item) => item.id === "face-id")?.active || false,
+      scanner:
+        diagnosticItems.find((item) => item.id === "scanner")?.active || false,
+      magSafe:
+        diagnosticItems.find((item) => item.id === "magsafe")?.active || false,
+      sensors:
+        diagnosticItems.find((item) => item.id === "sensors")?.active || false,
+      services:
+        diagnosticItems.find((item) => item.id === "services")?.active || false,
+      software:
+        diagnosticItems.find((item) => item.id === "software")?.active || false,
+      system:
+        diagnosticItems.find((item) => item.id === "system")?.active || false,
+      wiFi: diagnosticItems.find((item) => item.id === "wifi")?.active || false,
+      rfCellular:
+        diagnosticItems.find((item) => item.id === "rf-cellular")?.active ||
+        false,
+      wirelessProblem:
+        diagnosticItems.find((item) => item.id === "wireless-problem")
+          ?.active || false,
+    };
+
+    // Prepara gli elementi diagnostici
+    const diagnosticItemsPayload = diagnosticItems
+      .filter((item) => item.active)
+      .map((item) => ({
+        id: item.id,
+        label: item.label,
+        active: item.active,
+      }));
+
+    return {
+      customerId: selectedCustomer?.id || null,
+      newCustomer: customerPayload,
+      deviceId: selectedDevice?.id || null, // ✅ Per il CREATE usa l'ID del registry
+      newDevice: devicePayload,
+      repairData: repairPayload,
+      incomingTest: incomingTestPayload,
+      diagnosticItems: diagnosticItemsPayload,
+      notes: repairData.billingInfo || null,
+      multitenantId: multitenantId,
+    };
+  };
+
+  // Funzione principale per creare la riparazione
+  const handleCreateRepair_old = async (
+    actionType: "email" | "print" | "label" | "lab"
   ) => {
-    const dto = buildIncomingTestDtoDBOnly(items);
-    const res = await fetch(
-      `https://localhost:7148/api/repair/${repairGuid}/incoming-test`,
-      {
-        method: "PUT",
+    // Esegui validazione
+    const validation = validateForm();
+
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
+      alert("Errori di validazione:\n\n" + validation.errors.join("\n"));
+      return;
+    }
+
+    // Pulisci errori di validazione precedenti
+    setValidationErrors([]);
+    setIsCreatingRepair(true);
+
+    try {
+      // Prepara il payload
+      const payload = prepareRepairPayload();
+
+      console.log("Payload riparazione:", payload);
+
+      // Chiama l'API per creare la riparazione
+      const response = await fetch("https://localhost:7148/api/repair", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(dto),
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        console.log("Riparazione creata:", result);
+
+        // Mostra messaggio di successo
+        alert(
+          `Riparazione creata con successo!\n\nCodice: ${result.repairCode}\nID: ${result.repairId}\nStato: ${result.status}`
+        );
+
+        // Gestisci l'azione specifica
+        await handlePostCreateAction(actionType, result);
+
+        // Reset del form o reindirizzamento
+        if (confirm("Vuoi creare un'altra riparazione?")) {
+          resetForm();
+        } else {
+          // Reindirizza alla lista riparazioni o dashboard
+          // window.location.href = '/riparazioni';
+        }
+      } else {
+        const errorText = await response.text();
+        console.error("Errore risposta API:", errorText);
+        alert("Errore nella creazione della riparazione:\n" + errorText);
       }
-    );
-    if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      throw new Error(`Salvataggio diagnostica fallito (${res.status}) ${t}`);
+    } catch (error) {
+      console.error("Errore durante la creazione:", error);
+      alert("Errore durante la creazione della riparazione. Riprova.");
+    } finally {
+      setIsCreatingRepair(false);
     }
   };
-
-  const prepareRepairPayload = () => {
-  const multitenantId = localStorage.getItem("IdCompany");
-
-  // newCustomer (solo se non selezionato cliente esistente)
-  let customerPayload = null;
-  if (!selectedCustomer) {
-    customerPayload = {
-      tipo: "Privato",
-      cliente: true,
-      fornitore: false,
-      ragioneSociale: `${clienteData.cognome} ${clienteData.nome}`.trim(),
-      cognome: clienteData.cognome,
-      nome: clienteData.nome,
-      email: clienteData.email,
-      telefono: clienteData.telefono,
-      cap: clienteData.cap,
-      multitenantId: multitenantId,
-      indirizzo: "",
-      citta: "",
-      provincia: "",
-      regione: "",
-      fiscalCode: "",
-      pIva: "",
-      emailPec: "",
-      codiceSdi: "",
-      iban: "",
-    };
-  }
-
-  // newDevice (solo se non selezionato device esistente)
-  let devicePayload = null;
-  if (!selectedDevice) {
-    devicePayload = {
-      serialNumber: dispositivoData.serialNumber,
-      brand: dispositivoData.brand,
-      model: dispositivoData.model,
-      deviceType: dispositivoData.deviceType,
-      color: dispositivoData.color || null,
-      purchaseDate: null,
-      receiptNumber: null,
-      retailer: null,
-      notes: null,
-    };
-  }
-
-  // dati riparazione
-  const repairPayload = {
-    faultDeclared: repairData.faultDeclared,
-    repairAction: repairData.repairAction || null,
-    technicianCode:
-      selectedOperator?.codiceDipendente ||
-      selectedOperator?.internalCode ||
-      null,
-    technicianName:
-      `${selectedOperator?.firstName || ""} ${selectedOperator?.lastName || ""}`.trim() || null,
-    estimatedPrice: repairData.estimatedPrice,
-    paymentType: repairData.paymentType || null,
-    billingInfo: repairData.billingInfo || null,
-    unlockCode: dispositivoData.unlockCode || null,
-    courtesyPhone: dispositivoData.courtesyPhone || null,
-  };
-
-  return {
-    customerId: selectedCustomer?.id || null,
-    newCustomer: customerPayload,
-    deviceId: selectedDevice?.id || null, // per create rimane l'id numerico del registro dispositivi
-    newDevice: devicePayload,
-    repairData: repairPayload,  
-    notes: repairData.billingInfo || null,
-    multitenantId: multitenantId,
-  };
-};
-
 
   // Funzione principale per creare la riparazione
   const handleCreateRepair = async (
@@ -852,31 +1052,17 @@ const Accettazione: React.FC = () => {
 
       if (response.ok) {
         const result = await response.json();
+
         console.log("Riparazione creata:", result);
 
-        // 1) salva la diagnostica di ingresso con il nuovo endpoint
-        try {
-          await upsertIncomingTest(result.repairGuid, diagnosticItems);
-        } catch (e: unknown) {
-          console.error(e);
-          const message =
-            e instanceof Error ? e.message : String(e);
-          alert(
-            "⚠️ Riparazione creata, ma diagnostica NON salvata.\n" + message
-          );
-        }
-
-        // 2) UX di conferma
         alert(
           `Riparazione creata con successo!\n\nCodice: ${result.repairCode}\nID: ${result.repairId}\nStato: ${result.status}`
         );
 
-        // 3) azione post-creazione (stampa, email, ecc.)
         await handlePostCreateAction(actionType, result);
 
-        // 4) stato locale
         setIsRepairCreated(true);
-        setRepairGuid(result.repairGuid);
+        setRepairGuid(result.repairGuid); // 🔧 FIX: Memorizza il GUID, non l'ID numerico
       } else {
         const errorText = await response.text();
         console.error("Errore risposta API:", errorText);
@@ -891,18 +1077,9 @@ const Accettazione: React.FC = () => {
   };
 
   // Funzione per gestire le azioni post-creazione
-  // Define a type for the repair result
-  interface RepairResult {
-    repairId: number;
-    repairGuid: string;
-    repairCode: string;
-    status: string;
-    // Add other fields as needed
-  }
-
   const handlePostCreateAction = async (
     actionType: "email" | "print" | "label" | "lab",
-    repairResult: RepairResult
+    repairResult: any
   ) => {
     switch (actionType) {
       case "email":
@@ -925,7 +1102,52 @@ const Accettazione: React.FC = () => {
         alert("Riparazione inviata al laboratorio!");
         break;
     }
-  }; 
+  };
+
+  // Funzione per resettare il form
+  const resetForm = () => {
+    setSelectedCustomer(null);
+    setSelectedDevice(null);
+    setSearchQuery("");
+    setDeviceSearchQuery("");
+    setClienteData({
+      email: "",
+      nome: "",
+      cognome: "",
+      telefono: "",
+      cap: "",
+    });
+    setDispositivoData({
+      serialNumber: "",
+      brand: "",
+      model: "",
+      deviceType: "Mobile",
+      color: "",
+      unlockCode: "",
+      courtesyPhone: "",
+    });
+    setRepairData({
+      faultDeclared: "",
+      repairAction: "",
+      technicianCode: "",
+      technicianName: "",
+      estimatedPrice: 0,
+      paymentType: "",
+      billingInfo: "",
+      unlockCode: "",
+      courtesyPhone: "",
+    });
+    setRepairComponent("");
+    setSelectedOperator(null);
+    setValidationErrors([]);
+    setIsRepairCreated(false); // 🔧 Reset stato riparazione creata
+    setRepairGuid(null); // 🔧 Reset GUID riparazione
+
+    // Reset diagnostica
+    setDiagnosticItems((prevItems) =>
+      prevItems.map((item) => ({ ...item, active: true }))
+    );
+  };
 
   // Funzione per salvare il nuovo cliente
   const handleSaveNewClient = async () => {
@@ -1187,16 +1409,7 @@ const Accettazione: React.FC = () => {
       );
 
       if (response.ok) {
-        try {
-          await upsertIncomingTest(repairGuid, diagnosticItems);
-          alert("Riparazione e diagnostica aggiornate con successo.");
-        } catch (e: unknown) {
-          console.error(e);
-          const message = e instanceof Error ? e.message : String(e);
-          alert(
-            "Riparazione aggiornata ma diagnostica NON salvata.\n" + message
-          );
-        }
+        alert("Riparazione aggiornata con successo.");
       } else {
         const errorText = await response.text();
         console.error("Errore aggiornamento API:", errorText);
@@ -1212,30 +1425,39 @@ const Accettazione: React.FC = () => {
 
   // Payload specifico per l'update (diverso dal create)
   const prepareUpdateRepairPayload = () => {
-  const payload = {
-    customerId: selectedCustomer?.id || null,          // GUID cliente
-    deviceId: selectedDevice?.deviceId || null,        // GUID device
-    repairData: {
-      faultDeclared: repairData.faultDeclared,
-      repairAction: repairData.repairAction || null,
-      technicianCode:
-        selectedOperator?.codiceDipendente ||
-        selectedOperator?.internalCode ||
-        null,
-      technicianName:
-        `${selectedOperator?.firstName || ""} ${selectedOperator?.lastName || ""}`.trim() || null,
-      estimatedPrice: repairData.estimatedPrice,
-      paymentType: repairData.paymentType || null,
-      billingInfo: repairData.billingInfo || null,
-      unlockCode: dispositivoData.unlockCode || null,
-      courtesyPhone: dispositivoData.courtesyPhone || null,
-    },
-    notes: repairData.billingInfo || null,    
+    // Per l'update, utilizziamo UpdateRepairRequestDto
+    const payload = {
+      customerId: selectedCustomer?.id || null, // ✅ GUID del cliente
+      deviceId: selectedDevice?.deviceId || null, // 🔧 FIX: Usa deviceId (GUID), non id (int)
+      repairData: {
+        faultDeclared: repairData.faultDeclared,
+        repairAction: repairData.repairAction || null,
+        technicianCode:
+          selectedOperator?.codiceDipendente ||
+          selectedOperator?.internalCode ||
+          null,
+        technicianName:
+          `${selectedOperator?.firstName || ""} ${
+            selectedOperator?.lastName || ""
+          }`.trim() || null,
+        estimatedPrice: repairData.estimatedPrice,
+        paymentType: repairData.paymentType || null,
+        billingInfo: repairData.billingInfo || null,
+        unlockCode: dispositivoData.unlockCode || null,
+        courtesyPhone: dispositivoData.courtesyPhone || null,
+      },
+      notes: repairData.billingInfo || null,
+      diagnosticItems: diagnosticItems
+        .filter((item) => item.active)
+        .map((item) => ({
+          id: item.id,
+          label: item.label,
+          active: item.active,
+        })),
+    };
+
+    return payload;
   };
-
-  return payload;
-};
-
 
   return (
     <div className={styles.mainLayout}>

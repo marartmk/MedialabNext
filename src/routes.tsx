@@ -15,6 +15,8 @@ import LoginLocalAdmin from "./pages/LoginLocalAdmin";
 import TestPage from "./pages/TestPage";
 import Device from "./pages/DeviceRegistry";
 import RicercaSchede from "./pages/RicercaSchede";
+import Modifica from "./pages/Modifica";
+
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
@@ -119,7 +121,7 @@ const AppRoutes = () => {
         }
       />
 
-       <Route
+      <Route
         path="/device-registry"
         element={
           <ProtectedRoute>
@@ -137,7 +139,7 @@ const AppRoutes = () => {
         }
       />
 
-       <Route
+      <Route
         path="/ricerca-schede"
         element={
           <ProtectedRoute>
@@ -146,6 +148,14 @@ const AppRoutes = () => {
         }
       />
 
+      <Route
+        path="/modifica-schede"
+        element={
+          <ProtectedRoute>
+            <Modifica />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
