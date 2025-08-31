@@ -1,5 +1,5 @@
 /* ✨ STILI TABELLA - VERSIONE MONOCROMATICA PULITA - CSS MODULES */
-/* AGGIUNTO: Supporto per filtro temporale avanzato + STAMPA CORRETTA */
+/* AGGIUNTO: Supporto per filtro temporale avanzato */
 
 /* Layout principale per le pagine */
 .mainLayout {
@@ -913,6 +913,141 @@
   font-weight: 500;
 }
 
+/* Responsive */
+@media (max-width: 768px) {
+  .pageBody {
+    padding: 16px;
+  }
+
+  .schedaHeader {
+    margin: 0 16px;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .leftBlock {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .dateBox {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .tableHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .tableControls {
+    width: 100%;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .searchTableInput {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .filterSelect,
+  .dateFilterContainer {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  /* Responsive per range personalizzato */
+  .dateInputsRow {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .customDateRangeButtons {
+    flex-direction: column;
+  }
+
+  .applyDateBtn,
+  .resetDateBtn {
+    width: 100%;
+    justify-content: center !important;
+  }
+
+  /* Responsive per filtri attivi */
+  .activeFilterTags {
+    justify-content: center;
+  }
+
+  .filterTag {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+  
+  .paginationContainer {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .modernTable {
+    font-size: 12px;
+  }
+  
+  .modernTable th,
+  .modernTable td {
+    padding: 12px 8px !important;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .actionBtn {
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 6px 8px !important;
+  }
+
+  .problemCell {
+    max-width: 150px;
+    font-size: 12px;
+  }
+
+  .customerCell,
+  .deviceCell {
+    gap: 2px;
+  }
+
+  .customerName,
+  .deviceName {
+    font-size: 12px;
+  }
+
+  .customerContact,
+  .deviceSerial {
+    font-size: 11px;
+  }
+
+  .statusBadge {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+/* Hover effects per le righe */
+@keyframes rowHover {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+.modernTable tbody tr:hover {
+  animation: rowHover 0.2s ease-out forwards;
+}
+
 /* === STATS ROW (donut + cards) === */
 .statsRow {
   display: grid;
@@ -930,34 +1065,20 @@
 .statsChartCard {
   position: relative;
   background: #fff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e5e5;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.06);
-  padding: 0;
-  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 12px 16px 8px 16px;
 }
 
-/* Barra header piena (nera) */
 .statsCardHeader {
-  display: flex !important;
-  align-items: center;
-  justify-content: space-between;
-  background: #000;
+  background: linear-gradient(135deg, #002454 0%, #003875 100%);
   color: #fff;
   font-weight: 600;
-  padding: 10px 14px;
-  height: 44px;
-  width: 100%;
-  border-top-left-radius: 12px !important;
-  border-top-right-radius: 12px !important;
-  border-bottom-left-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06);
-}
-
-/* Contenuto del card */
-.statsCardBody {
-  padding: 14px 16px 16px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: inline-block;
 }
 
 .donutWrapper {
@@ -1057,13 +1178,13 @@
   opacity: .95;
 }
 
-/* 4 gradient diversi */
-.statCard0 { background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); }
-.statCard1 { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); }
-.statCard2 { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
-.statCard3 { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+/* 4 gradient diversi (coerenti con la pagina tasks di Medialab FE) */
+.statCard0 { background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); } /* "Aperti" like */
+.statCard1 { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); } /* "In lavorazione" like */
+.statCard2 { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); } /* "Completati" like */
+.statCard3 { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); } /* "Scaduti" like */
 
-/* Layout interno del card grafico */
+/* Layout interno del card grafico come Medialab Fe (donut sx, dettagli dx) */
 .chartTwoCols {
   display: flex;
   gap: 16px;
@@ -1091,7 +1212,7 @@
 .kpiTotalNumber {
   font-size: 42px;
   font-weight: 800;
-  color: #1e40af;
+  color: #1e40af; /* blu deciso */
   line-height: 1;
 }
 
@@ -1146,7 +1267,48 @@
   .chartRight { width: 100%; min-width: 0; }
 }
 
+/* Card grafico */
+.statsChartCard {
+  position: relative;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  padding: 0;                 /* <— header a tutta larghezza */
+  overflow: hidden;           /* <— arrotonda gli angoli del top bar */
+}
+
+/* Barra header piena (nera) */
+.statsCardHeader {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  background: #000;      /* nero */
+  color: #fff;
+  font-weight: 600;
+  padding: 10px 14px;
+  height: 44px;
+  width: 100%;
+
+  /* ⬇️ arrotonda solo in alto */
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+
+  /* sottile divider sotto (facoltativo) */
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06);
+}
+
+/* Contenuto del card (quello che prima stava direttamente nel card) */
+.statsCardBody {
+  padding: 14px 16px 16px;
+}
+
 /* === MODAL DETTAGLI RIPARAZIONE === */
+/* Aggiungi questi stili al file styles.module.css della pagina RicercaSchede */
+
+/* Overlay modal con sfocatura */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -1163,6 +1325,7 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
+/* Container principale del modal */
 .repairDetailModal {
   background: #ffffff;
   border-radius: 16px;
@@ -1175,6 +1338,7 @@
   border: 1px solid #e0e0e0;
 }
 
+/* Header del modal */
 .repairDetailHeader {
   display: flex;
   justify-content: space-between;
@@ -1236,12 +1400,14 @@
   transform: rotate(90deg);
 }
 
+/* Body del modal con scroll */
 .repairDetailBody {
   max-height: calc(90vh - 160px);
   overflow-y: auto;
   padding: 0;
 }
 
+/* States di loading ed errore */
 .repairDetailLoading,
 .repairDetailError {
   display: flex;
@@ -1264,10 +1430,12 @@
   margin: 20px;
 }
 
+/* Contenuto principale */
 .repairDetailContent {
   padding: 24px;
 }
 
+/* Sezioni del modal */
 .repairDetailSection {
   background: #fafafa;
   border: 1px solid #e5e5e5;
@@ -1288,6 +1456,7 @@
   border-bottom: 2px solid #e0e0e0;
 }
 
+/* Layout a due colonne */
 .repairDetailColumns {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1300,6 +1469,7 @@
   flex-direction: column;
 }
 
+/* Grid per i campi */
 .repairDetailGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -1455,6 +1625,7 @@
   text-align: center;
 }
 
+/* Footer del modal */
 .repairDetailFooter {
   display: flex;
   justify-content: flex-end;
@@ -1508,7 +1679,121 @@
   }
 }
 
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .repairDetailModal {
+    width: 98%;
+    max-height: 95vh;
+  }
+  
+  .repairDetailColumns {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .repairDetailModal {
+    width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .repairDetailHeader {
+    padding: 16px 20px;
+  }
+  
+  .repairDetailTitleSection h2 {
+    font-size: 1.3rem;
+  }
+  
+  .repairDetailContent {
+    padding: 16px;
+  }
+  
+  .repairDetailSection {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .repairDetailCodeAndStatus {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .repairTimeline {
+    padding-left: 20px;
+  }
+  
+  .timelineIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    margin-left: -36px;
+  }
+  
+  .diagnosticGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .repairDetailFooter {
+    padding: 16px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .repairDetailHeader {
+    padding: 12px 16px;
+  }
+  
+  .repairDetailContent {
+    padding: 12px;
+  }
+  
+  .repairDetailSection {
+    padding: 12px;
+  }
+  
+  .repairDetailField {
+    padding: 8px;
+  }
+  
+  .timelineItem {
+    padding: 12px;
+  }
+  
+  .diagnosticItem {
+    padding: 10px 12px;
+  }
+}
+
+/* Miglioramento per la scrollbar */
+.repairDetailBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.repairDetailBody::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.repairDetailBody::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.repairDetailBody::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Aggiungi questi stili al file styles.module.css */
+
 /* === NUOVI STILI PER DIAGNOSTICA ESTESA === */
+
+/* Griglia delle categorie diagnostiche */
 .diagnosticCategoriesGrid {
   display: flex;
   flex-direction: column;
@@ -1576,11 +1861,9 @@
 .diagnosticStatus {
   font-size: 12px;
   flex-shrink: 0;
-  margin-left: auto;
-  font-weight: 800;
-  font-size: 14px;
 }
 
+/* Statistiche diagnostica */
 .diagnosticSummaryStats {
   display: flex;
   gap: 16px;
@@ -1615,6 +1898,7 @@
   letter-spacing: 0.5px;
 }
 
+/* Stato quando la diagnostica non è disponibile */
 .diagnosticNotAvailable {
   padding: 24px;
   text-align: center;
@@ -1630,18 +1914,218 @@
   font-size: 14px;
 }
 
+/* Aggiornamento stili esistenti per compatibilità */
+.diagnosticSummary {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.diagnosticGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+/* Responsive per dispositivi mobile */
+@media (max-width: 768px) {
+  .diagnosticCategoriesGrid {
+    gap: 16px;
+  }
+  
+  .diagnosticCategory {
+    padding: 12px;
+  }
+  
+  .diagnosticGrid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .diagnosticItem {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .diagnosticIcon {
+    font-size: 12px;
+    width: 16px;
+  }
+  
+  .diagnosticSummaryStats {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+  
+  .diagnosticStatNumber {
+    font-size: 20px;
+  }
+  
+  .diagnosticStatLabel {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .diagnosticCategory {
+    padding: 10px;
+  }
+  
+  .diagnosticCategoryTitle {
+    font-size: 12px;
+  }
+  
+  .diagnosticItem {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+  
+  .diagnosticStatNumber {
+    font-size: 18px;
+  }
+}
+
+/* Stili per stati di caricamento diagnostica */
+.repairDetailLoading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  gap: 12px;
+  color: #666666;
+  background: #f8f8f8;
+  border-radius: 8px;
+  border: 2px dashed #cccccc;
+  flex-direction: column;
+}
+
+/* Miglioramenti per la sezione diagnostica originale */
+.repairDetailSection h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+/* Badge per test diagnostici passati/falliti */
+.diagnosticItemPassed .diagnosticStatus {
+  color: #28a745;
+}
+
+.diagnosticItemFailed .diagnosticStatus {
+  color: #dc3545;
+}
+
+.diagnosticItemFailed {
+  background: #fff5f5;
+  border-color: #feb2b2;
+}
+
+.diagnosticItemPassed {
+  background: #f0fff4;
+  border-color: #9ae6b4;
+}
+
+/* Stato visuale per i test (OK/KO) */
 .diagnosticItemOk {
-  background: #ecfdf5;
+  background: #ecfdf5;          /* verde molto chiaro */
   border: 2px solid #10b981;
 }
 
 .diagnosticItemKo {
-  background: #fef2f2;
+  background: #fef2f2;          /* rosso molto chiaro */
   border: 2px solid #ef4444;
 }
 
-.diagnosticOk { color: #059669; }
-.diagnosticKo { color: #dc2626; }
+.diagnosticStatus {
+  margin-left: auto;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.diagnosticOk { color: #059669; }  /* ✓ verde */
+.diagnosticKo { color: #dc2626; }  /* ✕ rosso */
+
+/* ===== MODALE STAMPA A4 — STILE FATTURA ===== */
+.accOverlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.45);
+  display:flex; align-items:center; justify-content:center; z-index:9999;
+}
+.accModal{
+  width:min(900px,95vw); max-height:95vh; background:#fff; border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.25); overflow:auto; padding:20px;
+  display:flex; flex-direction:column; gap:12px;
+}
+
+/* Area che si stampa */
+.accSheet{
+  background:#fff; padding:24px; border:1px solid #e5e5e5; border-radius:8px;
+  font-size:14px; line-height:1.35; color:#111;
+}
+
+/* Header a due colonne (come in Cassa/Fattura) */
+.accHeader{ display:flex; justify-content:space-between; gap:16px; margin-bottom:10px; }
+.accHeadLeft{ flex:1; }
+.accCompany{ margin:0; font-size:22px; }
+.accCompanySmall{ color:#555; }
+.accHeadRight{ flex:1; text-align:right; }
+.accDocTitle{ margin:0 0 6px 0; font-size:18px; }
+
+/* Cards info */
+.accGrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:8px 0 12px; }
+.accCard{ border:1px solid #ddd; border-radius:8px; background:#fafafa; padding:10px 12px; }
+.accCardTitle{ font-weight:700; text-transform:uppercase; font-size:12px; margin-bottom:8px; color:#333; }
+.accRow{ display:flex; justify-content:space-between; gap:12px; padding:6px 0; border-bottom:1px dashed #e6e6e6; }
+.accRow:last-child{ border-bottom:none; }
+.accRow span{ color:#666; }
+.accParagraph{ white-space:pre-wrap; }
+
+/* Tabella stile fattura */
+.accTable{ width:100%; border-collapse:collapse; margin-top:6px; }
+.accTable th{ text-align:left; background:#eef1f4; color:#111; border:1px solid #d9dee3; padding:8px 10px; }
+.accTable td{ border:1px solid #e5e5e5; padding:8px 10px; }
+.accColQty{ width:80px; text-align:center; }
+.accColPrice{ width:160px; text-align:right; }
+
+/* Termini & firma */
+.accTerms{ margin-top:12px; font-size:12px; color:#333; }
+.accSignature{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px; }
+.accSignBox{ height:70px; display:flex; align-items:flex-end; justify-content:center; border-top:1px solid #000; font-size:13px; }
+
+/* Azioni modale (non stampate) */
+.accActions{ display:flex; justify-content:center; gap:10px; }
+.accBtnPrimary{
+  background:#28a745; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-weight:700; cursor:pointer;
+}
+.accBtnGhost{
+  background:#fff; color:#333; border:1px solid #ddd; border-radius:8px; padding:10px 16px; cursor:pointer;
+}
+
+/* Stampa */
+@media print {
+  body * { visibility: hidden; }
+  .accSheet, .accSheet * { visibility: visible; }
+  .accOverlay{ position:static; background:none; }
+  .accModal{ padding:0; box-shadow:none; }
+  .accActions{ display:none !important; }
+  @page { size: A4 portrait; margin: 18mm; }
+}
+
+/* Responsive */
+@media (max-width: 700px){
+  .accGrid{ grid-template-columns:1fr; }
+  .accHeadRight{ text-align:left; }
+}
 
 /* ===== MODALE STAMPA A4 PROFESSIONALE ===== */
 .accOverlay{
@@ -1649,7 +2133,6 @@
   display:flex; align-items:center; justify-content:center; z-index:9999;
   animation: fadeIn 0.3s ease;
 }
-
 .accModal{
   width:min(950px,98vw); max-height:95vh; background:#fff; border-radius:12px;
   box-shadow:0 20px 60px rgba(0,0,0,.3); overflow:auto; padding:16px;
@@ -2098,339 +2581,40 @@
   background: linear-gradient(135deg, #7f8c8d, #95a5a6);
 }
 
-/* === STILI STAMPA MIGLIORATI E CORRETTI === */
+/* Miglioramento per la stampa */
 @media print {
-  /* Reset generale per la stampa */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    color-adjust: exact !important;
-  }
-
-  /* Nasconde tutto tranne il contenuto da stampare */
-  body * {
-    visibility: hidden !important;
-  }
-
-  /* Mostra solo il contenuto del documento */
-  .accSheet,
-  .accSheet * {
-    visibility: visible !important;
-  }
-
-  /* Posizionamento del contenuto da stampare */
-  .accSheet {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-    margin: 0 !important;
+  body * { visibility: hidden; }
+  .accSheet, .accSheet * { visibility: visible; }
+  .accOverlay { 
+    position: static !important; 
+    background: none !important; 
     padding: 0 !important;
-    background: white !important;
+  }
+  .accModal { 
+    padding: 0 !important; 
+    box-shadow: none !important; 
+    border-radius: 0 !important;
+    max-height: none !important;
+    width: 100% !important;
+  }
+  .accSheet {
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    font-size: 12pt !important;
-    line-height: 1.4 !important;
+    padding: 20mm !important;
   }
-
-  /* Nasconde overlay e azioni */
-  .accOverlay {
-    position: static !important;
-    background: none !important;
-    backdrop-filter: none !important;
-  }
-
-  .accModal {
-    position: static !important;
-    width: 100% !important;
-    max-width: none !important;
-    height: auto !important;
-    max-height: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    overflow: visible !important;
-  }
-
-  .accActions {
-    display: none !important;
-  }
-
-  /* Configurazione pagina */
-  @page {
-    size: A4 portrait;
-    margin: 15mm 10mm;
-  }
-
-  /* Header professionale */
-  .accHeaderPro {
-    margin-bottom: 8mm !important;
-    page-break-inside: avoid !important;
-  }
-
-  .accCompanyName {
-    font-size: 24pt !important;
-    font-weight: 900 !important;
-  }
-
-  .accDocTitle {
-    font-size: 20pt !important;
-    font-weight: 700 !important;
-  }
-
-  /* Informazioni azienda e documento */
-  .accInfoGrid {
-    margin: 6mm 0 !important;
-    page-break-inside: avoid !important;
-  }
-
-  .accInfoSection {
-    background: #f8f9fa !important;
-    border: 1pt solid #dee2e6 !important;
-    page-break-inside: avoid !important;
-  }
-
-  .accSectionTitle {
-    font-size: 11pt !important;
-    font-weight: 700 !important;
-  }
-
-  /* Sezione problema */
-  .accProblemSection {
-    background: #fff3cd !important;
-    border: 1pt solid #ffeaa7 !important;
-    margin: 6mm 0 !important;
-    page-break-inside: avoid !important;
-  }
-
-  .accProblemText {
-    background: white !important;
-    border: 1pt solid #e9ecef !important;
-  }
-
-  /* Tabella preventivo */
-  .accTableSection {
-    margin: 6mm 0 !important;
-    page-break-inside: avoid !important;
-  }
-
-  .accTable {
-    width: 100% !important;
-    border-collapse: collapse !important;
-  }
-
-  .accTableHeader {
-    background: #2c3e50 !important;
-    color: white !important;
-    font-weight: 700 !important;
-  }
-
-  .accTableCell {
-    border: 1pt solid #e9ecef !important;
-    padding: 8pt !important;
-  }
-
-  /* Sezione privacy */
-  .accPrivacySection {
-    background: #f4f6f7 !important;
-    border: 2pt solid #bdc3c7 !important;
-    margin: 6mm 0 !important;
-    page-break-inside: avoid !important;
-  }
-
-  .accPrivacyText {
-    font-size: 10pt !important;
-    line-height: 1.3 !important;
-  }
-
-  .accPrivacyText p {
-    background: white !important;
-    border-left: 2pt solid #95a5a6 !important;
-    margin-bottom: 4mm !important;
-  }
-
-  /* Area firma */
-  .accSignatureArea {
-    margin-top: 10mm !important;
-    page-break-inside: avoid !important;
-  }
-
-  .accSignatureLine {
-    border: 2pt solid #2c3e50 !important;
-    background: white !important;
-    height: 15mm !important;
-  }
-
-  /* Footer */
-  .accFooter {
-    margin-top: 8mm !important;
-    border-top: 1pt solid #ecf0f1 !important;
-  }
-
-  .accFooterText {
-    font-size: 8pt !important;
-    color: #666 !important;
-  }
-
-  /* Evita interruzioni di pagina indesiderate */
-  .accHeaderPro,
-  .accInfoSection,
-  .accProblemSection,
-  .accTableSection,
-  .accSignatureArea {
-    page-break-inside: avoid !important;
-  }
-
-  /* Forza interruzione di pagina prima della privacy se necessario */
-  .accPrivacySection {
-    page-break-before: auto !important;
-    page-break-inside: avoid !important;
+  .accActions { display: none !important; }
+  .accHeaderPro { margin-bottom: 15mm; }
+  .accPrivacySection { page-break-inside: avoid; }
+  .accSignatureArea { margin-top: 15mm; }
+  @page { 
+    size: A4 portrait; 
+    margin: 15mm; 
   }
 }
 
-/* Responsive */
+/* Responsive per dispositivi mobili */
 @media (max-width: 768px) {
-  .pageBody {
-    padding: 16px;
-  }
-
-  .schedaHeader {
-    margin: 0 16px;
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
-  }
-  
-  .leftBlock {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .dateBox {
-    min-width: auto;
-    width: 100%;
-  }
-
-  .tableHeader {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-  
-  .tableControls {
-    width: 100%;
-    justify-content: center;
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .searchTableInput {
-    width: 100%;
-    max-width: 400px;
-  }
-  
-  .filterSelect,
-  .dateFilterContainer {
-    width: 100%;
-    max-width: 400px;
-  }
-
-  /* Responsive per range personalizzato */
-  .dateInputsRow {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .customDateRangeButtons {
-    flex-direction: column;
-  }
-
-  .applyDateBtn,
-  .resetDateBtn {
-    width: 100%;
-    justify-content: center !important;
-  }
-
-  /* Responsive per filtri attivi */
-  .activeFilterTags {
-    justify-content: center;
-  }
-
-  .filterTag {
-    font-size: 11px;
-    padding: 4px 8px;
-  }
-  
-  .paginationContainer {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .modernTable {
-    font-size: 12px;
-  }
-  
-  .modernTable th,
-  .modernTable td {
-    padding: 12px 8px !important;
-  }
-
-  .actionButtons {
-    flex-direction: column;
-    gap: 4px;
-  }
-  
-  .actionBtn {
-    min-width: 32px !important;
-    height: 32px !important;
-    padding: 6px 8px !important;
-  }
-
-  .problemCell {
-    max-width: 150px;
-    font-size: 12px;
-  }
-
-  .customerCell,
-  .deviceCell {
-    gap: 2px;
-  }
-
-  .customerName,
-  .deviceName {
-    font-size: 12px;
-  }
-
-  .customerContact,
-  .deviceSerial {
-    font-size: 11px;
-  }
-
-  .statusBadge {
-    font-size: 10px;
-    padding: 4px 8px;
-  }
-
-  /* Modal responsive */
-  .repairDetailModal {
-    width: 98%;
-    max-height: 95vh;
-  }
-  
-  .repairDetailColumns {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .diagnosticGrid {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  /* Stampa responsive */
   .accModal {
     width: 100%;
     height: 100vh;
@@ -2458,6 +2642,19 @@
     gap: 16px;
   }
 
+  .accCompanyName {
+    font-size: 20px;
+  }
+
+  .accDocTitle {
+    font-size: 18px;
+  }
+
+  .accSignatureArea {
+    flex-direction: column;
+    gap: 16px;
+  }
+
   .accActions {
     flex-direction: column;
   }
@@ -2469,17 +2666,34 @@
   }
 }
 
-/* Hover effects per le righe */
-@keyframes rowHover {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-2px); }
+@media (max-width: 480px) {
+  .accInfoRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .accValue {
+    text-align: left;
+  }
+
+  .accLogoIcon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .accCompanyDetails {
+    margin-left: 52px;
+  }
 }
 
-.modernTable tbody tr:hover {
-  animation: rowHover 0.2s ease-out forwards;
+/* Animazioni eleganti */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* Animazioni eleganti per il modal di stampa */
 .accSheet {
   animation: slideIn 0.4s ease-out;
 }
@@ -2495,293 +2709,4 @@
   }
 }
 
-/* Miglioramento per la scrollbar dei modal */
-.repairDetailBody::-webkit-scrollbar,
-.accModal::-webkit-scrollbar {
-  width: 8px;
-}
 
-.repairDetailBody::-webkit-scrollbar-track,
-.accModal::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.repairDetailBody::-webkit-scrollbar-thumb,
-.accModal::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-  transition: background 0.2s ease;
-}
-
-.repairDetailBody::-webkit-scrollbar-thumb:hover,
-.accModal::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
-}
-
-/* Marart*/
-
-@media print {
-  /* Riduzione generale più aggressiva */
-  .accSheet {
-    font-size: 8pt !important;
-    line-height: 1.1 !important;
-    padding: 3mm !important;
-    transform: scale(0.9) !important;
-    transform-origin: top left !important;
-    width: 110% !important;
-  }
-  
-  /* Riorganizzazione header: dati azienda a sinistra, autorizzazione a destra */
-  .accHeaderPro {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px !important;
-    margin-bottom: 3mm !important;
-    padding-bottom: 3mm !important;
-    align-items: start !important;
-  }
-  
-  .accLogoSection {
-    grid-column: 1 !important;
-  }
-  
-  .accDocSection {
-    grid-column: 2 !important;
-    text-align: right !important;
-    margin-top: 0 !important;
-  }
-  
-  /* Riduzione dimensioni header */
-  .accCompanyName {
-    font-size: 14pt !important;
-    margin-bottom: 1mm !important;
-  }
-  
-  .accCompanyTagline {
-    font-size: 8pt !important;
-  }
-  
-  .accCompanyDetails {
-    font-size: 7pt !important;
-    margin-left: 0 !important;
-    margin-top: 2mm !important;
-  }
-  
-  .accDocTitle {
-    font-size: 12pt !important;
-    margin-bottom: 2mm !important;
-  }
-  
-  .accDocInfo {
-    padding: 4px 6px !important;
-    font-size: 8pt !important;
-  }
-  
-  .accDocInfo > div {
-    margin-bottom: 1px !important;
-    flex-direction: column !important;
-    align-items: flex-end !important;
-  }
-  
-  /* Divider più sottile */
-  .accDivider {
-    margin: 4px 0 !important;
-    height: 0.5px !important;
-  }
-  
-  /* Layout grid più compatto */
-  .accInfoGrid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 6px !important;
-    margin-bottom: 8px !important;
-  }
-  
-  .accInfoSection {
-    padding: 6px !important;
-    margin-bottom: 0 !important;
-  }
-  
-  .accSectionTitle {
-    font-size: 8pt !important;
-    margin-bottom: 4px !important;
-    padding-bottom: 2px !important;
-  }
-  
-  .accInfoRows {
-    gap: 3px !important;
-  }
-  
-  .accInfoRow {
-    padding: 2px 0 !important;
-    margin-bottom: 1px !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 1px !important;
-  }
-  
-  .accLabel {
-    font-size: 7pt !important;
-    min-width: auto !important;
-  }
-  
-  .accValue {
-    font-size: 8pt !important;
-    text-align: left !important;
-  }
-  
-  /* Sezione problema più compatta */
-  .accProblemSection {
-    padding: 8px !important;
-    margin-bottom: 8px !important;
-  }
-  
-  .accProblemText {
-    padding: 6px !important;
-    font-size: 8pt !important;
-    margin-bottom: 4px !important;
-  }
-  
-  .accNotesText {
-    font-size: 7pt !important;
-  }
-  
-  /* Tabella più compatta */
-  .accTableSection {
-    margin-bottom: 8px !important;
-  }
-  
-  .accTable {
-    font-size: 7pt !important;
-  }
-  
-  .accTableHeader {
-    padding: 4px 4px !important;
-    font-size: 7pt !important;
-  }
-  
-  .accTableCell {
-    padding: 3px 4px !important;
-    font-size: 7pt !important;
-  }
-  
-  /* Sezione privacy ultra compatta */
-  .accPrivacySection {
-    padding: 8px !important;
-    margin-bottom: 8px !important;
-  }
-  
-  .accPrivacyTitle {
-    font-size: 9pt !important;
-    margin-bottom: 4px !important;
-    padding: 3px 6px !important;
-  }
-  
-  .accPrivacyText {
-    font-size: 6pt !important;
-    line-height: 1.1 !important;
-  }
-  
-  .accPrivacyText p {
-    margin-bottom: 3px !important;
-    padding: 3px !important;
-  }
-  
-  /* Area firma più compatta */
-  .accConsentSection {
-    margin-top: 4px !important;
-    padding-top: 4px !important;
-  }
-  
-  .accConsentTitle {
-    font-size: 8pt !important;
-    margin-bottom: 4px !important;
-    padding: 2px 4px !important;
-  }
-  
-  .accSignatureArea {
-    margin-top: 4px !important;
-    gap: 6px !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-  }
-  
-  .accSignatureBox {
-    flex: none !important;
-  }
-  
-  .accSignatureLabel {
-    font-size: 7pt !important;
-  }
-  
-  .accSignatureLine {
-    height: 25px !important;
-  }
-  
-  .accDateBox {
-    flex: none !important;
-    text-align: left !important;
-  }
-  
-  .accDateLabel {
-    font-size: 7pt !important;
-    padding: 2px 4px !important;
-  }
-  
-  /* Footer più piccolo */
-  .accFooter {
-    margin-top: 4px !important;
-    padding-top: 2px !important;
-  }
-  
-  .accFooterText {
-    font-size: 6pt !important;
-  }
-  
-  /* Forza tutto su una pagina con misure più aggressive */
-  .accSheet * {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-  
-  .accSheet {
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-    height: auto !important;
-    max-height: 100% !important;
-  }
-  
-  /* Margini di pagina ridotti al minimo */
-  @page {
-    margin: 5mm 3mm !important;
-  }
-}
-
-/* Utility class per ridurre ulteriormente gli spazi */
-.printCompact * {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.printCompact .accInfoRow {
-  min-height: auto !important;
-}
-
-.printCompact .accSignatureArea {
-  margin-top: 2mm !important;
-}
-
-/* Riduzione extra per sezioni lunghe */
-.printCompact .accPrivacyText p {
-  line-height: 1 !important;
-  margin-bottom: 1mm !important;
-}
-
-/* Forza layout verticale ultra-compatto */
-.printCompact .accInfoGrid {
-  grid-template-columns: 1fr !important;
-}
-
-.printCompact .accInfoSection {
-  margin-bottom: 2mm !important;
-}

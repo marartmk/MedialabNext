@@ -855,7 +855,7 @@ const Modifica: React.FC = () => {
           <div className="breadcrumb">
             <span className="breadcrumb-item">Roma - Next srl</span>
             <span className="breadcrumb-separator"> &gt; </span>
-            <span className="breadcrumb-current">Modifica Riparazione</span>
+            <span className="breadcrumb-current">Modifica - Completa Riparazione</span>
           </div>
         </div>
 
@@ -863,7 +863,7 @@ const Modifica: React.FC = () => {
           <div className="repair-form-container">
             {/* Header della pagina */}
             <div className="page-title">
-              <h1>Modifica Riparazione</h1>
+              <h1>Modifica / Completa Riparazione</h1>
               <p>
                 ID: {repairData.repairId} | Creata il:{" "}
                 {new Date(repairData.createdAt).toLocaleDateString("it-IT")}

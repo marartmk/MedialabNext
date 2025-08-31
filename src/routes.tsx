@@ -16,6 +16,7 @@ import Device from "./pages/DeviceRegistry";
 import RicercaSchede from "./pages/RicercaSchede";
 import Modifica from "./pages/Modifica";
 import Magazzino from "./pages/Magazzino";
+import Logistica from "./pages/Logistica";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -153,6 +154,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Magazzino />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/gestione-logistica"
+        element={
+          <ProtectedRoute>
+            <Logistica />
           </ProtectedRoute>
         }
       />

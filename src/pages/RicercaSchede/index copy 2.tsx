@@ -713,7 +713,7 @@ const RicercaSchede: React.FC = () => {
         to: defaultEndDate.split("T")[0],
       });
     } catch (error: unknown) {
-      console.error("⌐ Errore nel caricamento delle riparazioni:", error);
+      console.error("❌ Errore nel caricamento delle riparazioni:", error);
       if (error instanceof Error) {
         setError(error.message);
       } else {
@@ -858,330 +858,6 @@ const RicercaSchede: React.FC = () => {
     setShowPrintModal(true);
   };
 
-  // FUNZIONE DI STAMPA CORRETTA
-  const handlePrintRepairDocument = async () => {
-    try {
-      // Aggiungi un piccolo delay per assicurarti che il modal sia completamente renderizzato
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      // Trova l'elemento da stampare
-      const printContent = document.querySelector(`.${styles.accSheet}`);
-
-      if (!printContent) {
-        console.error("Elemento da stampare non trovato");
-        alert("Errore: impossibile trovare il contenuto da stampare");
-        return;
-      }
-
-      // Crea una finestra di stampa separata
-      const printWindow = window.open("", "_blank", "width=800,height=600");
-
-      if (!printWindow) {
-        console.error("Impossibile aprire la finestra di stampa");
-        alert(
-          "Errore: impossibile aprire la finestra di stampa. Verifica che i popup siano consentiti."
-        );
-        return;
-      }
-
-      // Ottieni tutti i CSS della pagina corrente
-      const cssLinks = Array.from(
-        document.querySelectorAll('link[rel="stylesheet"]')
-      )
-        .map((link) => `<link rel="stylesheet" href="${link.href}">`)
-        .join("");
-
-      const cssStyles = Array.from(document.querySelectorAll("style"))
-        .map((style) => style.outerHTML)
-        .join("");
-
-      // Crea il contenuto HTML della finestra di stampa
-      const printHTML = `
-        <!DOCTYPE html>
-        <html lang="it">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Documento di Riparazione - ${
-            printRepair?.repairCode || ""
-          }</title>
-          ${cssLinks}
-          ${cssStyles}
-          <style>
-            @media print {
-              * { 
-                visibility: hidden !important; 
-                box-sizing: border-box !important;
-              }
-              .print-content, 
-              .print-content * { 
-                visibility: visible !important; 
-              }
-              .print-content {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                height: auto !important;
-                margin: 0 !important;
-                padding: 5mm !important;
-                background: white !important;
-                border: none !important;
-                box-shadow: none !important;
-                border-radius: 0 !important;
-                font-size: 10px !important;
-                line-height: 1.2 !important;
-                color: #000 !important;
-                overflow: hidden !important;
-              }
-              @page { 
-                size: A4 portrait; 
-                margin: 10mm 8mm; 
-              }
-              
-              /* Compatta header */
-              .print-content .accHeaderPro {
-                margin-bottom: 8px !important;
-                padding-bottom: 8px !important;
-                border-bottom: 1px solid #000 !important;
-              }
-              .print-content .accCompanyName {
-                font-size: 16px !important;
-                margin-bottom: 2px !important;
-                line-height: 1.1 !important;
-              }
-              .print-content .accCompanyTagline {
-                font-size: 8px !important;
-                line-height: 1 !important;
-              }
-              .print-content .accDocTitle {
-                font-size: 14px !important;
-                margin-bottom: 4px !important;
-                line-height: 1.1 !important;
-              }
-              .print-content .accDocInfo {
-                padding: 6px 8px !important;
-                font-size: 8px !important;
-                line-height: 1.1 !important;
-              }
-              .print-content .accDocInfo > div {
-                margin-bottom: 2px !important;
-              }
-              .print-content .accCompanyDetails {
-                font-size: 9px !important;
-                line-height: 1.1 !important;
-                margin-left: 45px !important;
-              }
-              .print-content .accLogoIcon {
-                width: 35px !important;
-                height: 35px !important;
-                font-size: 16px !important;
-              }
-              
-              /* Divider più sottile */
-              .print-content .accDivider {
-                margin: 6px 0 !important;
-                height: 1px !important;
-                background: #000 !important;
-              }
-              
-              /* Info grid compatta */
-              .print-content .accInfoGrid {
-                gap: 8px !important;
-                margin: 8px 0 !important;
-              }
-              .print-content .accInfoSection {
-                padding: 8px !important;
-                background: #f8f8f8 !important;
-              }
-              .print-content .accSectionTitle {
-                font-size: 10px !important;
-                margin-bottom: 6px !important;
-                padding-bottom: 2px !important;
-                border-bottom: 1px solid #000 !important;
-              }
-              .print-content .accInfoRows {
-                gap: 4px !important;
-              }
-              .print-content .accInfoRow {
-                padding: 2px 0 !important;
-                border-bottom: 1px dotted #ccc !important;
-                margin-bottom: 2px !important;
-              }
-              .print-content .accLabel,
-              .print-content .accValue {
-                font-size: 9px !important;
-                line-height: 1.1 !important;
-              }
-              
-              /* Problema section compatta */
-              .print-content .accProblemSection {
-                background: #ffffcc !important;
-                padding: 8px !important;
-                margin: 8px 0 !important;
-                border: 1px solid #000 !important;
-              }
-              .print-content .accProblemText {
-                padding: 6px !important;
-                font-size: 9px !important;
-                line-height: 1.2 !important;
-                background: white !important;
-              }
-              .print-content .accNotesText {
-                font-size: 8px !important;
-                line-height: 1.1 !important;
-              }
-              
-              /* Tabella compatta */
-              .print-content .accTableSection {
-                margin: 8px 0 !important;
-              }
-              .print-content .accTable {
-                margin-top: 4px !important;
-              }
-              .print-content .accTableHeader {
-                padding: 6px 8px !important;
-                font-size: 9px !important;
-                background: #333 !important;
-                color: white !important;
-              }
-              .print-content .accTableCell {
-                padding: 6px 8px !important;
-                font-size: 9px !important;
-                line-height: 1.1 !important;
-                background: #f9f9f9 !important;
-                border: 1px solid #ccc !important;
-              }
-              
-              /* Privacy section molto compatta */
-              .print-content .accPrivacySection {
-                background: #f0f0f0 !important;
-                border: 1px solid #000 !important;
-                padding: 8px !important;
-                margin: 8px 0 !important;
-              }
-              .print-content .accPrivacyTitle {
-                font-size: 10px !important;
-                margin-bottom: 6px !important;
-                padding: 4px 8px !important;
-                background: white !important;
-                border: 1px solid #000 !important;
-              }
-              .print-content .accPrivacyText {
-                font-size: 7px !important;
-                line-height: 1.1 !important;
-              }
-              .print-content .accPrivacyText p {
-                margin-bottom: 4px !important;
-                padding: 4px !important;
-                background: white !important;
-                border-left: 2px solid #000 !important;
-              }
-              
-              /* Area firma compatta */
-              .print-content .accConsentSection {
-                margin-top: 6px !important;
-                padding-top: 6px !important;
-                border-top: 1px dashed #000 !important;
-              }
-              .print-content .accConsentTitle {
-                font-size: 9px !important;
-                margin-bottom: 6px !important;
-                padding: 3px 6px !important;
-              }
-              .print-content .accSignatureArea {
-                margin-top: 6px !important;
-                gap: 12px !important;
-              }
-              .print-content .accSignatureLabel {
-                font-size: 8px !important;
-              }
-              .print-content .accSignatureLine {
-                height: 20px !important;
-                border: 1px solid #000 !important;
-              }
-              .print-content .accDateLabel {
-                font-size: 8px !important;
-                padding: 3px 6px !important;
-                border: 1px solid #000 !important;
-              }
-              
-              /* Footer compatto */
-              .print-content .accFooter {
-                margin-top: 6px !important;
-                padding-top: 4px !important;
-                border-top: 1px solid #ccc !important;
-              }
-              .print-content .accFooterText {
-                font-size: 7px !important;
-                text-align: center !important;
-              }
-              
-              /* Forza tutto su una pagina */
-              .print-content * {
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-              }
-              .print-content {
-                page-break-after: avoid !important;
-                break-after: avoid !important;
-              }
-            }
-
-            @media screen {
-              body {
-                margin: 0;
-                padding: 20px;
-                background: #f5f5f5;
-                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-              }
-              .print-content {
-                max-width: 210mm;
-                margin: 0 auto;
-                background: white;
-                padding: 32px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-                border-radius: 8px;
-                font-size: 13px;
-                line-height: 1.4;
-                color: #2c3e50;
-              }
-              .no-print {
-                display: none;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="print-content">
-            ${printContent.innerHTML}
-          </div>
-          <script>
-            // Auto-stampa quando la pagina è completamente caricata
-            window.onload = function() {
-              setTimeout(() => {
-                window.print();
-                // Chiudi la finestra dopo la stampa (opzionale)
-                setTimeout(() => window.close(), 1000);
-              }, 500);
-            };
-          </script>
-        </body>
-        </html>
-      `;
-
-      // Scrivi il contenuto nella nuova finestra
-      printWindow.document.write(printHTML);
-      printWindow.document.close();
-
-      // Focus sulla nuova finestra
-      printWindow.focus();
-    } catch (error) {
-      console.error("Errore durante la stampa:", error);
-      alert("Si è verificato un errore durante la preparazione della stampa.");
-    }
-  };
-
   // Funzioni di utilità
   const getStatusClass = (status: string): string => {
     switch (status.toLowerCase()) {
@@ -1209,7 +885,7 @@ const RicercaSchede: React.FC = () => {
     switch (status.toLowerCase()) {
       case "pending":
       case "in attesa":
-        return "⌛";
+        return "⏳";
       case "in progress":
       case "in lavorazione":
         return "🔧";
@@ -1301,7 +977,7 @@ const RicercaSchede: React.FC = () => {
         to: fmtDateIT(end),
       });
     } catch (err: unknown) {
-      console.error("⌐ Errore nel caricamento esteso:", err);
+      console.error("❌ Errore nel caricamento esteso:", err);
       if (err instanceof Error) {
         setError?.(err.message);
       } else {
@@ -1481,7 +1157,7 @@ const RicercaSchede: React.FC = () => {
             icon: "🎙️",
           },
           { key: "altoparlantteChiamata", label: "Altoparlante", icon: "🔊" },
-          { key: "speakerBuzzer", label: "Speaker/Buzzer", icon: "🔢" },
+          { key: "speakerBuzzer", label: "Speaker/Buzzer", icon: "📢" },
           { key: "tastiVolumeMuto", label: "Tasti Volume/Muto", icon: "🔘" },
           { key: "tastoStandbyPower", label: "Tasto Power", icon: "⏻" },
           { key: "tastoHome", label: "Tasto Home", icon: "🏠" },
@@ -2331,9 +2007,8 @@ const RicercaSchede: React.FC = () => {
           <div className={styles.accModal} onClick={(e) => e.stopPropagation()}>
             {/* AREA CHE SI STAMPA */}
             <div className={styles.accSheet}>
-              {/* Header professionale con logo */}             
+              {/* Header professionale con logo */}
               <div className={styles.accHeaderPro}>
-                {/* Colonna sinistra - Dati azienda */}
                 <div className={styles.accLogoSection}>
                   <div className={styles.accLogo}>
                     <div className={styles.accLogoIcon}>🏥</div>
@@ -2354,8 +2029,6 @@ const RicercaSchede: React.FC = () => {
                     <div>{companyVat}</div>
                   </div>
                 </div>
-
-                {/* Colonna destra - Autorizzazione al lavoro */}
                 <div className={styles.accDocSection}>
                   <h1 className={styles.accDocTitle}>
                     Autorizzazione al lavoro
@@ -2369,24 +2042,24 @@ const RicercaSchede: React.FC = () => {
                     </div>
                     <div>
                       <strong>Numero di Riparazione:</strong>{" "}
-                      {printRepair?.repairCode}
+                      {printRepair.repairCode}
                     </div>
                     <div>
                       <strong>Data:</strong>{" "}
-                      {new Date(
-                        printRepair?.createdAt || ""
-                      ).toLocaleDateString("it-IT")}{" "}
-                      {new Date(
-                        printRepair?.createdAt || ""
-                      ).toLocaleTimeString("it-IT", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {new Date(printRepair.createdAt).toLocaleDateString(
+                        "it-IT"
+                      )}{" "}
+                      {new Date(printRepair.createdAt).toLocaleTimeString(
+                        "it-IT",
+                        { hour: "2-digit", minute: "2-digit" }
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
+
               <hr className={styles.accDivider} />
+
               {/* Dati cliente / dispositivo con layout migliorato */}
               <div className={styles.accInfoGrid}>
                 <div className={styles.accInfoSection}>
@@ -2486,6 +2159,7 @@ const RicercaSchede: React.FC = () => {
                   </div>
                 </div>
               </div>
+
               {/* Descrizione problema */}
               <div className={styles.accProblemSection}>
                 <div className={styles.accSectionTitle}>
@@ -2500,6 +2174,7 @@ const RicercaSchede: React.FC = () => {
                   </div>
                 )}
               </div>
+
               {/* Tabella preventivo */}
               <div className={styles.accTableSection}>
                 <div className={styles.accSectionTitle}>PREVENTIVO</div>
@@ -2555,6 +2230,7 @@ const RicercaSchede: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+
               {/* Clausole complete privacy e servizio */}
               <div className={styles.accPrivacySection}>
                 <div className={styles.accPrivacyTitle}>
@@ -2619,6 +2295,7 @@ const RicercaSchede: React.FC = () => {
                   </div>
                 </div>
               </div>
+
               {/* Footer con informazioni legali */}
               <div className={styles.accFooter}>
                 <div className={styles.accFooterText}>
@@ -2641,7 +2318,7 @@ const RicercaSchede: React.FC = () => {
               </button>
               <button
                 className={styles.accBtnPrimary}
-                onClick={handlePrintRepairDocument}
+                onClick={() => window.print()}
               >
                 🖨️ Stampa Documento
               </button>

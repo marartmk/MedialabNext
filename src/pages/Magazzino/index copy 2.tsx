@@ -17,8 +17,6 @@ import {
   Volume2,
   Cpu,
   Settings,
-  Grid3X3,
-  List,
 } from "lucide-react";
 import "./magazzino-styles.css";
 
@@ -76,7 +74,6 @@ const Magazzino: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [stockStatus, setStockStatus] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
 
   // Stati per il modal
   const [showModal, setShowModal] = useState(false);
@@ -684,29 +681,6 @@ const Magazzino: React.FC = () => {
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
-
-                  {/* Selettore visualizzazione */}
-                  <div className="view-selector">
-                    <button
-                      className={`view-btn ${
-                        viewMode === "grid" ? "active" : ""
-                      }`}
-                      onClick={() => setViewMode("grid")}
-                      title="Vista Griglia"
-                    >
-                      <Grid3X3 className="view-icon" />
-                    </button>
-                    <button
-                      className={`view-btn ${
-                        viewMode === "list" ? "active" : ""
-                      }`}
-                      onClick={() => setViewMode("list")}
-                      title="Vista Lista"
-                    >
-                      <List className="view-icon" />
-                    </button>
-                  </div>
-
                   <div className="toolbar-actions">
                     <button
                       className="btn btn-success"
@@ -717,222 +691,117 @@ const Magazzino: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Area contenuto - Vista condizionale */}
-                {viewMode === "grid" ? (
-                  /* Griglia articoli */
-                  <div className="items-grid">
-                    {filteredItems.map((item) => {
-                      const stockStatus = getStockStatus(item);
+                {/* Griglia articoli */}
+                <div className="items-grid">
+                  {filteredItems.map((item) => {
+                    const stockStatus = getStockStatus(item);
 
-                      return (
-                        <div key={item.id} className="item-card">
-                          <div className="item-header">
-                            <div className={`item-icon ${item.category}`}>
-                              {getCategoryIcon(item.category)}
-                            </div>
-                            <div className="item-info">
-                              <div className="item-code">{item.code}</div>
-                              <h4 className="item-name">{item.name}</h4>
-                              <p className="item-description">
-                                {item.description}
-                              </p>
-                            </div>
-                            <div
-                              className={`stock-badge ${getStockBadgeClass(
-                                stockStatus
-                              )}`}
-                            >
-                              {getStockBadgeText(stockStatus)}
-                            </div>
+                    return (
+                      <div key={item.id} className="item-card">
+                        <div className="item-header">
+                          <div className={`item-icon ${item.category}`}>
+                            {getCategoryIcon(item.category)}
                           </div>
-
-                          <div className="item-details">
-                            <div className="item-row">
-                              <span className="item-label">Marca:</span>
-                              <span className="item-value">{item.brand}</span>
-                            </div>
-                            <div className="item-row">
-                              <span className="item-label">Modello:</span>
-                              <span className="item-value">{item.model}</span>
-                            </div>
-                            <div className="item-row">
-                              <span className="item-label">Scorte:</span>
-                              <span
-                                className={`stock-quantity ${
-                                  stockStatus === "low"
-                                    ? "quantity-low"
-                                    : stockStatus === "out"
-                                    ? "quantity-out"
-                                    : ""
-                                }`}
-                              >
-                                {item.quantity} / {item.minQuantity}+ unità
-                              </span>
-                            </div>
-                            <div className="item-row">
-                              <span className="item-label">Prezzo:</span>
-                              <span className="price-value">
-                                € {item.unitPrice.toFixed(2)}
-                              </span>
-                            </div>
-                            <div className="item-row">
-                              <span className="item-label">Ubicazione:</span>
-                              <span className="item-value">
-                                {item.location}
-                              </span>
-                            </div>
-                            <div className="item-row">
-                              <span className="item-label">Fornitore:</span>
-                              <span className="item-value">
-                                {getSupplierName(item.supplier)}
-                              </span>
-                            </div>
-
-                            <div
-                              style={{
-                                marginTop: "12px",
-                                display: "flex",
-                                gap: "8px",
-                                justifyContent: "flex-end",
-                              }}
-                            >
-                              <button
-                                className="btn btn-primary"
-                                style={{
-                                  padding: "6px 12px",
-                                  fontSize: "0.75rem",
-                                }}
-                                onClick={() => openModal("view", item)}
-                              >
-                                Dettagli
-                              </button>
-                              <button
-                                className="btn btn-warning"
-                                style={{
-                                  padding: "6px 12px",
-                                  fontSize: "0.75rem",
-                                }}
-                                onClick={() => openModal("edit", item)}
-                              >
-                                Modifica
-                              </button>
-                              <button
-                                className="btn btn-danger"
-                                style={{
-                                  padding: "6px 12px",
-                                  fontSize: "0.75rem",
-                                }}
-                                onClick={() => handleDeleteItem(item.id)}
-                              >
-                                Elimina
-                              </button>
-                            </div>
+                          <div className="item-info">
+                            <div className="item-code">{item.code}</div>
+                            <h4 className="item-name">{item.name}</h4>
+                            <p className="item-description">
+                              {item.description}
+                            </p>
+                          </div>
+                          <div
+                            className={`stock-badge ${getStockBadgeClass(
+                              stockStatus
+                            )}`}
+                          >
+                            {getStockBadgeText(stockStatus)}
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  /* Vista Lista */
-                  <div className="items-table-container">
-                    <table className="items-table">
-                      <thead>
-                        <tr>
-                          <th className="col-code">Codice</th>
-                          <th>Nome</th>
-                          <th>Marca</th>
-                          <th>Modello</th>
-                          <th>Categoria</th>
-                          <th>Scorte</th>
-                          <th>Prezzo</th>
-                          <th>Ubicazione</th>
-                          <th>Azioni</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredItems.map((item) => {
-                          const stockStatus = getStockStatus(item);
-                          const category = categories.find(
-                            (cat) => cat.id === item.category
-                          );
 
-                          return (
-                            <tr key={item.id} className="table-row">
-                              <td className="table-code">{item.code}</td>
-                              <td className="table-name">
-                                <div className="name-with-icon">
-                                  <div
-                                    className={`table-icon ${item.category}`}
-                                  >
-                                    {getCategoryIcon(item.category)}
-                                  </div>
-                                  <div>
-                                    <div className="table-item-name">
-                                      {item.name}
-                                    </div>
-                                    <div className="table-item-desc">
-                                      {item.description}
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td>{item.brand}</td>
-                              <td>{item.model}</td>
-                              <td>
-                                <span
-                                  className="category-badge"
-                                  style={{
-                                    backgroundColor: category?.color + "20",
-                                    color: category?.color,
-                                  }}
-                                >
-                                  {category?.icon} {category?.name}
-                                </span>
-                              </td>
-                              <td>
-                                <span
-                                  className={`stock-quantity ${
-                                    stockStatus === "low"
-                                      ? "quantity-low"
-                                      : stockStatus === "out"
-                                      ? "quantity-out"
-                                      : ""
-                                  }`}
-                                >
-                                  {item.quantity} / {item.minQuantity}+
-                                </span>
-                              </td>
-                              <td className="table-price">
-                                € {item.unitPrice.toFixed(2)}
-                              </td>
-                              <td>{item.location}</td>
-                              <td className="table-actions">
-                                <button
-                                  className="action-btn btn-view"
-                                  onClick={() => openModal("view", item)}
-                                >
-                                  👁️
-                                </button>
-                                <button
-                                  className="action-btn btn-edit"
-                                  onClick={() => openModal("edit", item)}
-                                >
-                                  ✏️
-                                </button>
-                                <button
-                                  className="action-btn btn-delete"
-                                  onClick={() => handleDeleteItem(item.id)}
-                                >
-                                  🗑️
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                        <div className="item-details">
+                          <div className="item-row">
+                            <span className="item-label">Marca:</span>
+                            <span className="item-value">{item.brand}</span>
+                          </div>
+                          <div className="item-row">
+                            <span className="item-label">Modello:</span>
+                            <span className="item-value">{item.model}</span>
+                          </div>
+                          <div className="item-row">
+                            <span className="item-label">Scorte:</span>
+                            <span
+                              className={`stock-quantity ${
+                                stockStatus === "low"
+                                  ? "quantity-low"
+                                  : stockStatus === "out"
+                                  ? "quantity-out"
+                                  : ""
+                              }`}
+                            >
+                              {item.quantity} / {item.minQuantity}+ unità
+                            </span>
+                          </div>
+                          <div className="item-row">
+                            <span className="item-label">Prezzo:</span>
+                            <span className="price-value">
+                              € {item.unitPrice.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="item-row">
+                            <span className="item-label">Ubicazione:</span>
+                            <span className="item-value">{item.location}</span>
+                          </div>
+                          <div className="item-row">
+                            <span className="item-label">Fornitore:</span>
+                            <span className="item-value">
+                              {getSupplierName(item.supplier)}
+                            </span>
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: "12px",
+                              display: "flex",
+                              gap: "8px",
+                              justifyContent: "flex-end",
+                            }}
+                          >
+                            <button
+                              className="btn btn-primary"
+                              style={{
+                                padding: "6px 12px",
+                                fontSize: "0.75rem",
+                              }}
+                              onClick={() => openModal("view", item)}
+                            >
+                              Dettagli
+                            </button>
+                            <button
+                              className="btn btn-warning"
+                              style={{
+                                padding: "6px 12px",
+                                fontSize: "0.75rem",
+                              }}
+                              onClick={() => openModal("edit", item)}
+                            >
+                              Modifica
+                            </button>
+                            <button
+                              className="btn btn-danger"
+                              style={{
+                                padding: "6px 12px",
+                                fontSize: "0.75rem",
+                              }}
+                              onClick={() => handleDeleteItem(item.id)}
+                            >
+                              Elimina
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
 
                 {/* Messaggio se non ci sono risultati */}
                 {filteredItems.length === 0 && (

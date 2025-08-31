@@ -100,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         </button>
         <button
           className="list-group-item"
-          onClick={() => window.open("https://whr.dea40.it", "_blank")}
+          onClick={() => window.open("https://whrtest.dea40.it", "_blank")}
         >
           <Settings className="icon" />
           <span className="item-text">Amministrazione</span>
