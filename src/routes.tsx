@@ -12,10 +12,10 @@ import MasterCompany from "./pages/ReservedArea/AnagraficaMaster";
 import AffiliateManagement from "./pages/ReservedArea/AffiliateManagement";
 import DashboarLocaldAdmin from "./pages/LocalAreaConfig/DashboardLocalAdmin";
 import LoginLocalAdmin from "./pages/LoginLocalAdmin";
-import TestPage from "./pages/TestPage";
 import Device from "./pages/DeviceRegistry";
 import RicercaSchede from "./pages/RicercaSchede";
 import Modifica from "./pages/Modifica";
+import Magazzino from "./pages/Magazzino";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -128,16 +128,7 @@ const AppRoutes = () => {
             <Device />
           </ProtectedRoute>
         }
-      />
-
-      <Route
-        path="/testpage"
-        element={
-          <ProtectedRoute>
-            <TestPage />
-          </ProtectedRoute>
-        }
-      />
+      />     
 
       <Route
         path="/ricerca-schede"
@@ -153,6 +144,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Modifica />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/magazzino-ricambi"
+        element={
+          <ProtectedRoute>
+            <Magazzino />
           </ProtectedRoute>
         }
       />
