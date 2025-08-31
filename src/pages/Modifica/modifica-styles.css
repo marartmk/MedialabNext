@@ -828,3 +828,141 @@
 .page-body::-webkit-scrollbar-thumb:hover {
   background: #a1a1a1;
 }
+
+/* ===== Ricambi utilizzati ===== */
+.parts-section { }
+
+.parts-results {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.parts-result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.parts-result-item:hover {
+  border-color: #333;
+  box-shadow: 0 2px 10px rgba(0,0,0,.08);
+  transform: translateY(-1px);
+}
+
+.parts-result-item .pri-name { font-size: .9rem; }
+.parts-result-item .pri-name .muted { color: #666; margin-left: 4px; font-weight: 500; }
+.parts-result-item .pri-meta { display: flex; gap: 10px; align-items: center; font-size: .8rem; }
+.parts-result-item .pri-meta .code { font-family: monospace; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; }
+.parts-result-item .pri-meta .price { font-weight: 800; color: #28a745; }
+.parts-result-item .pri-meta .stock.ok { color: #007bff; font-weight: 700; }
+.parts-result-item .pri-meta .stock.low { color: #fd7e14; font-weight: 700; }
+.parts-result-item .pri-meta .stock.out { color: #dc3545; font-weight: 700; }
+
+.parts-table-container {
+  margin-top: 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.parts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+
+.parts-table th, .parts-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.parts-table thead {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.parts-table tfoot td {
+  background: #fafafa;
+}
+
+.qty-input {
+  text-align: right;
+}
+
+.empty-hint {
+  padding: 12px;
+  color: #666;
+  font-size: .9rem;
+}
+
+.parts-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* Toggle Ingresso/Uscita */
+.diagnostic-toggle {
+  display: inline-flex;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+.toggle-btn {
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.toggle-btn + .toggle-btn {
+  border-left: 1px solid #e5e5e5;
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, #f0f4ff 0%, #dbe4ff 100%);
+  color: #0b5ed7;
+}
+
+/* Azioni diagnostica */
+.diagnostic-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+/* Select stato riparazione nel box RIPARAZIONE */
+.status-select {
+  appearance: auto;
+  background: #fff;
+  font-weight: 600;
+}
+
+.status-select option {
+  font-weight: 600;
+}
+.hint {
+  display:block;
+  margin-top:4px;
+  color:#777;
+  font-size:.78rem;
+}
+

@@ -101,6 +101,26 @@ interface Operator {
   phoneNumber?: string;
 }
 
+interface PartSearchItem {
+  id: string;
+  code: string;
+  name: string;
+  brand: string;
+  model: string;
+  unitPrice: number;
+  quantity: number; // giacenza attuale
+}
+
+interface RepairPartLine {
+  tempId: string;
+  itemId: string;
+  code: string;
+  name: string;
+  qty: number;
+  unitPrice: number;
+  lineTotal: number;
+}
+
 const Modifica: React.FC = () => {
   const { repairId } = useParams<{ repairId: string }>();
   const navigate = useNavigate();
@@ -121,6 +141,73 @@ const Modifica: React.FC = () => {
 
   const repairGuid = navState.repairGuid || search.get("rid") || "";
   const numericId = navState.id ?? Number(search.get("id") || 0);
+
+  // Modalità diagnostica corrente
+  const [diagnosticMode, setDiagnosticMode] = useState<"incoming" | "exit">(
+    "incoming"
+  );
+
+  // Stato riparazione (code + label) — valore iniziale dal dato caricato
+  const [repairStatusCode, setRepairStatusCode] = useState<string>("");
+
+  // mappa codice↔︎label (riusa queste chiavi anche per il BE)
+  const REPAIR_STATUS = [
+    { code: "RECEIVED", label: "📥 Ricevuto" },
+    { code: "PENDING", label: "⏳ In Attesa" },
+    { code: "IN_PROGRESS", label: "🔧 In Lavorazione" },
+    { code: "COMPLETED", label: "✅ Completato" },
+    { code: "DELIVERED", label: "📦 Consegnato" },
+    { code: "CANCELLED", label: "❌ Annullato" },
+  ];
+
+  // Simulazione di dati per i ricambi
+  const fakeParts: PartSearchItem[] = [
+    {
+      id: "1",
+      code: "LCD-S23",
+      name: "Display IPhone 13",
+      brand: "Apple",
+      model: "S23",
+      unitPrice: 220,
+      quantity: 5,
+    },
+    {
+      id: "2",
+      code: "BAT-IP13",
+      name: "Batteria iPhone 13",
+      brand: "Apple",
+      model: "iPhone 13",
+      unitPrice: 89,
+      quantity: 12,
+    },
+    {
+      id: "3",
+      code: "CONN-XIA12",
+      name: "Connettore ricarica IPhone 12",
+      brand: "Apple",
+      model: "iPhone 12",
+      unitPrice: 25,
+      quantity: 8,
+    },
+    {
+      id: "4",
+      code: "CAM-HUA-P50",
+      name: "Fotocamera IPhone 13",
+      brand: "Apple",
+      model: "iPhone 13",
+      unitPrice: 140,
+      quantity: 2,
+    },
+  ];
+
+  // Ricerca ricambi + righe utilizzate
+  const [partsQuery, setPartsQuery] = useState("");
+  const [partsResults, setPartsResults] = useState<PartSearchItem[]>([]);
+  const [partsSearching, setPartsSearching] = useState(false);
+  const [usedParts, setUsedParts] = useState<RepairPartLine[]>([]);
+
+  // Totale ricambi
+  const partsTotal = usedParts.reduce((s, l) => s + l.lineTotal, 0);
 
   // Stati per i dati della riparazione
   const [repairData, setRepairData] = useState<RepairData | null>(null);
@@ -205,6 +292,16 @@ const Modifica: React.FC = () => {
     },
   ]);
 
+  // Manteniamo due copie indipendenti degli item
+  const [incomingDiagnosticItems, setIncomingDiagnosticItems] = useState<
+    DiagnosticItem[]
+  >([
+    ...diagnosticItems, // clone iniziale
+  ]);
+  const [exitDiagnosticItems, setExitDiagnosticItems] = useState<
+    DiagnosticItem[]
+  >(diagnosticItems.map((i) => ({ ...i, active: false })));
+
   const deviceTypes = [
     { value: "Mobile", label: "📱 Mobile" },
     { value: "TV", label: "📺 TV" },
@@ -233,6 +330,100 @@ const Modifica: React.FC = () => {
       loadOperators();
     }
   }, [numericId]);
+
+  const toggleDiagnosticItem = (id: string) => {
+    if (diagnosticMode === "incoming") {
+      setIncomingDiagnosticItems((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, active: !item.active } : item
+        )
+      );
+    } else {
+      setExitDiagnosticItems((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, active: !item.active } : item
+        )
+      );
+    }
+  };
+
+  const loadExistingDiagnostics = async (repairGuid: string) => {
+    // Incoming
+    try {
+      const rIn = await fetch(
+        `https://localhost:7148/api/repair/${repairGuid}/incoming-test`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      if (rIn.ok) {
+        const inData = await rIn.json();
+        setIncomingDiagnosticItems((prev) =>
+          mapApiToDiagnosticItems(prev, inData)
+        );
+      }
+    } catch (e) {
+      console.warn("Incoming-test load error:", e);
+    }
+
+    // Exit
+    try {
+      const rEx = await fetch(
+        `https://localhost:7148/api/repair/${repairGuid}/exit-test`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      if (rEx.ok) {
+        const exData = await rEx.json();
+        setExitDiagnosticItems((prev) => mapApiToDiagnosticItems(prev, exData));
+      }
+    } catch (e) {
+      console.warn("Exit-test load error:", e);
+    }
+  };
+
+  const mapApiToDiagnosticItems = (
+    base: DiagnosticItem[],
+    diagnosticData: any
+  ) => {
+    return base.map((item) => {
+      let isActive = false;
+      switch (item.id) {
+        case "battery":
+          isActive = diagnosticData.batteria || false;
+          break;
+        case "wifi":
+          isActive = diagnosticData.wiFi || false;
+          break;
+        case "face-id":
+          isActive = diagnosticData.faceId || false;
+          break;
+        case "scanner":
+          isActive = diagnosticData.touchId || false;
+          break;
+        case "sensors":
+          isActive = diagnosticData.sensoreDiProssimita || false;
+          break;
+        case "system":
+          isActive = diagnosticData.schedaMadre || false;
+          break;
+        case "cellular":
+          isActive = diagnosticData.rete || diagnosticData.chiamata || false;
+          break;
+        case "camera":
+          isActive =
+            diagnosticData.fotocameraPosteriore ||
+            diagnosticData.fotocameraAnteriore ||
+            false;
+          break;
+        // altri mapping a necessità…
+        default:
+          isActive = item.active;
+      }
+      return { ...item, active: isActive };
+    });
+  };
 
   // Funzioni per il caricamento dei dati
   const loadRepairData = async (id: string) => {
@@ -268,68 +459,68 @@ const Modifica: React.FC = () => {
     }
   };
 
-  const loadExistingDiagnostics = async (repairGuid: string) => {
-    try {
-      const response = await fetch(
-        `https://localhost:7148/api/repair/${repairGuid}/incoming-test`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+  // const loadExistingDiagnostics = async (repairGuid: string) => {
+  //   try {
+  //     const response = await fetch(
+  //       `https://localhost:7148/api/repair/${repairGuid}/incoming-test`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //         },
+  //       }
+  //     );
 
-      if (response.ok) {
-        const diagnosticData = await response.json();
-        updateDiagnosticItemsFromAPI(diagnosticData);
-      }
-    } catch (error) {
-      console.warn("Errore nel caricamento diagnostica esistente:", error);
-    }
-  };
+  //     if (response.ok) {
+  //       const diagnosticData = await response.json();
+  //       updateDiagnosticItemsFromAPI(diagnosticData);
+  //     }
+  //   } catch (error) {
+  //     console.warn("Errore nel caricamento diagnostica esistente:", error);
+  //   }
+  // };
 
-  const updateDiagnosticItemsFromAPI = (diagnosticData: any) => {
-    setDiagnosticItems((prevItems) =>
-      prevItems.map((item) => {
-        let isActive = false;
+  // const updateDiagnosticItemsFromAPI = (diagnosticData: any) => {
+  //   setDiagnosticItems((prevItems) =>
+  //     prevItems.map((item) => {
+  //       let isActive = false;
 
-        // Mappa i campi API ai nostri ID
-        switch (item.id) {
-          case "battery":
-            isActive = diagnosticData.batteria || false;
-            break;
-          case "wifi":
-            isActive = diagnosticData.wiFi || false;
-            break;
-          case "face-id":
-            isActive = diagnosticData.faceId || false;
-            break;
-          case "scanner":
-            isActive = diagnosticData.touchId || false;
-            break;
-          case "sensors":
-            isActive = diagnosticData.sensoreDiProssimita || false;
-            break;
-          case "system":
-            isActive = diagnosticData.schedaMadre || false;
-            break;
-          case "cellular":
-            isActive = diagnosticData.rete || false;
-            break;
-          case "camera":
-            isActive =
-              diagnosticData.fotocameraPosteriore ||
-              diagnosticData.fotocameraAnteriore ||
-              false;
-            break;
-          default:
-            isActive = item.active; // Mantieni lo stato corrente per gli altri
-        }
+  //       // Mappa i campi API ai nostri ID
+  //       switch (item.id) {
+  //         case "battery":
+  //           isActive = diagnosticData.batteria || false;
+  //           break;
+  //         case "wifi":
+  //           isActive = diagnosticData.wiFi || false;
+  //           break;
+  //         case "face-id":
+  //           isActive = diagnosticData.faceId || false;
+  //           break;
+  //         case "scanner":
+  //           isActive = diagnosticData.touchId || false;
+  //           break;
+  //         case "sensors":
+  //           isActive = diagnosticData.sensoreDiProssimita || false;
+  //           break;
+  //         case "system":
+  //           isActive = diagnosticData.schedaMadre || false;
+  //           break;
+  //         case "cellular":
+  //           isActive = diagnosticData.rete || false;
+  //           break;
+  //         case "camera":
+  //           isActive =
+  //             diagnosticData.fotocameraPosteriore ||
+  //             diagnosticData.fotocameraAnteriore ||
+  //             false;
+  //           break;
+  //         default:
+  //           isActive = item.active; // Mantieni lo stato corrente per gli altri
+  //       }
 
-        return { ...item, active: isActive };
-      })
-    );
-  };
+  //       return { ...item, active: isActive };
+  //     })
+  //   );
+  // };
 
   const populateFormWithRepairData = (data: RepairData) => {
     // Funzione helper per dividere nome e cognome - DEFINITA QUI DENTRO
@@ -406,6 +597,9 @@ const Modifica: React.FC = () => {
 
     // Determina il componente di riparazione dalla descrizione
     determineRepairComponent(data.faultDeclared);
+
+    // Imposta lo stato della riparazione
+    setRepairStatusCode(data.repairStatusCode || "");
   };
 
   // 3. SOSTITUISCI la parte JSX della sezione Cliente con questa:
@@ -594,13 +788,13 @@ const Modifica: React.FC = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
   };
 
-  const toggleDiagnosticItem = (id: string) => {
-    setDiagnosticItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === id ? { ...item, active: !item.active } : item
-      )
-    );
-  };
+  // const toggleDiagnosticItem = (id: string) => {
+  //   setDiagnosticItems((prevItems) =>
+  //     prevItems.map((item) =>
+  //       item.id === id ? { ...item, active: !item.active } : item
+  //     )
+  //   );
+  // };
 
   const validateForm = (): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
@@ -685,6 +879,40 @@ const Modifica: React.FC = () => {
     };
   };
 
+  const buildExitTestDto = (items: { id: string; active: boolean }[]) => {
+    const on = (id: string) => items.find((x) => x.id === id)?.active ?? false;
+
+    return {
+      telefonoSpento: false,
+      batteria: on("battery"),
+      wiFi: on("wifi"),
+      faceId: on("face-id"),
+      touchId: on("scanner"),
+      sensoreDiProssimita: on("sensors"),
+      schedaMadre: on("system"),
+      rete: on("cellular") || on("rf-cellular"),
+      chiamata: on("cellular"),
+      fotocameraPosteriore: on("camera"),
+      fotocameraAnteriore: on("camera"),
+      vetroRotto: false,
+      touchscreen: false,
+      lcd: false,
+      frameScollato: false,
+      dockDiRicarica: false,
+      backCover: false,
+      telaio: false,
+      tastiVolumeMuto: false,
+      tastoStandbyPower: false,
+      microfonoChiamate: false,
+      microfonoAmbientale: false,
+      altoparlantteChiamata: false,
+      speakerBuzzer: false,
+      vetroFotocameraPosteriore: false,
+      tastoHome: false,
+      vetroPosteriore: false,
+    };
+  };
+
   const upsertIncomingTest = async (
     repairGuid: string,
     items: { id: string; active: boolean }[]
@@ -704,6 +932,28 @@ const Modifica: React.FC = () => {
     if (!res.ok) {
       const t = await res.text().catch(() => "");
       throw new Error(`Salvataggio diagnostica fallito (${res.status}) ${t}`);
+    }
+  };
+
+  const upsertExitTest = async (
+    repairGuid: string,
+    items: { id: string; active: boolean }[]
+  ) => {
+    const dto = buildExitTestDto(items);
+    const res = await fetch(
+      `https://localhost:7148/api/repair/${repairGuid}/exit-test`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(dto),
+      }
+    );
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`Salvataggio exit-test fallito (${res.status}) ${t}`);
     }
   };
 
@@ -743,6 +993,11 @@ const Modifica: React.FC = () => {
           courtesyPhone: dispositivoData.courtesyPhone || null,
         },
         notes: repairFormData.billingInfo || null,
+        repairStatusCode: repairStatusCode || null,
+        repairStatus:
+          REPAIR_STATUS.find(
+            (s) => s.code === repairStatusCode
+          )?.label?.replace(/^.\s/, "") || null,
       };
 
       console.log("Payload aggiornamento:", payload);
@@ -762,6 +1017,7 @@ const Modifica: React.FC = () => {
       if (response.ok) {
         try {
           await upsertIncomingTest(repairData.repairGuid, diagnosticItems);
+          await upsertExitTest(repairData.repairGuid, exitDiagnosticItems);
           alert("✅ Riparazione aggiornata con successo!");
         } catch (e: unknown) {
           console.error(e);
@@ -783,8 +1039,150 @@ const Modifica: React.FC = () => {
     }
   };
 
+  const handleSaveDiagnostic = async () => {
+    if (!repairData) return;
+    const currentItems =
+      diagnosticMode === "incoming"
+        ? incomingDiagnosticItems
+        : exitDiagnosticItems;
+    try {
+      if (diagnosticMode === "incoming") {
+        await upsertIncomingTest(repairData.repairGuid, currentItems);
+        alert("Diagnostica di ingresso salvata ✅");
+      } else {
+        await upsertExitTest(repairData.repairGuid, currentItems);
+        alert("Diagnostica di uscita salvata ✅");
+      }
+    } catch (e) {
+      alert((e as Error).message || "Errore nel salvataggio diagnostica");
+    }
+  };
+
   const handleGoBack = () => {
     navigate(-1);
+  };
+
+  // Ricerca ricambi (chiama il BE - endpoint placeholder)
+  // const searchParts = async (q: string) => {
+  //   setPartsQuery(q);
+  //   if (!q || q.trim().length < 2) {
+  //     setPartsResults([]);
+  //     return;
+  //   }
+  //   setPartsSearching(true);
+  //   try {
+  //     const resp = await fetch(
+  //       `https://localhost:7148/api/warehouse/search?q=${encodeURIComponent(
+  //         q
+  //       )}`,
+  //       {
+  //         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  //       }
+  //     );
+  //     if (resp.ok) {
+  //       const data: PartSearchItem[] = await resp.json();
+  //       setPartsResults(data);
+  //     } else {
+  //       setPartsResults([]);
+  //     }
+  //   } catch {
+  //     setPartsResults([]);
+  //   } finally {
+  //     setPartsSearching(false);
+  //   }
+  // };
+
+  const searchParts = async (q: string) => {
+    setPartsQuery(q);
+    if (!q || q.trim().length < 2) {
+      setPartsResults([]);
+      return;
+    }
+    setPartsSearching(true);
+    setTimeout(() => {
+      const lower = q.toLowerCase();
+      const filtered = fakeParts.filter(
+        (p) =>
+          p.code.toLowerCase().includes(lower) ||
+          p.name.toLowerCase().includes(lower) ||
+          p.brand.toLowerCase().includes(lower) ||
+          p.model.toLowerCase().includes(lower)
+      );
+      setPartsResults(filtered);
+      setPartsSearching(false);
+    }, 300); // simuliamo piccolo delay
+  };
+
+  // Aggiunge una riga ricambio alla scheda
+  const addPartLine = (item: PartSearchItem) => {
+    setUsedParts((prev) => {
+      // se già presente, incrementa qty
+      const existing = prev.find((p) => p.itemId === item.id);
+      if (existing) {
+        return prev.map((p) =>
+          p.itemId === item.id
+            ? { ...p, qty: p.qty + 1, lineTotal: (p.qty + 1) * p.unitPrice }
+            : p
+        );
+      }
+      const line: RepairPartLine = {
+        tempId: crypto.randomUUID(),
+        itemId: item.id,
+        code: item.code,
+        name: `${item.name} (${item.brand} ${item.model})`,
+        qty: 1,
+        unitPrice: item.unitPrice ?? 0,
+        lineTotal: item.unitPrice ?? 0,
+      };
+      return [...prev, line];
+    });
+  };
+
+  // Aggiorna quantità
+  const updateLineQty = (tempId: string, qty: number) => {
+    const safeQty = Math.max(1, Math.floor(qty || 1));
+    setUsedParts((prev) =>
+      prev.map((l) =>
+        l.tempId === tempId
+          ? { ...l, qty: safeQty, lineTotal: safeQty * l.unitPrice }
+          : l
+      )
+    );
+  };
+
+  // Rimuove riga
+  const removeLine = (tempId: string) => {
+    setUsedParts((prev) => prev.filter((l) => l.tempId !== tempId));
+  };
+
+  // Scarica dal magazzino (consumo scorte) – endpoint placeholder
+  // const handleConsumeFromWarehouse = async () => {
+  //   if (!repairData) return;
+  //   try {
+  //     const payload = {
+  //       repairGuid: repairData.repairGuid || repairData.repairId,
+  //       lines: usedParts.map((l) => ({ itemId: l.itemId, qty: l.qty })),
+  //     };
+  //     const resp = await fetch(`https://localhost:7148/api/warehouse/consume`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //       },
+  //       body: JSON.stringify(payload),
+  //     });
+  //     if (!resp.ok) throw new Error();
+  //     alert("Ricambi scaricati dal magazzino ✅");
+  //   } catch {
+  //     alert("Errore nello scarico dal magazzino ❌");
+  //   }
+  // };
+
+  const handleConsumeFromWarehouse = async () => {
+    console.log("Scarico simulato:", usedParts);
+    alert(
+      "Scarico magazzino simulato ✅\n" + JSON.stringify(usedParts, null, 2)
+    );
   };
 
   // Rendering condizionale per loading e errori
@@ -855,7 +1253,9 @@ const Modifica: React.FC = () => {
           <div className="breadcrumb">
             <span className="breadcrumb-item">Roma - Next srl</span>
             <span className="breadcrumb-separator"> &gt; </span>
-            <span className="breadcrumb-current">Modifica - Completa Riparazione</span>
+            <span className="breadcrumb-current">
+              Modifica - Completa Riparazione
+            </span>
           </div>
         </div>
 
@@ -1158,32 +1558,206 @@ const Modifica: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Sezione Ricambi utilizzati */}
+                <div className="form-section parts-section">
+                  <h3>Ricambi utilizzati</h3>
+
+                  {/* Search ricambi */}
+                  <div className="form-group">
+                    <label>Cerca ricambio</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={partsQuery}
+                      onChange={(e) => searchParts(e.target.value)}
+                      placeholder="Codice, nome, marca, modello..."
+                    />
+                    {partsSearching && <small>Ricerca in corso…</small>}
+                  </div>
+
+                  {/* Risultati ricerca */}
+                  {partsResults.length > 0 && (
+                    <div className="parts-results">
+                      {partsResults.map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          className="parts-result-item"
+                          onClick={() => addPartLine(r)}
+                          title={`Disponibili: ${r.quantity}`}
+                        >
+                          <div className="pri-name">
+                            <strong>{r.name}</strong>{" "}
+                            <span className="muted">
+                              ({r.brand} {r.model})
+                            </span>
+                          </div>
+                          <div className="pri-meta">
+                            <span className="code">{r.code}</span>
+                            <span
+                              className={`stock ${
+                                r.quantity <= 0
+                                  ? "out"
+                                  : r.quantity < 5
+                                  ? "low"
+                                  : "ok"
+                              }`}
+                            >
+                              {r.quantity <= 0
+                                ? "Esaurito"
+                                : `Disp: ${r.quantity}`}
+                            </span>
+                            <span className="price">
+                              € {r.unitPrice?.toFixed(2) ?? "0.00"}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Tabella righe ricambi aggiunti */}
+                  <div className="parts-table-container">
+                    {usedParts.length === 0 ? (
+                      <div className="empty-hint">
+                        Nessun ricambio aggiunto. Cerca qui sopra e clicca per
+                        aggiungere.
+                      </div>
+                    ) : (
+                      <table className="parts-table">
+                        <thead>
+                          <tr>
+                            <th style={{ width: "140px" }}>Codice</th>
+                            <th>Descrizione</th>
+                            <th style={{ width: "90px" }}>Q.tà</th>
+                            <th style={{ width: "110px" }}>Prezzo</th>
+                            <th style={{ width: "110px" }}>Totale</th>
+                            <th style={{ width: "60px" }}></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {usedParts.map((line) => (
+                            <tr key={line.tempId}>
+                              <td>
+                                <code>{line.code}</code>
+                              </td>
+                              <td>{line.name}</td>
+                              <td>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  className="form-control qty-input"
+                                  value={line.qty}
+                                  onChange={(e) =>
+                                    updateLineQty(
+                                      line.tempId,
+                                      parseInt(e.target.value, 10)
+                                    )
+                                  }
+                                />
+                              </td>
+                              <td>€ {line.unitPrice.toFixed(2)}</td>
+                              <td>
+                                <strong>€ {line.lineTotal.toFixed(2)}</strong>
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  className="action-btn btn-delete"
+                                  onClick={() => removeLine(line.tempId)}
+                                >
+                                  ✕
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <td colSpan={4} style={{ textAlign: "right" }}>
+                              <strong>Totale ricambi:</strong>
+                            </td>
+                            <td colSpan={2}>
+                              <strong>€ {partsTotal.toFixed(2)}</strong>
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    )}
+                  </div>
+
+                  <div className="parts-actions">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setUsedParts([])}
+                    >
+                      Svuota righe
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleConsumeFromWarehouse}
+                      disabled={usedParts.length === 0}
+                      title="Registra lo scarico scorte per questi ricambi"
+                    >
+                      Scarica da magazzino
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sezione Diagnostica */}
                 {/* Sezione Diagnostica */}
                 <div className="form-section diagnostica-section">
-                  <h3>Diagnostica di ricezione</h3>
+                  <h3>Sezione diagnostica</h3>
+                  <div className="diagnostic-toggle">
+                    <button
+                      type="button"
+                      className={`toggle-btn ${
+                        diagnosticMode === "incoming" ? "active" : ""
+                      }`}
+                      onClick={() => setDiagnosticMode("incoming")}
+                      title="Diagnostica effettuata all'ingresso"
+                    >
+                      Ingresso
+                    </button>
+                    <button
+                      type="button"
+                      className={`toggle-btn ${
+                        diagnosticMode === "exit" ? "active" : ""
+                      }`}
+                      onClick={() => setDiagnosticMode("exit")}
+                      title="Diagnostica effettuata in uscita"
+                    >
+                      Uscita
+                    </button>
+                  </div>
+
                   <div className="diagnostica-grid">
-                    {diagnosticItems.map((item) => (
+                    {(diagnosticMode === "incoming"
+                      ? incomingDiagnosticItems
+                      : exitDiagnosticItems
+                    ).map((item) => (
                       <div key={item.id} className="diagnostica-item-wrapper">
                         <div
                           className={`diagnostica-item ${
                             item.active ? "active" : "inactive"
                           }`}
                           onClick={() => toggleDiagnosticItem(item.id)}
+                          role="button"
+                          tabIndex={0}
                         >
-                          <div className="diagnostica-icon">{item.icon}</div>
-                          <div
-                            className={`diagnostica-status ${
-                              item.active ? "ok" : "ko"
-                            }`}
-                          >
-                            {item.active ? "✓" : "✕"}
-                          </div>
+                          <span className="diagnostica-icon">{item.icon}</span>
+                          <span className="diagnostica-status {item.active ? 'ok' : 'ko'}">
+                            {item.active ? "✓" : "–"}
+                          </span>
                         </div>
-
                         <div className="diagnostica-label">{item.label}</div>
                       </div>
                     ))}
                   </div>
+
+                  <div className="diagnostic-actions"></div>
                 </div>
               </div>
 
@@ -1255,6 +1829,26 @@ const Modifica: React.FC = () => {
                 {/* Sezione Riparazione */}
                 <div className="form-section">
                   <h3>Riparazione</h3>
+
+                  {/* Stato riparazione */}
+                  <div className="form-group">
+                    <label>Stato riparazione *</label>
+                    <select
+                      className="form-control status-select"
+                      value={repairStatusCode}
+                      onChange={(e) => setRepairStatusCode(e.target.value)}
+                    >
+                      <option value="">Tutti gli stati</option>
+                      {REPAIR_STATUS.map((s) => (
+                        <option key={s.code} value={s.code}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                    <small className="hint">
+                      Seleziona lo stato corrente della lavorazione.
+                    </small>
+                  </div>
 
                   <div className="form-group">
                     <label>Componente/riparazione *</label>
@@ -1416,7 +2010,6 @@ const Modifica: React.FC = () => {
                 onClick={handleGoBack}
                 disabled={isUpdating}
               >
-                <X className="btn-icon" />
                 Annulla
               </button>
 
@@ -1425,7 +2018,6 @@ const Modifica: React.FC = () => {
                 onClick={handleUpdateRepair}
                 disabled={isUpdating}
               >
-                <Save className="btn-icon" />
                 {isUpdating ? "Aggiornando..." : "💾 Salva Modifiche"}
               </button>
             </div>
