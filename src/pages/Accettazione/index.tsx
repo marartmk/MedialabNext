@@ -4,6 +4,7 @@ import Topbar from "../../components/topbar";
 import styles from "./styles.module.css";
 import { CalendarDays } from "lucide-react";
 import BottomBar from "../../components/BottomBar";
+import logoUrl from "../../assets/logo-black-white.jpg";
 
 // Definizione dei tipi per la diagnostica
 interface DiagnosticItem {
@@ -77,6 +78,54 @@ const Accettazione: React.FC = () => {
   const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<DeviceData | null>(null);
+
+  // Tipo per i dati della riparazione (per la stampa)
+  interface RepairData {
+    repairId?: number;
+    repairGuid?: string;
+    repairCode?: string;
+    createdAt?: string;
+    customer?: {
+      name?: string;
+      phone?: string;
+      email?: string;
+      address?: string;
+      postalCode?: string;
+      city?: string;
+      province?: string;
+      fiscalCode?: string;
+      vatNumber?: string;
+    };
+    device?: {
+      brand?: string;
+      model?: string;
+      serialNumber?: string;
+      deviceType?: string;
+    };
+    technicianName?: string;
+    repairStatus?: string;
+    faultDeclared?: string;
+    notes?: string;
+  }
+
+  // Stati per il modal di stampa
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printRepair, setPrintRepair] = useState<RepairData | null>(null);
+
+  // Dati aziendali per la stampa
+  const companyName =
+    (typeof window !== "undefined" && sessionStorage.getItem("companyName")) ||
+    "CLINICA iPHONE STORE";
+  const companyAddr =
+    (typeof window !== "undefined" &&
+      sessionStorage.getItem("companyAddress")) ||
+    "Via Prova 1 – 73100 Lecce (LE)";
+  const companyVat =
+    (typeof window !== "undefined" && sessionStorage.getItem("companyVat")) ||
+    "P.IVA 01234567890";
+  const companyPhone =
+    (typeof window !== "undefined" && sessionStorage.getItem("companyPhone")) ||
+    "0832 123456";
 
   // Refs per gestire i dropdown
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -162,7 +211,7 @@ const Accettazione: React.FC = () => {
     unlockCode: "",
     courtesyPhone: "",
   });
-  
+
   // Define a type for Operator
   interface Operator {
     id: string;
@@ -173,9 +222,11 @@ const Accettazione: React.FC = () => {
     email?: string;
     phoneNumber?: string;
   }
-  
+
   const [operators, setOperators] = useState<Operator[]>([]);
-  const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
+  const [selectedOperator, setSelectedOperator] = useState<Operator | null>(
+    null
+  );
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isCreatingRepair, setIsCreatingRepair] = useState(false);
   const [repairComponent, setRepairComponent] = useState("");
@@ -219,7 +270,7 @@ const Accettazione: React.FC = () => {
     },
   ]);
 
-  const [isRepairCreated, setIsRepairCreated] = useState(false);  
+  const [isRepairCreated, setIsRepairCreated] = useState(false);
   const [repairGuid, setRepairGuid] = useState<string | null>(null); // 🆕 Usa GUID
 
   useEffect(() => {
@@ -737,78 +788,79 @@ const Accettazione: React.FC = () => {
   };
 
   const prepareRepairPayload = () => {
-  const multitenantId = localStorage.getItem("IdCompany");
+    const multitenantId = localStorage.getItem("IdCompany");
 
-  // newCustomer (solo se non selezionato cliente esistente)
-  let customerPayload = null;
-  if (!selectedCustomer) {
-    customerPayload = {
-      tipo: "Privato",
-      cliente: true,
-      fornitore: false,
-      ragioneSociale: `${clienteData.cognome} ${clienteData.nome}`.trim(),
-      cognome: clienteData.cognome,
-      nome: clienteData.nome,
-      email: clienteData.email,
-      telefono: clienteData.telefono,
-      cap: clienteData.cap,
+    // newCustomer (solo se non selezionato cliente esistente)
+    let customerPayload = null;
+    if (!selectedCustomer) {
+      customerPayload = {
+        tipo: "Privato",
+        cliente: true,
+        fornitore: false,
+        ragioneSociale: `${clienteData.cognome} ${clienteData.nome}`.trim(),
+        cognome: clienteData.cognome,
+        nome: clienteData.nome,
+        email: clienteData.email,
+        telefono: clienteData.telefono,
+        cap: clienteData.cap,
+        multitenantId: multitenantId,
+        indirizzo: "",
+        citta: "",
+        provincia: "",
+        regione: "",
+        fiscalCode: "",
+        pIva: "",
+        emailPec: "",
+        codiceSdi: "",
+        iban: "",
+      };
+    }
+
+    // newDevice (solo se non selezionato device esistente)
+    let devicePayload = null;
+    if (!selectedDevice) {
+      devicePayload = {
+        serialNumber: dispositivoData.serialNumber,
+        brand: dispositivoData.brand,
+        model: dispositivoData.model,
+        deviceType: dispositivoData.deviceType,
+        color: dispositivoData.color || null,
+        purchaseDate: null,
+        receiptNumber: null,
+        retailer: null,
+        notes: null,
+      };
+    }
+
+    // dati riparazione
+    const repairPayload = {
+      faultDeclared: repairData.faultDeclared,
+      repairAction: repairData.repairAction || null,
+      technicianCode:
+        selectedOperator?.codiceDipendente ||
+        selectedOperator?.internalCode ||
+        null,
+      technicianName:
+        `${selectedOperator?.firstName || ""} ${
+          selectedOperator?.lastName || ""
+        }`.trim() || null,
+      estimatedPrice: repairData.estimatedPrice,
+      paymentType: repairData.paymentType || null,
+      billingInfo: repairData.billingInfo || null,
+      unlockCode: dispositivoData.unlockCode || null,
+      courtesyPhone: dispositivoData.courtesyPhone || null,
+    };
+
+    return {
+      customerId: selectedCustomer?.id || null,
+      newCustomer: customerPayload,
+      deviceId: selectedDevice?.id || null, // per create rimane l'id numerico del registro dispositivi
+      newDevice: devicePayload,
+      repairData: repairPayload,
+      notes: repairData.billingInfo || null,
       multitenantId: multitenantId,
-      indirizzo: "",
-      citta: "",
-      provincia: "",
-      regione: "",
-      fiscalCode: "",
-      pIva: "",
-      emailPec: "",
-      codiceSdi: "",
-      iban: "",
     };
-  }
-
-  // newDevice (solo se non selezionato device esistente)
-  let devicePayload = null;
-  if (!selectedDevice) {
-    devicePayload = {
-      serialNumber: dispositivoData.serialNumber,
-      brand: dispositivoData.brand,
-      model: dispositivoData.model,
-      deviceType: dispositivoData.deviceType,
-      color: dispositivoData.color || null,
-      purchaseDate: null,
-      receiptNumber: null,
-      retailer: null,
-      notes: null,
-    };
-  }
-
-  // dati riparazione
-  const repairPayload = {
-    faultDeclared: repairData.faultDeclared,
-    repairAction: repairData.repairAction || null,
-    technicianCode:
-      selectedOperator?.codiceDipendente ||
-      selectedOperator?.internalCode ||
-      null,
-    technicianName:
-      `${selectedOperator?.firstName || ""} ${selectedOperator?.lastName || ""}`.trim() || null,
-    estimatedPrice: repairData.estimatedPrice,
-    paymentType: repairData.paymentType || null,
-    billingInfo: repairData.billingInfo || null,
-    unlockCode: dispositivoData.unlockCode || null,
-    courtesyPhone: dispositivoData.courtesyPhone || null,
   };
-
-  return {
-    customerId: selectedCustomer?.id || null,
-    newCustomer: customerPayload,
-    deviceId: selectedDevice?.id || null, // per create rimane l'id numerico del registro dispositivi
-    newDevice: devicePayload,
-    repairData: repairPayload,  
-    notes: repairData.billingInfo || null,
-    multitenantId: multitenantId,
-  };
-};
-
 
   // Funzione principale per creare la riparazione
   const handleCreateRepair = async (
@@ -859,8 +911,7 @@ const Accettazione: React.FC = () => {
           await upsertIncomingTest(result.repairGuid, diagnosticItems);
         } catch (e: unknown) {
           console.error(e);
-          const message =
-            e instanceof Error ? e.message : String(e);
+          const message = e instanceof Error ? e.message : String(e);
           alert(
             "⚠️ Riparazione creata, ma diagnostica NON salvata.\n" + message
           );
@@ -925,7 +976,7 @@ const Accettazione: React.FC = () => {
         alert("Riparazione inviata al laboratorio!");
         break;
     }
-  }; 
+  };
 
   // Funzione per salvare il nuovo cliente
   const handleSaveNewClient = async () => {
@@ -1210,32 +1261,150 @@ const Accettazione: React.FC = () => {
     }
   };
 
-  // Payload specifico per l'update (diverso dal create)
-  const prepareUpdateRepairPayload = () => {
-  const payload = {
-    customerId: selectedCustomer?.id || null,          // GUID cliente
-    deviceId: selectedDevice?.deviceId || null,        // GUID device
-    repairData: {
-      faultDeclared: repairData.faultDeclared,
-      repairAction: repairData.repairAction || null,
-      technicianCode:
-        selectedOperator?.codiceDipendente ||
-        selectedOperator?.internalCode ||
-        null,
-      technicianName:
-        `${selectedOperator?.firstName || ""} ${selectedOperator?.lastName || ""}`.trim() || null,
-      estimatedPrice: repairData.estimatedPrice,
-      paymentType: repairData.paymentType || null,
-      billingInfo: repairData.billingInfo || null,
-      unlockCode: dispositivoData.unlockCode || null,
-      courtesyPhone: dispositivoData.courtesyPhone || null,
-    },
-    notes: repairData.billingInfo || null,    
+  // Funzione per la stampa (da definire)
+  const handleStampaAccettazione = () => {
+    if (repairData) {
+      setPrintRepair(repairData);
+      setShowPrintModal(true);
+    }
   };
 
-  return payload;
-};
+  // FUNZIONE DI STAMPA CORRETTA
+  const handlePrintRepairDocument = async () => {
+    try {
+      // Aggiungi un piccolo delay per assicurarti che il modal sia completamente renderizzato
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
+      // Trova l'elemento da stampare
+      const printContent = document.querySelector(`.accSheet`);
+
+      if (!printContent) {
+        console.error("Elemento da stampare non trovato");
+        alert("Errore: impossibile trovare il contenuto da stampare");
+        return;
+      }
+
+      // Crea una finestra di stampa separata
+      const printWindow = window.open("", "_blank", "width=800,height=600");
+
+      if (!printWindow) {
+        console.error("Impossibile aprire la finestra di stampa");
+        alert(
+          "Errore: impossibile aprire la finestra di stampa. Verifica che i popup siano consentiti."
+        );
+        return;
+      }
+
+      // Ottieni tutti i CSS della pagina corrente
+      const cssLinks = Array.from(
+        document.querySelectorAll('link[rel="stylesheet"]')
+      )
+        .map((link) => `<link rel="stylesheet" href="${link.href}">`)
+        .join("");
+
+      const cssStyles = Array.from(document.querySelectorAll("style"))
+        .map((style) => style.outerHTML)
+        .join("");
+
+      // Crea il contenuto HTML della finestra di stampa
+      const printHTML = `
+      <!DOCTYPE html>
+      <html lang="it">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Documento di Riparazione - ${
+          printRepair?.repairCode || ""
+        }</title>
+        ${cssLinks}
+        ${cssStyles}
+        <style>
+          @media print {
+            * { 
+              visibility: hidden !important; 
+              box-sizing: border-box !important;
+            }
+            .print-content, 
+            .print-content * { 
+              visibility: visible !important; 
+            }
+            .print-content {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              height: auto !important;
+              margin: 0 !important;
+              padding: 5mm !important;
+              background: white !important;
+              border: none !important;
+              box-shadow: none !important;
+              border-radius: 0 !important;
+              font-size: 10px !important;
+              line-height: 1.2 !important;
+              color: #000 !important;
+              overflow: hidden !important;
+            }
+            @page { 
+              size: A4 portrait; 
+              margin: 10mm 8mm; 
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-content">
+          ${printContent.innerHTML}
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(() => {
+              window.print();
+              setTimeout(() => window.close(), 1000);
+            }, 500);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+      // Scrivi il contenuto nella nuova finestra
+      printWindow.document.write(printHTML);
+      printWindow.document.close();
+      printWindow.focus();
+    } catch (error) {
+      console.error("Errore durante la stampa:", error);
+      alert("Si è verificato un errore durante la preparazione della stampa.");
+    }
+  };
+
+  // Payload specifico per l'update (diverso dal create)
+  const prepareUpdateRepairPayload = () => {
+    const payload = {
+      customerId: selectedCustomer?.id || null, // GUID cliente
+      deviceId: selectedDevice?.deviceId || null, // GUID device
+      repairData: {
+        faultDeclared: repairData.faultDeclared,
+        repairAction: repairData.repairAction || null,
+        technicianCode:
+          selectedOperator?.codiceDipendente ||
+          selectedOperator?.internalCode ||
+          null,
+        technicianName:
+          `${selectedOperator?.firstName || ""} ${
+            selectedOperator?.lastName || ""
+          }`.trim() || null,
+        estimatedPrice: repairData.estimatedPrice,
+        paymentType: repairData.paymentType || null,
+        billingInfo: repairData.billingInfo || null,
+        unlockCode: dispositivoData.unlockCode || null,
+        courtesyPhone: dispositivoData.courtesyPhone || null,
+      },
+      notes: repairData.billingInfo || null,
+    };
+
+    return payload;
+  };
 
   return (
     <div className={styles.mainLayout}>
@@ -2066,12 +2235,21 @@ const Accettazione: React.FC = () => {
                   </button>
                 </>
               ) : (
-                <button
-                  className={`${styles.btn} ${styles.btnPrimary}`}
-                  onClick={handleUpdateRepair}
-                >
-                  🔄 Aggiorna Scheda
-                </button>
+                <>
+                  <button
+                    className={`${styles.btn} ${styles.btnPrimary}`}
+                    onClick={handleUpdateRepair}
+                  >
+                    🔄 Aggiorna Scheda
+                  </button>
+
+                  <button
+                    className={`${styles.btn} ${styles.btnInfo}`}
+                    onClick={handleStampaAccettazione}
+                  >
+                    🖨️ Stampa Accettazione
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -2591,6 +2769,316 @@ const Accettazione: React.FC = () => {
                 disabled={savingNewDevice}
               >
                 {savingNewDevice ? "Salvando..." : "Salva Dispositivo"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Stampa Accettazione */}
+      {showPrintModal && printRepair && (
+        <div
+          className="accOverlay"
+          onClick={(e) =>
+            e.target === e.currentTarget &&
+            (setShowPrintModal(false), setPrintRepair(null))
+          }
+        >
+          <div className="accModal" onClick={(e) => e.stopPropagation()}>
+            {/* AREA CHE SI STAMPA */}
+            <div className="accSheet">
+              {/* Header professionale con logo */}
+              <div className="accHeaderPro">
+                {/* Colonna sinistra - Dati azienda */}
+                <div className="accLogoSection">
+                  <div className="accLogo">
+                    <img src={logoUrl} alt="Logo" className="accLogoImage" />
+                  </div>
+                  <div className="accCompanyTagline">ASSISTENZA TECNICA</div>
+
+                  <div className="accCompanyDetails">
+                    <div>{companyName}</div>
+                    <div>Città - AZIENDA</div>
+                    <div>{companyAddr}</div>
+                    <div>Tel. {companyPhone}</div>
+                    <div>{companyVat}</div>
+                  </div>
+                </div>
+
+                {/* Colonna destra - Autorizzazione al lavoro */}
+                <div className="accDocSection">
+                  <h1 className="accDocTitle">Autorizzazione al lavoro</h1>
+                  <div className="accDocInfo">
+                    <div>
+                      <strong>Tipo di riparazione:</strong> Gestita in clinica
+                    </div>
+                    <div>
+                      <strong>Gestita da dipendente:</strong> xxxx
+                    </div>
+                    <div>
+                      <strong>Numero di Riparazione:</strong>{" "}
+                      {printRepair?.repairCode}
+                    </div>
+                    <div>
+                      <strong>Data:</strong>{" "}
+                      {new Date(
+                        printRepair?.createdAt || ""
+                      ).toLocaleDateString("it-IT")}{" "}
+                      {new Date(
+                        printRepair?.createdAt || ""
+                      ).toLocaleTimeString("it-IT", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <hr className="accDivider" />
+              {/* Dati cliente / dispositivo */}
+              <div className="accInfoGrid">
+                <div className="accInfoSection">
+                  <div className="accSectionTitle">
+                    INFORMAZIONI DEL CLIENTE
+                  </div>
+                  <div className="accInfoRows">
+                    <div className="accInfoRow">
+                      <span className="accLabel">Cliente:</span>
+                      <span className="accValue">
+                        {printRepair.customer?.name || "Non specificato"}
+                      </span>
+                    </div>
+                    <div className="accInfoRow">
+                      <span className="accLabel">Telefono:</span>
+                      <span className="accValue">
+                        {printRepair.customer?.phone || "Non specificato"}
+                      </span>
+                    </div>
+                    <div className="accInfoRow">
+                      <span className="accLabel">Email:</span>
+                      <span className="accValue">
+                        {printRepair.customer?.email || "Non specificato"}
+                      </span>
+                    </div>
+                    <div className="accInfoRow">
+                      <span className="accLabel">Indirizzo:</span>
+                      <span className="accValue">
+                        {[
+                          printRepair.customer?.address,
+                          printRepair.customer?.postalCode,
+                          printRepair.customer?.city,
+                          printRepair.customer?.province,
+                        ]
+                          .filter(Boolean)
+                          .join(", ") || "Non specificato"}
+                      </span>
+                    </div>
+                    {printRepair.customer?.fiscalCode && (
+                      <div className="accInfoRow">
+                        <span className="accLabel">Codice Fiscale:</span>
+                        <span className="accValue">
+                          {printRepair.customer.fiscalCode}
+                        </span>
+                      </div>
+                    )}
+                    {printRepair.customer?.vatNumber && (
+                      <div className="accInfoRow">
+                        <span className="accLabel">P.IVA:</span>
+                        <span className="accValue">
+                          {printRepair.customer.vatNumber}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="accInfoSection">
+                  <div className="accSectionTitle">DATI DEL DISPOSITIVO</div>
+                  <div className="accInfoRows">
+                    <div className="accInfoRow">
+                      <span className="accLabel">Marca e Modello:</span>
+                      <span className="accValue">
+                        {printRepair.device?.brand} {printRepair.device?.model}
+                      </span>
+                    </div>
+                    <div className="accInfoRow">
+                      <span className="accLabel">Numero Seriale:</span>
+                      <span className="accValue">
+                        {printRepair.device?.serialNumber || "Non specificato"}
+                      </span>
+                    </div>
+                    <div className="accInfoRow">
+                      <span className="accLabel">Tipologia:</span>
+                      <span className="accValue">
+                        {printRepair.device?.deviceType || "Non specificato"}
+                      </span>
+                    </div>
+                    <div className="accInfoRow">
+                      <span className="accLabel">Stato:</span>
+                      <span className="accValue">
+                        {printRepair.repairStatus}
+                      </span>
+                    </div>
+                    {printRepair.technicianName && (
+                      <div className="accInfoRow">
+                        <span className="accLabel">Tecnico Assegnato:</span>
+                        <span className="accValue">
+                          {printRepair.technicianName}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Descrizione problema */}
+              <div className="accProblemSection">
+                <div className="accSectionTitle">DESCRIZIONE DEL PROBLEMA</div>
+                <div className="accProblemText">
+                  {printRepair.faultDeclared || "Nessuna descrizione fornita"}
+                </div>
+                {printRepair.notes && (
+                  <div className="accNotesText">
+                    <strong>Note aggiuntive:</strong> {printRepair.notes}
+                  </div>
+                )}
+              </div>
+
+              {/* Tabella preventivo */}
+              <div className="accTableSection">
+                <div className="accSectionTitle">PREVENTIVO</div>
+                <table className="accTable">
+                  <thead>
+                    <tr>
+                      <th className="accTableHeader">Descrizione Intervento</th>
+                      <th
+                        className="accTableHeader"
+                        style={{ width: "80px", textAlign: "center" }}
+                      >
+                        Q.tà
+                      </th>
+                      <th
+                        className="accTableHeader"
+                        style={{ width: "120px", textAlign: "right" }}
+                      >
+                        Importo
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="accTableCell">
+                        Diagnosi e preventivo riparazione
+                      </td>
+                      <td
+                        className="accTableCell"
+                        style={{ textAlign: "center" }}
+                      >
+                        1
+                      </td>
+                      <td
+                        className="accTableCell"
+                        style={{ textAlign: "right" }}
+                      >
+                        € 0,00
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="accTableCell" colSpan={2}>
+                        <strong>TOTALE</strong>
+                      </td>
+                      <td
+                        className="accTableCell"
+                        style={{ textAlign: "right" }}
+                      >
+                        <strong>€ 0,00</strong>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Clausole privacy */}
+              <div className="accPrivacySection">
+                <div className="accPrivacyTitle">
+                  AUTORIZZAZIONE DEL SERVIZIO DI ASSISTENZA
+                </div>
+                <div className="accPrivacyText">
+                  <p>
+                    Accetto che i Termini e condizioni di riparazione riportati
+                    sul retro di questa pagina verranno applicati al servizio di
+                    assistenza per il prodotto sopra indicato, che, poiché
+                    l'espletamento del servizio di assistenza può comportare
+                    l'accidentale perdita dei dati, sarà responsabilità
+                    esclusiva mia quella di backed archiviare i dati per
+                    recuperarli in caso di necessità e che quindi CLINICA IPHONE
+                    non è responsabile dell'eventuale perdita o danneggiamento
+                    dei dati archiviati sul prodotto che i componenti potranno
+                    essere riparati o sostituiti con componenti nuovi o
+                    ricondizionati e che gli eventuali componenti difettosi
+                    rimossi dal prodotto non potranno essere ritirati o
+                    recuperati dal Cliente.
+                  </p>
+                  <p>
+                    Ai sensi ed in conformità degli artt. 13 Dlgs 196/03 e 14
+                    del GDPR regolamento UE 2016/679, per il trattamento dei
+                    dati personali, i dati raccolti con la presente scheda sono
+                    destinati ad essere archiviati (sia manualmente su supporti
+                    cartacei sia mediante l'utilizzo di moderni sistemi
+                    informatici su supporti magnetici) nel pieno rispetto dei
+                    dettami normativi vigenti e potranno essere oggetto di
+                    trattamento solo ed esclusivamente da parte di soggetti
+                    appositamente nominati incaricati ai sensi del citato
+                    Decreto legislativo. I dati medesimi saranno utilizzati
+                    unicamente per gli scopi indicati nella presente scheda e
+                    non saranno utilizzati per ulteriori comunicazioni o per usi
+                    diversi dal trattamento della "riparazione".
+                  </p>
+                </div>
+
+                <div className="accConsentSection">
+                  <div className="accConsentTitle">COPIA DI ASSISTENZA</div>
+                  <div className="accSignatureArea">
+                    <div className="accSignatureBox">
+                      <div className="accSignatureLabel">
+                        Firma per accettazione
+                      </div>
+                      <div className="accSignatureLine"></div>
+                    </div>
+                    <div className="accDateBox">
+                      <div className="accDateLabel">
+                        Data: {new Date().toLocaleDateString("it-IT")}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="accFooter">
+                <div className="accFooterText">
+                  Documento generato automaticamente dal sistema di gestione
+                  riparazioni - {companyName}
+                </div>
+              </div>
+            </div>
+
+            {/* Azioni (non stampate) */}
+            <div className="accActions">
+              <button
+                className="accBtnSecondary"
+                onClick={() => {
+                  setShowPrintModal(false);
+                  setPrintRepair(null);
+                }}
+              >
+                ✕ Chiudi
+              </button>
+              <button
+                className="accBtnPrimary"
+                onClick={handlePrintRepairDocument}
+              >
+                🖨️ Stampa Documento
               </button>
             </div>
           </div>

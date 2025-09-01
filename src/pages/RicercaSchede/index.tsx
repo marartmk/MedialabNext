@@ -14,6 +14,7 @@ import Topbar from "../../components/topbar";
 import BottomBar from "../../components/BottomBar";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useNavigate } from "react-router-dom";
+import logoUrl from '../../assets/logo-black-white.jpg';
 
 // Interfaccia per i dati delle riparazioni
 interface RepairData {
@@ -2331,18 +2332,15 @@ const RicercaSchede: React.FC = () => {
           <div className={styles.accModal} onClick={(e) => e.stopPropagation()}>
             {/* AREA CHE SI STAMPA */}
             <div className={styles.accSheet}>
-              {/* Header professionale con logo */}             
+              {/* Header professionale con logo */}
               <div className={styles.accHeaderPro}>
                 {/* Colonna sinistra - Dati azienda */}
                 <div className={styles.accLogoSection}>
                   <div className={styles.accLogo}>
-                    <div className={styles.accLogoIcon}>🏥</div>
+                    <img src={logoUrl} alt="Logo" className={styles.accLogoImage} />
                     <div className={styles.accLogoText}>
-                      <div className={styles.accCompanyName}>
-                        CLINICA iPHONE
-                      </div>
                       <div className={styles.accCompanyTagline}>
-                        ASSISTENZA TECNICA AUTORIZZATA
+                        ASSISTENZA TECNICA
                       </div>
                     </div>
                   </div>

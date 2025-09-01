@@ -2785,3 +2785,28 @@
 .printCompact .accInfoSection {
   margin-bottom: 2mm !important;
 }
+
+.accLogoImage {
+  max-height: 50px;
+  max-width: 200px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+/* Aggiusta il layout del logo per la stampa */
+.accLogo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* Stili specifici per la stampa */
+@media print {
+  .accLogoImage {
+    max-height: 35px !important;
+    max-width: 180px !important;
+    object-fit: contain !important;
+    margin-bottom: 4px !important;
+  }
+}
