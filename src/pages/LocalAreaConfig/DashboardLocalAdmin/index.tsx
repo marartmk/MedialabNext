@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -29,8 +28,7 @@ interface CustomerData {
 const DashboarLocaldAdmin: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
   const [selectedNews, setSelectedNews] = useState<any>(null);
-  const [newsData, setNewsData] = useState<any[]>([]);
-  const navigate = useNavigate();
+  const [newsData, setNewsData] = useState<any[]>([]);  
   const [rowData, setRowData] = useState<CustomerData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -209,12 +207,7 @@ const DashboarLocaldAdmin: React.FC = () => {
     const newsItem = newsData.find((item) => item.id === newsId);
     setSelectedNews(newsItem);
   };
-
-  // Navigazione alle varie pagine
-  const navigateTo = (path: string) => {
-    navigate(path);
-  };
-
+ 
   return (
     <div
       className={`d-flex ${menuState === "closed" ? "menu-closed" : ""}`}

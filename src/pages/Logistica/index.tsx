@@ -1,24 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import BottomBar from "../../components/BottomBar";
 import {
   Truck,
   Search,
-  Filter,
   BarChart3,
   X,
-  ChevronDown,
-  AlertTriangle,
-  Package,
-  FileText,
-  ArrowUpRight,
-  ArrowDownLeft,
   Printer,
   Plus,
-  Calendar,
-  MapPin,
   Grid3X3,
   List,
   Smartphone,
@@ -97,12 +87,30 @@ interface Laboratory {
 }
 
 const Logistica: React.FC = () => {
-  const navigate = useNavigate();
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
   const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
     date: "",
     time: "",
   });
+  console.log(dateTime);
+
+  // Funzione per la validazione del tipo di documento
+  const isValidDocumentType = (
+    value: string
+  ): value is TransportDocument["documentType"] => {
+    return [
+      "DDT_IN",
+      "DDT_OUT",
+      "PURCHASE",
+      "SALE",
+      "REPAIR_IN",
+      "REPAIR_OUT",
+    ].includes(value);
+  };
+
+  // Stati per le ricerche articoli e riparazioni
+  const [showItemSearch, setShowItemSearch] = useState(false);
+  const [showRepairSearch, setShowRepairSearch] = useState(false);
 
   // Stati per i dati
   const [documents, setDocuments] = useState<TransportDocument[]>([]);
@@ -128,7 +136,7 @@ const Logistica: React.FC = () => {
   // Stati per il form
   const [formData, setFormData] = useState({
     documentNumber: "",
-    documentType: "DDT_OUT" as const,
+    documentType: "DDT_OUT" as TransportDocument["documentType"],
     date: new Date().toISOString().split("T")[0],
     supplier: "",
     customer: "",
@@ -143,12 +151,6 @@ const Logistica: React.FC = () => {
   const [selectedRepairs, setSelectedRepairs] = useState<RepairTransportItem[]>(
     []
   );
-
-  // Stati per ricerca articoli e riparazioni
-  const [showItemSearch, setShowItemSearch] = useState(false);
-  const [showRepairSearch, setShowRepairSearch] = useState(false);
-  const [itemSearchQuery, setItemSearchQuery] = useState("");
-  const [repairSearchQuery, setRepairSearchQuery] = useState("");
 
   // Dati statici
   const documentTypes = [
@@ -427,6 +429,7 @@ const Logistica: React.FC = () => {
       setError(null);
     } catch (err) {
       setError("Errore nel caricamento dei documenti di trasporto");
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -509,7 +512,7 @@ const Logistica: React.FC = () => {
   const resetForm = () => {
     setFormData({
       documentNumber: "",
-      documentType: "DDT_OUT",
+      documentType: "DDT_OUT" as TransportDocument["documentType"],
       date: new Date().toISOString().split("T")[0],
       supplier: "",
       customer: "",
@@ -531,11 +534,15 @@ const Logistica: React.FC = () => {
       );
 
       if (modalMode === "add") {
+        // Genera il numero documento se non fornito
+        const finalDocumentNumber =
+          formData.documentNumber || `AUTO${Date.now()}`;
+
         // Logica per aggiungere nuovo documento
         const newDocument: TransportDocument = {
           id: Date.now().toString(),
-          documentNumber: formData.documentNumber || `AUTO${Date.now()}`,
           ...formData,
+          documentNumber: finalDocumentNumber, // Sovrascrive quello in formData
           totalItems,
           totalValue,
           items: selectedItems,
@@ -571,6 +578,7 @@ const Logistica: React.FC = () => {
           : "Documento modificato con successo!"
       );
     } catch (error) {
+      console.error("Errore durante il salvataggio:", error);
       alert("Errore durante il salvataggio del documento");
     }
   };
@@ -602,10 +610,6 @@ const Logistica: React.FC = () => {
 
   const getCourierName = (courierId: string) => {
     return couriers.find((c) => c.id === courierId)?.name || courierId;
-  };
-
-  const getLaboratoryName = (labId: string) => {
-    return laboratories.find((l) => l.id === labId)?.name || labId;
   };
 
   // Statistiche
@@ -851,7 +855,7 @@ const Logistica: React.FC = () => {
                     <button
                       className="btn btn-success"
                       onClick={() => openModal("add")}
-                    >                     
+                    >
                       Nuovo Documento
                     </button>
                   </div>
@@ -966,9 +970,9 @@ const Logistica: React.FC = () => {
                               </button>
                               <button
                                 className="btn btn-secondary btn-sm"
-                                onClick={() => handlePrintDocument(document)}                            
+                                onClick={() => handlePrintDocument(document)}
                               >
-                               Stampa
+                                Stampa
                               </button>
                               <button
                                 className="btn btn-danger btn-sm"
@@ -993,7 +997,7 @@ const Logistica: React.FC = () => {
                           <th>Numero</th>
                           <th>Tipo</th>
                           <th>Data</th>
-                          <th>Cliente/Fornitore</th>                         
+                          <th>Cliente/Fornitore</th>
                           <th>Stato</th>
                           <th>Articoli</th>
                           <th>Valore</th>
@@ -1033,7 +1037,7 @@ const Logistica: React.FC = () => {
                                   document.supplier ||
                                   document.laboratory ||
                                   "-"}
-                              </td>                             
+                              </td>
                               <td>
                                 <span
                                   className="status-badge"
@@ -1161,12 +1165,15 @@ const Logistica: React.FC = () => {
                       <select
                         className="form-control"
                         value={formData.documentType}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            documentType: e.target.value as any,
-                          })
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (isValidDocumentType(value)) {
+                            setFormData({
+                              ...formData,
+                              documentType: value,
+                            });
+                          }
+                        }}
                         disabled={modalMode === "view"}
                       >
                         {documentTypes.map((type) => (
@@ -1457,6 +1464,81 @@ const Logistica: React.FC = () => {
                     </button>
                   </>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Modal per ricerca articoli */}
+        {showItemSearch && (
+          <div
+            className="modal-overlay"
+            onClick={() => setShowItemSearch(false)}
+          >
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>Seleziona Articoli</h3>
+                <button
+                  className="modal-close"
+                  onClick={() => setShowItemSearch(false)}
+                >
+                  <X />
+                </button>
+              </div>
+              <div className="modal-body">
+                {/* Implementa qui la logica per selezionare gli articoli */}
+                <p>Interfaccia per la selezione degli articoli</p>
+              </div>
+              <div className="modal-actions">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowItemSearch(false)}
+                >
+                  Chiudi
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setShowItemSearch(false)}
+                >
+                  Conferma Selezione
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal per ricerca riparazioni */}
+        {showRepairSearch && (
+          <div
+            className="modal-overlay"
+            onClick={() => setShowRepairSearch(false)}
+          >
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>Seleziona Riparazioni</h3>
+                <button
+                  className="modal-close"
+                  onClick={() => setShowRepairSearch(false)}
+                >
+                  <X />
+                </button>
+              </div>
+              <div className="modal-body">
+                {/* Implementa qui la logica per selezionare le riparazioni */}
+                <p>Interfaccia per la selezione delle riparazioni</p>
+              </div>
+              <div className="modal-actions">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowRepairSearch(false)}
+                >
+                  Chiudi
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setShowRepairSearch(false)}
+                >
+                  Conferma Selezione
+                </button>
               </div>
             </div>
           </div>

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import Sidebar from "../../components/sidebar"; // Assicurati che il percorso sia corretto
 import Topbar from "../../components/topbar"; // Assicurati che il percorso sia corretto
@@ -8,7 +7,6 @@ const Dashboard: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
   const [selectedNews, setSelectedNews] = useState<any>(null);
   const [newsData, setNewsData] = useState<any[]>([]);
-  const navigate = useNavigate();
 
   // Simula il caricamento delle notizie
   useEffect(() => {
@@ -57,11 +55,6 @@ const Dashboard: React.FC = () => {
   const handleSelectNews = (newsId: number) => {
     const newsItem = newsData.find((item) => item.id === newsId);
     setSelectedNews(newsItem);
-  };
-
-  // Navigazione alle varie pagine
-  const navigateTo = (path: string) => {
-    navigate(path);
   };
 
   // Gestione data e ora
@@ -270,7 +263,7 @@ const Dashboard: React.FC = () => {
               <canvas id="clockCanvas" width="250" height="250"></canvas>
             </div>
 
-            <div className="stats-box">
+            <div className="stats-box-dashboard">
               <div className="icon-container">
                 <i className="fa-solid fa-user"></i>
               </div>
@@ -279,7 +272,7 @@ const Dashboard: React.FC = () => {
               </span>
             </div>
 
-            <div className="stats-box">
+            <div className="stats-box-dashboard">
               <div className="icon-container">
                 <i className="fa-solid fa-screwdriver-wrench icon-large"></i>
               </div>
@@ -288,7 +281,7 @@ const Dashboard: React.FC = () => {
               </span>
             </div>
 
-            <div className="stats-box">
+            <div className="stats-box-dashboard">
               <span className="success-rate">
                 <strong className="big-number">98%</strong>
                 <span className="small-text">Rip. svolte con successo</span>

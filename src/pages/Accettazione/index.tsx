@@ -1299,7 +1299,7 @@ const Accettazione: React.FC = () => {
       const cssLinks = Array.from(
         document.querySelectorAll('link[rel="stylesheet"]')
       )
-        .map((link) => `<link rel="stylesheet" href="${link.href}">`)
+        .map((link) => `<link rel="stylesheet" href="${(link as HTMLLinkElement).href}">`)
         .join("");
 
       const cssStyles = Array.from(document.querySelectorAll("style"))

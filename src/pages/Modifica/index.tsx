@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  useParams,
   useNavigate,
   useLocation,
   useSearchParams,
@@ -8,7 +7,7 @@ import {
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import BottomBar from "../../components/BottomBar";
-import { CalendarDays, ArrowLeft, Save, X } from "lucide-react";
+import { CalendarDays, ArrowLeft } from "lucide-react";
 import "./modifica-styles.css";
 // Tipi per i dati
 interface DiagnosticItem {
@@ -121,8 +120,7 @@ interface RepairPartLine {
   lineTotal: number;
 }
 
-const Modifica: React.FC = () => {
-  const { repairId } = useParams<{ repairId: string }>();
+const Modifica: React.FC = () => {  
   const navigate = useNavigate();
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
   const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
@@ -261,7 +259,7 @@ const Modifica: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Stati per la diagnostica
-  const [diagnosticItems, setDiagnosticItems] = useState<DiagnosticItem[]>([
+  const [diagnosticItems] = useState<DiagnosticItem[]>([
     {
       id: "device-info",
       icon: "📱",
@@ -1037,25 +1035,6 @@ const Modifica: React.FC = () => {
       alert("❌ Errore durante l'aggiornamento della riparazione. Riprova.");
     } finally {
       setIsUpdating(false);
-    }
-  };
-
-  const handleSaveDiagnostic = async () => {
-    if (!repairData) return;
-    const currentItems =
-      diagnosticMode === "incoming"
-        ? incomingDiagnosticItems
-        : exitDiagnosticItems;
-    try {
-      if (diagnosticMode === "incoming") {
-        await upsertIncomingTest(repairData.repairGuid, currentItems);
-        alert("Diagnostica di ingresso salvata ✅");
-      } else {
-        await upsertExitTest(repairData.repairGuid, currentItems);
-        alert("Diagnostica di uscita salvata ✅");
-      }
-    } catch (e) {
-      alert((e as Error).message || "Errore nel salvataggio diagnostica");
     }
   };
 

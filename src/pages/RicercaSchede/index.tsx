@@ -139,12 +139,6 @@ interface RepairDetailModal extends RepairData {
   };
 }
 
-// Estendi l'interfaccia RepairDetailModal esistente aggiungendo questi campi:
-interface RepairDetailModalExtended extends RepairDetailModal {
-  incomingTest?: IncomingTestDto;
-  exitTest?: ExitTestDto;
-}
-
 interface IncomingTestDto {
   id?: number;
   repairId?: string;
@@ -889,7 +883,7 @@ const RicercaSchede: React.FC = () => {
       const cssLinks = Array.from(
         document.querySelectorAll('link[rel="stylesheet"]')
       )
-        .map((link) => `<link rel="stylesheet" href="${link.href}">`)
+        .map((link) => `<link rel="stylesheet" href="${(link as HTMLLinkElement).href}">`)
         .join("");
 
       const cssStyles = Array.from(document.querySelectorAll("style"))
@@ -1393,10 +1387,7 @@ const RicercaSchede: React.FC = () => {
     if (v === "true") return true;
     if (v === "false") return false;
     return null; // non presente o non definito
-  };
-
-  // Ritorna true se la chiave esiste ed è impostata (true o false)
-  const isSet = (obj: any, key: string) => asBool(obj, key) !== null;
+  }; 
 
   // Funzione per renderizzare i test diagnostici - VERSIONE CORRETTA
   const renderDiagnosticTests = (

@@ -1,12 +1,17 @@
-import { useState, useEffect, FC } from "react";
-import type { FormEvent } from "react";
-import type { ChangeEvent } from "react";
+import { useState, useEffect } from "react";
+import type { FC, FormEvent, ChangeEvent } from "react";
 import { Eye, EyeOff, User, LogIn } from "lucide-react";
-import "./Login.css"; // 👈 importa gli stili standard
-import logo from "../../assets/LogoBaseBlack_300.png"; // Importa il logo se necessario
+import "./Login.css";
+import logo from "../../assets/LogoBaseBlack_300.png";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 interface LoginResponse {
+  token: string;
+  fullName: string;
+  email: string;
+  idCompany: string;
+  companyName: string;
   userId: string;
   level: string;
   isExternalUser: boolean;
@@ -46,70 +51,6 @@ const Login: FC = () => {
     }
     return true;
   };
-
-  const handleLogin_old = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    setLoading(true);
-    setError("");
-
-    console.log("Api Url :", API_URL);
-
-    const urlLogin = `${API_URL}/api/auth/login`;
-    console.log("URL di login:", urlLogin);
-    console.log("Form data:", formData);
-
-    try {
-      const res = await fetch(urlLogin, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.message || "UserId o Password errata");
-        return;
-      }
-
-      const result: LoginResponse = await res.json();
-
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("userId", result.userId);
-      localStorage.setItem("userLevel", result.level);
-      localStorage.setItem("isExternalUser", String(result.isExternalUser));
-
-      window.location.href = result.isExternalUser
-        ? "/external-dashboard"
-        : "/dashboard";
-    } catch (error: unknown) {
-      console.error("Errore durante il login:", error);
-
-      if (
-        error instanceof TypeError &&
-        error.message.includes("Failed to fetch")
-      ) {
-        setError(
-          "Impossibile connettersi al server. Verifica la rete."
-        );
-      } else if (error instanceof Error) {
-        setError(error.message || "Errore sconosciuto durante la connessione.");
-      } else {
-        setError("Errore sconosciuto durante la connessione.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  interface LoginResponse {
-    token: string;
-    fullName: string;
-    email: string;
-    idCompany: string;
-    companyName: string;
-  }
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -151,7 +92,7 @@ const Login: FC = () => {
         String(payload.role === "External")
       ); // esempio
 
-      // 🔁 Redirect condizionato
+      // 🔀 Redirect condizionato
       window.location.href =
         payload.role === "External" ? "/external-dashboard" : "/dashboard";
     } catch (error: unknown) {
@@ -161,9 +102,7 @@ const Login: FC = () => {
         error instanceof TypeError &&
         error.message.includes("Failed to fetch")
       ) {
-        setError(
-          "Impossibile connettersi al server. Verifica la rete."
-        );
+        setError("Impossibile connettersi al server. Verifica la rete.");
       } else if (error instanceof Error) {
         setError(error.message || "Errore sconosciuto durante la connessione.");
       } else {
@@ -181,7 +120,7 @@ const Login: FC = () => {
 
       {/* logo */}
       <div className="login-logo">
-        <img src={logo} alt="Medialab Logo" />;
+        <img src={logo} alt="Medialab Logo" />
       </div>
 
       {/* form */}

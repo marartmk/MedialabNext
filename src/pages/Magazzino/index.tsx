@@ -1,22 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import BottomBar from "../../components/BottomBar";
 import {
   Package,
   Search,
-  Filter,
   BarChart3,
-  X,
-  ChevronDown,
-  AlertTriangle,
-  Smartphone,
-  Battery,
-  Camera,
-  Volume2,
-  Cpu,
-  Settings,
+  X,  
   Grid3X3,
   List,
 } from "lucide-react";
@@ -58,12 +48,12 @@ interface Supplier {
 }
 
 const Magazzino: React.FC = () => {
-  const navigate = useNavigate();
-  const [menuState, setMenuState] = useState<"open" | "closed">("open");
+  const [menuState, setMenuState] = useState<"open" | "closed">("open"); 
   const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
     date: "",
     time: "",
   });
+  console.log(dateTime);
 
   // Stati per i dati
   const [warehouseItems, setWarehouseItems] = useState<WarehouseItem[]>([]);
@@ -266,6 +256,7 @@ const Magazzino: React.FC = () => {
       setError(null);
     } catch (err) {
       setError("Errore nel caricamento dei dati del magazzino");
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -401,6 +392,7 @@ const Magazzino: React.FC = () => {
       );
     } catch (error) {
       alert("Errore durante il salvataggio dell'articolo");
+      console.log(error);
     }
   };
 
@@ -451,23 +443,6 @@ const Magazzino: React.FC = () => {
   const getCategoryIcon = (categoryId: string) => {
     const category = categories.find((cat) => cat.id === categoryId);
     return category?.icon || "📦";
-  };
-
-  const getItemIcon = (categoryId: string) => {
-    switch (categoryId) {
-      case "screens":
-        return <Smartphone className="item-icon-lucide" />;
-      case "batteries":
-        return <Battery className="item-icon-lucide" />;
-      case "cameras":
-        return <Camera className="item-icon-lucide" />;
-      case "speakers":
-        return <Volume2 className="item-icon-lucide" />;
-      case "motherboards":
-        return <Cpu className="item-icon-lucide" />;
-      default:
-        return <Settings className="item-icon-lucide" />;
-    }
   };
 
   const getSupplierName = (supplierId: string) => {
