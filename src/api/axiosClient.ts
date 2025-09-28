@@ -10,7 +10,7 @@ const api = axios.create({
   Request interceptor
 ───────────────*/
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("jwt");
+  const token = sessionStorage.getItem("jwt");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -29,7 +29,7 @@ api.interceptors.response.use(
 
     // Esempio: se 401 → redirect al login
     if (error.response?.status === 401) {
-      localStorage.removeItem("jwt");
+      sessionStorage.removeItem("jwt");
       window.location.href = "/";
     }
 

@@ -149,10 +149,10 @@ class WarehouseService {
   private multitenantId: string | null = null;
 
   constructor() {
-    // Recupera il multitenantId dal localStorage - usa IdCompany come nelle altre pagine
+    // Recupera il multitenantId dal sessionStorage - usa IdCompany come nelle altre pagine
     this.multitenantId =
-      localStorage.getItem("IdCompany") ||
-      localStorage.getItem("multitenantId");
+      sessionStorage.getItem("IdCompany") ||
+      sessionStorage.getItem("multitenantId");
   }
 
   private async request<T>(
@@ -163,7 +163,7 @@ class WarehouseService {
 
     const defaultHeaders = {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${sessionStorage.getItem("token")}`,
     };
 
     const config: RequestInit = {
@@ -370,7 +370,7 @@ class WarehouseService {
 
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
       },
     });
 
@@ -397,7 +397,7 @@ class WarehouseService {
 
   setMultitenantId(id: string) {
     this.multitenantId = id;
-    localStorage.setItem("multitenantId", id);
+    sessionStorage.setItem("multitenantId", id);
   }
 
   getMultitenantId(): string | null {

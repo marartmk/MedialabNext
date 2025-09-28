@@ -99,7 +99,7 @@ const CompanyMaster: React.FC = () => {
   const API_BASE = "https://localhost:7148";
 
   const authHeaders = () => ({
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
+    Authorization: `Bearer ${sessionStorage.getItem("token")}`,
     "Content-Type": "application/json",
   });
 
@@ -218,7 +218,7 @@ const CompanyMaster: React.FC = () => {
         )}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
         }
       );
@@ -611,7 +611,7 @@ const CompanyMaster: React.FC = () => {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });

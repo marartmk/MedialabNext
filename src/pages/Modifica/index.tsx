@@ -305,7 +305,7 @@ const Modifica: React.FC = () => {
       const rIn = await fetch(
         `https://localhost:7148/api/repair/${repairGuid}/incoming-test`,
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
         }
       );
       if (rIn.ok) {
@@ -323,7 +323,7 @@ const Modifica: React.FC = () => {
       const rEx = await fetch(
         `https://localhost:7148/api/repair/${repairGuid}/exit-test`,
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
         }
       );
       if (rEx.ok) {
@@ -385,7 +385,7 @@ const Modifica: React.FC = () => {
     try {
       const response = await fetch(`https://localhost:7148/api/repair/${id}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
       });
 
@@ -417,7 +417,7 @@ const Modifica: React.FC = () => {
   //       `https://localhost:7148/api/repair/${repairGuid}/incoming-test`,
   //       {
   //         headers: {
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //           Authorization: `Bearer ${sessionStorage.getItem("token")}`,
   //         },
   //       }
   //     );
@@ -877,7 +877,7 @@ const Modifica: React.FC = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(dto),
       }
@@ -899,7 +899,7 @@ const Modifica: React.FC = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(dto),
       }
@@ -961,7 +961,7 @@ const Modifica: React.FC = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
           body: JSON.stringify(payload),
         }
@@ -1010,7 +1010,7 @@ const Modifica: React.FC = () => {
   //         q
   //       )}`,
   //       {
-  //         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  //         headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
   //       }
   //     );
   //     if (resp.ok) {
@@ -1108,7 +1108,7 @@ const Modifica: React.FC = () => {
   //       method: "POST",
   //       headers: {
   //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //         Authorization: `Bearer ${sessionStorage.getItem("token")}`,
   //       },
   //       body: JSON.stringify(payload),
   //     });

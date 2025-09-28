@@ -465,3 +465,74 @@
 .statusTextInactive {
   color: #6c757d;
 }
+
+/* === Editor inline (ex modal) === */
+.inlineEditorCard {
+  margin: 20px 20px 40px;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.inlineEditorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.inlineEditorHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #343a40;
+  letter-spacing: .2px;
+}
+
+.inlineCloseBtn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: #6c757d;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.inlineCloseBtn:hover { background:#e9ecef; color:#495057; }
+
+.inlineEditorBody {
+  padding: 20px;
+}
+
+.inlineEditorFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+/* opzionale: allineamento griglia del form */
+.customerForm .row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.customerForm .fieldGroup { flex: 1; }
+
+/* titolo sezione “Account di accesso” */
+.sectionTitle {
+  margin: 10px 0 12px;
+  font-weight: 600;
+  color: #495057;
+  border-top: 1px solid #e9ecef;
+  padding-top: 14px;
+}

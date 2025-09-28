@@ -364,7 +364,7 @@ const Accettazione: React.FC = () => {
       // Questo sarà il codice vero quando avremo l'API:
       const response = await fetch("https://localhost:7148/api/operator", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
       });
 
@@ -464,7 +464,7 @@ const Accettazione: React.FC = () => {
     if (!query.trim()) return;
 
     setLoading(true);
-    const multitenantId = localStorage.getItem("IdCompany");
+    const multitenantId = sessionStorage.getItem("IdCompany");
 
     try {
       const response = await fetch(
@@ -473,7 +473,7 @@ const Accettazione: React.FC = () => {
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
         }
       );
@@ -499,7 +499,7 @@ const Accettazione: React.FC = () => {
     if (!query.trim()) return;
 
     setDeviceLoading(true);
-    const multitenantId = localStorage.getItem("IdCompany");
+    const multitenantId = sessionStorage.getItem("IdCompany");
 
     try {
       const response = await fetch(
@@ -508,7 +508,7 @@ const Accettazione: React.FC = () => {
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
         }
       );
@@ -632,7 +632,7 @@ const Accettazione: React.FC = () => {
       deviceId: generateGuid(),
       customerId: selectedCustomer?.id || "",
       companyId: "",
-      multitenantId: localStorage.getItem("IdCompany") || "",
+      multitenantId: sessionStorage.getItem("IdCompany") || "",
       serialNumber: "",
       brand: "",
       model: "",
@@ -774,7 +774,7 @@ const Accettazione: React.FC = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(dto),
       }
@@ -786,7 +786,7 @@ const Accettazione: React.FC = () => {
   };
 
   const prepareRepairPayload = () => {
-    const multitenantId = localStorage.getItem("IdCompany");
+    const multitenantId = sessionStorage.getItem("IdCompany");
 
     // newCustomer (solo se non selezionato cliente esistente)
     let customerPayload = null;
@@ -895,7 +895,7 @@ const Accettazione: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });
@@ -1049,7 +1049,7 @@ const Accettazione: React.FC = () => {
       emailPec: newClientData.emailPec,
       codiceSdi: newClientData.codiceSdi,
       iban: newClientData.iban,
-      multitenantId: localStorage.getItem("IdCompany") || "",
+      multitenantId: sessionStorage.getItem("IdCompany") || "",
     };
 
     setSavingNewClient(true);
@@ -1059,7 +1059,7 @@ const Accettazione: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });
@@ -1128,7 +1128,7 @@ const Accettazione: React.FC = () => {
       deviceId: newDeviceData.deviceId || generateGuid(),
       customerId: selectedCustomer?.id || null,
       companyId: newDeviceData.companyId || null,
-      multitenantId: localStorage.getItem("IdCompany") || null,
+      multitenantId: sessionStorage.getItem("IdCompany") || null,
       serialNumber: newDeviceData.serialNumber,
       brand: newDeviceData.brand,
       model: newDeviceData.model,
@@ -1146,7 +1146,7 @@ const Accettazione: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });
@@ -1229,7 +1229,7 @@ const Accettazione: React.FC = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
           body: JSON.stringify(payload),
         }

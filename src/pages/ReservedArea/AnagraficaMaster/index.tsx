@@ -120,7 +120,7 @@ const CompanyMaster: React.FC = () => {
     time: "",
   });
 
-  const API_BASE = "https://localhost:7148";
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const authHeaders = () => ({
     Authorization: `Bearer ${sessionStorage.getItem("token")}`,

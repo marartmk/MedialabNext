@@ -11,7 +11,7 @@ import {
 import { useSearchParams, useNavigate } from "react-router-dom";
 import styles from "./styles.module.css";
 import Sidebar from "../../../components/sidebar-admin";
-import Topbar from "../../../components/topbar-admin";
+import Topbar from "../../../components/topbar";
 
 // Definisci il tipo per i dati del cliente
 interface CustomerData {
@@ -80,7 +80,6 @@ const PROVINCE_NAMES: { [key: string]: string } = {
   AQ: "L'Aquila",
   LT: "Latina",
   LE: "Lecce",
-  LECCE: "Lecce", // Aggiunta versione completa
   LC: "Lecco",
   LI: "Livorno",
   LO: "Lodi",
@@ -143,26 +142,26 @@ const PROVINCE_NAMES: { [key: string]: string } = {
 };
 
 const CANONICAL_REGIONS = [
-  "ABRUZZO",
-  "BASILICATA",
-  "CALABRIA",
-  "CAMPANIA",
-  "EMILIA-ROMAGNA",
-  "FRIULI VENEZIA GIULIA",
-  "LAZIO",
-  "LIGURIA",
-  "LOMBARDIA",
-  "MARCHE",
-  "MOLISE",
-  "PIEMONTE",
-  "PUGLIA",
-  "SARDEGNA",
-  "SICILIA",
-  "TOSCANA",
-  "TRENTINO-ALTO ADIGE",
-  "UMBRIA",
-  "VALLE D'AOSTA",
-  "VENETO",
+  "Abruzzo",
+  "Basilicata",
+  "Calabria",
+  "Campania",
+  "Emilia-Romagna",
+  "Friuli Venezia Giulia",
+  "Lazio",
+  "Liguria",
+  "Lombardia",
+  "Marche",
+  "Molise",
+  "Piemonte",
+  "Puglia",
+  "Sardegna",
+  "Sicilia",
+  "Toscana",
+  "Trentino-Alto Adige",
+  "Umbria",
+  "Valle d'Aosta",
+  "Veneto",
 ] as const;
 
 // Estendi l'interfaccia Window per Google Maps
@@ -194,7 +193,6 @@ const AffiliateManagement: React.FC = () => {
   // Filtri
   const [selectedProvincia, setSelectedProvincia] = useState<string>("");
   const [selectedRegione, setSelectedRegione] = useState<string>("");
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   // Stato per fullscreen della mappa
   const [isMapFullscreen, setIsMapFullscreen] = useState<boolean>(false);
@@ -306,12 +304,10 @@ const AffiliateManagement: React.FC = () => {
 
   // Aggiorna marker quando cambiano i dati per la mappa normale
   useEffect(() => {
-    if (mapInstance.current && rowData.length > 0 && !loading) {
-      setTimeout(() => {
-        updateMapMarkers();
-      }, 200);
+    if (mapInstance.current && rowData.length > 0) {
+      updateMapMarkers();
     }
-  }, [rowData, selectedProvincia, selectedRegione, loading]);
+  }, [rowData, selectedProvincia, selectedRegione]);
 
   // Gestisce l'aggiornamento della mappa fullscreen quando cambiano i filtri
   useEffect(() => {
@@ -394,19 +390,12 @@ const AffiliateManagement: React.FC = () => {
     );
 
     if (selectedRegione) {
-      // Confronto case-insensitive per gestire maiuscole/minuscole
-      filteredData = filteredData.filter(
-        (d) =>
-          d.regione && d.regione.toUpperCase() === selectedRegione.toUpperCase()
-      );
+      filteredData = filteredData.filter((d) => d.regione === selectedRegione);
     }
 
     if (selectedProvincia) {
-      // Confronto case-insensitive anche per le province
       filteredData = filteredData.filter(
-        (d) =>
-          d.provincia &&
-          d.provincia.toUpperCase() === selectedProvincia.toUpperCase()
+        (d) => d.provincia === selectedProvincia
       );
     }
 
@@ -438,8 +427,8 @@ const AffiliateManagement: React.FC = () => {
               customer.ragioneSociale
             }</strong></h6>
             <p style="margin-bottom: 0.5rem; font-size: 0.875rem;"><strong>${
-              customer.nome || ""
-            } ${customer.cognome || ""}</strong></p>
+              customer.nome
+            } ${customer.cognome}</strong></p>
             <p style="margin-bottom: 0.5rem; font-size: 0.875rem;"><small>${
               customer.indirizzo || ""
             }<br>
@@ -486,19 +475,12 @@ const AffiliateManagement: React.FC = () => {
     );
 
     if (selectedRegione) {
-      // Confronto case-insensitive per gestire maiuscole/minuscole
-      filteredData = filteredData.filter(
-        (d) =>
-          d.regione && d.regione.toUpperCase() === selectedRegione.toUpperCase()
-      );
+      filteredData = filteredData.filter((d) => d.regione === selectedRegione);
     }
 
     if (selectedProvincia) {
-      // Confronto case-insensitive anche per le province
       filteredData = filteredData.filter(
-        (d) =>
-          d.provincia &&
-          d.provincia.toUpperCase() === selectedProvincia.toUpperCase()
+        (d) => d.provincia === selectedProvincia
       );
     }
 
@@ -530,8 +512,8 @@ const AffiliateManagement: React.FC = () => {
               customer.ragioneSociale
             }</strong></h6>
             <p style="margin-bottom: 0.5rem; font-size: 0.875rem;"><strong>${
-              customer.nome || ""
-            } ${customer.cognome || ""}</strong></p>
+              customer.nome
+            } ${customer.cognome}</strong></p>
             <p style="margin-bottom: 0.5rem; font-size: 0.875rem;"><small>${
               customer.indirizzo || ""
             }<br>
@@ -565,162 +547,7 @@ const AffiliateManagement: React.FC = () => {
     }
   };
 
-  // Funzione helper per ottenere la regione dalla provincia
-  const getRegionFromProvince = (provincia: string): string => {
-    const provinceToRegion: { [key: string]: string } = {
-      LE: "PUGLIA",
-      RM: "LAZIO",
-      MI: "LOMBARDIA",
-      NA: "CAMPANIA",
-      AG: "SICILIA",
-      AL: "PIEMONTE",
-      AN: "MARCHE",
-      AO: "VALLE D'AOSTA",
-      AR: "TOSCANA",
-      AP: "MARCHE",
-      AT: "PIEMONTE",
-      AV: "CAMPANIA",
-      BA: "PUGLIA",
-      BT: "PUGLIA",
-      BL: "VENETO",
-      BN: "CAMPANIA",
-      BG: "LOMBARDIA",
-      BI: "PIEMONTE",
-      BO: "EMILIA-ROMAGNA",
-      BZ: "TRENTINO-ALTO ADIGE",
-      BS: "LOMBARDIA",
-      BR: "PUGLIA",
-      CA: "SARDEGNA",
-      CL: "SICILIA",
-      CB: "MOLISE",
-      CE: "CAMPANIA",
-      CT: "SICILIA",
-      CZ: "CALABRIA",
-      CH: "ABRUZZO",
-      CO: "LOMBARDIA",
-      CS: "CALABRIA",
-      CR: "LOMBARDIA",
-      KR: "CALABRIA",
-      CN: "PIEMONTE",
-      EN: "SICILIA",
-      FM: "MARCHE",
-      FE: "EMILIA-ROMAGNA",
-      FI: "TOSCANA",
-      FG: "PUGLIA",
-      FC: "EMILIA-ROMAGNA",
-      FR: "LAZIO",
-      GE: "LIGURIA",
-      GO: "FRIULI VENEZIA GIULIA",
-      GR: "TOSCANA",
-      IM: "LIGURIA",
-      IS: "MOLISE",
-      SP: "LIGURIA",
-      AQ: "ABRUZZO",
-      LT: "LAZIO",
-      LECCE: "PUGLIA", // Aggiungiamo anche il nome completo
-      LC: "LOMBARDIA",
-      LI: "TOSCANA",
-      LO: "LOMBARDIA",
-      LU: "TOSCANA",
-      MC: "MARCHE",
-      MN: "LOMBARDIA",
-      MS: "TOSCANA",
-      MT: "BASILICATA",
-      ME: "SICILIA",
-      MO: "EMILIA-ROMAGNA",
-      MB: "LOMBARDIA",
-      NO: "PIEMONTE",
-      NU: "SARDEGNA",
-      PD: "VENETO",
-      PA: "SICILIA",
-      PR: "EMILIA-ROMAGNA",
-      PV: "LOMBARDIA",
-      PG: "UMBRIA",
-      PU: "MARCHE",
-      PE: "ABRUZZO",
-      PC: "EMILIA-ROMAGNA",
-      PI: "TOSCANA",
-      PT: "TOSCANA",
-      PN: "FRIULI VENEZIA GIULIA",
-      PZ: "BASILICATA",
-      PO: "TOSCANA",
-      RG: "SICILIA",
-      RA: "EMILIA-ROMAGNA",
-      RC: "CALABRIA",
-      RE: "EMILIA-ROMAGNA",
-      RI: "LAZIO",
-      RN: "EMILIA-ROMAGNA",
-      RO: "VENETO",
-      SA: "CAMPANIA",
-      SS: "SARDEGNA",
-      SV: "LIGURIA",
-      SI: "TOSCANA",
-      SR: "SICILIA",
-      SO: "LOMBARDIA",
-      TA: "PUGLIA",
-      TE: "ABRUZZO",
-      TR: "UMBRIA",
-      TO: "PIEMONTE",
-      TP: "SICILIA",
-      TN: "TRENTINO-ALTO ADIGE",
-      TV: "VENETO",
-      TS: "FRIULI VENEZIA GIULIA",
-      UD: "FRIULI VENEZIA GIULIA",
-      VA: "LOMBARDIA",
-      VE: "VENETO",
-      VB: "PIEMONTE",
-      VC: "PIEMONTE",
-      VR: "VENETO",
-      VV: "CALABRIA",
-      VI: "VENETO",
-      VT: "LAZIO",
-    };
-    return (
-      provinceToRegion[provincia] ||
-      provinceToRegion[provincia.toUpperCase()] ||
-      "LAZIO"
-    ); // Default
-  };
-
-  // Funzione condivisa per processare i dati
-  const processCustomerData = (data: CustomerData[]) => {
-    return data.map((customer: CustomerData) => {
-      // Usa la regione dal server se disponibile, altrimenti calcola dalla provincia
-      const regioneFromServer = customer.regione?.toUpperCase();
-      const regioneFromProvincia = getRegionFromProvince(customer.provincia);
-
-      if (!customer.lat || !customer.lng) {
-        const idHash = customer.id.split("").reduce((a, b) => {
-          a = (a << 5) - a + b.charCodeAt(0);
-          return a & a;
-        }, 0);
-
-        const latOffset = ((idHash % 1000) / 1000 - 0.5) * 10;
-        const lngOffset = (((idHash * 7) % 1000) / 1000 - 0.5) * 10;
-
-        return {
-          ...customer,
-          lat: 41.9028 + latOffset,
-          lng: 12.4964 + lngOffset,
-          geocoded: true,
-          regione: regioneFromServer || regioneFromProvincia,
-          indirizzo:
-            customer.indirizzo ||
-            `Via ${customer.ragioneSociale.split(" ")[0]} ${
-              Math.abs(idHash % 100) + 1
-            }`,
-          cap: customer.cap || `${Math.abs(idHash % 90000) + 10000}`,
-        };
-      }
-      return {
-        ...customer,
-        geocoded: true,
-        regione: regioneFromServer || regioneFromProvincia,
-      };
-    });
-  };
-
-  // Carica dati affiliati - USA LO STESSO ENDPOINT DEL REFRESH
+  // Carica dati affiliati
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -730,13 +557,8 @@ const AffiliateManagement: React.FC = () => {
         const token = sessionStorage.getItem("token");
         const multitenantId = sessionStorage.getItem("IdCompanyAdmin");
 
-        if (!token || !multitenantId) {
-          throw new Error("Token o ID azienda mancanti");
-        }
-
-        // USA LO STESSO ENDPOINT DEL REFRESH PER COERENZA
         const response = await fetch(
-          `https://localhost:7148/api/Customer/customeraffiliated/with-geolocation?multitenantId=${multitenantId}`,
+          `https://localhost:7148/api/Customer/customeraffiliated?multitenantId=${multitenantId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -751,16 +573,22 @@ const AffiliateManagement: React.FC = () => {
 
         const data = await response.json();
 
-        // Verifica che ci siano dati
-        if (!data || data.length === 0) {
-          setRowData([]);
-          return;
-        }
+        // Aggiungi coordinate mock per il test della mappa
+        const dataWithCoords = data.map(
+          (customer: CustomerData, index: number) => ({
+            ...customer,
+            lat: 41.9028 + (Math.random() - 0.5) * 10, // Coordinate casuali per test
+            lng: 12.4964 + (Math.random() - 0.5) * 10,
+            geocoded: true,
+            regione: getRegionFromProvince(customer.provincia),
+            indirizzo: `Via ${customer.ragioneSociale.split(" ")[0]} ${
+              Math.floor(Math.random() * 100) + 1
+            }`,
+            cap: `${Math.floor(Math.random() * 90000) + 10000}`,
+          })
+        );
 
-        // Usa la stessa logica del refreshData
-        const processedData = processCustomerData(data);
-        setRowData(processedData);
-        setIsFirstLoad(false);
+        setRowData(dataWithCoords);
       } catch (error: unknown) {
         console.error("Errore nel caricamento dei clienti:", error);
         if (error instanceof Error) {
@@ -768,19 +596,25 @@ const AffiliateManagement: React.FC = () => {
         } else {
           setError("Errore sconosciuto");
         }
-        setRowData([]);
       } finally {
         setLoading(false);
       }
     };
 
-    // Piccolo delay per evitare race conditions
-    const timeoutId = setTimeout(() => {
-      fetchData();
-    }, 100);
-
-    return () => clearTimeout(timeoutId);
+    fetchData();
   }, []);
+
+  // Funzione helper per ottenere la regione dalla provincia
+  const getRegionFromProvince = (provincia: string): string => {
+    const provinceToRegion: { [key: string]: string } = {
+      LE: "Puglia",
+      RM: "Lazio",
+      MI: "Lombardia",
+      NA: "Campania",
+      // Aggiungi altre mappature secondo necessità
+    };
+    return provinceToRegion[provincia] || "Lazio"; // Default
+  };
 
   const toggleMenu = () => {
     const newState = menuState === "open" ? "closed" : "open";
@@ -793,63 +627,27 @@ const AffiliateManagement: React.FC = () => {
 
     if (selectedRegione) {
       provinces = rowData
-        .filter(
-          (d) =>
-            d.regione &&
-            d.regione.toUpperCase() === selectedRegione.toUpperCase()
-        )
+        .filter((d) => d.regione === selectedRegione)
         .map((d) => d.provincia);
     }
 
     const uniqueProvinces = [...new Set(provinces)].sort();
 
-    return uniqueProvinces.map((provincia) => {
-      // Normalizza la provincia per la visualizzazione
-      const normalizedProvincia = provincia.toUpperCase();
-      const displayName =
-        PROVINCE_NAMES[normalizedProvincia] ||
-        PROVINCE_NAMES[provincia] ||
-        provincia;
-
-      return {
-        code: provincia, // Mantieni il valore originale per il confronto
-        normalizedCode: normalizedProvincia, // Versione normalizzata
-        name: displayName,
-        displayValue: `${normalizedProvincia} - ${displayName}`, // Formato completo per dropdown
-      };
-    });
-  };
-
-  // Aggiungi questa funzione per ottenere le regioni uniche dai dati
-  const getUniqueRegions = () => {
-    const regions = rowData
-      .map((d) => d.regione)
-      .filter(Boolean) // Rimuove valori null/undefined
-      .filter((region) => region.trim() !== "") // Rimuove stringhe vuote
-      .map((region) => region.toUpperCase()); // Normalizza in maiuscolo
-
-    const uniqueRegions = [...new Set(regions)].sort();
-    return uniqueRegions;
+    return uniqueProvinces.map((provincia) => ({
+      code: provincia,
+      name: PROVINCE_NAMES[provincia] || provincia,
+    }));
   };
 
   const getFilteredCount = () => {
     let filtered = rowData;
 
     if (selectedRegione) {
-      // Confronto case-insensitive per gestire maiuscole/minuscole
-      filtered = filtered.filter(
-        (d) =>
-          d.regione && d.regione.toUpperCase() === selectedRegione.toUpperCase()
-      );
+      filtered = filtered.filter((d) => d.regione === selectedRegione);
     }
 
     if (selectedProvincia) {
-      // Confronto case-insensitive anche per le province
-      filtered = filtered.filter(
-        (d) =>
-          d.provincia &&
-          d.provincia.toUpperCase() === selectedProvincia.toUpperCase()
-      );
+      filtered = filtered.filter((d) => d.provincia === selectedProvincia);
     }
 
     return filtered.length;
@@ -875,10 +673,6 @@ const AffiliateManagement: React.FC = () => {
       const token = sessionStorage.getItem("token");
       const multitenantId = sessionStorage.getItem("IdCompanyAdmin");
 
-      if (!token || !multitenantId) {
-        throw new Error("Token o ID azienda mancanti");
-      }
-
       const response = await fetch(
         `https://localhost:7148/api/Customer/customeraffiliated/with-geolocation?multitenantId=${multitenantId}`,
         {
@@ -894,11 +688,7 @@ const AffiliateManagement: React.FC = () => {
       }
 
       const data = await response.json();
-
-      // Usa la stessa funzione di processamento
-      const processedData = processCustomerData(data);
-      setRowData(processedData);
-      setIsFirstLoad(false);
+      setRowData(data);
     } catch (error: unknown) {
       console.error("Errore nell'aggiornamento dei dati:", error);
       if (error instanceof Error) {
@@ -955,7 +745,7 @@ const AffiliateManagement: React.FC = () => {
 
     if (isMapFullscreen) {
       document.addEventListener("keydown", handleKeyPress);
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = "hidden"; // Previene lo scroll del body
     } else {
       document.body.style.overflow = "unset";
     }
@@ -1021,6 +811,10 @@ const AffiliateManagement: React.FC = () => {
                 ></i>
                 Aggiorna
               </button>
+              <button className={styles.btnPrimary}>
+                <i className="fa-solid fa-plus me-1"></i>
+                Nuovo Affiliato
+              </button>
             </div>
           </div>
 
@@ -1055,82 +849,6 @@ const AffiliateManagement: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Mappa Affiliati */}
-          <div className={styles.mapSection}>
-            <div className={styles.cardHeader}>
-              <span>Mappa Affiliati</span>
-              <div className={styles.mapControls}>
-                <div className={styles.filterIcon}>
-                  <i className="fa-solid fa-filter" />
-                </div>
-                <div
-                  className={styles.expandIcon}
-                  onClick={toggleMapFullscreen}
-                  title="Espandi mappa a schermo intero"
-                >
-                  <i className="fa-solid fa-expand" />
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.mapCard}>
-              {/* Filtri mappa */}
-              <div className={styles.mapFilters}>
-                <div className={styles.filtersRow}>
-                  <div className={styles.filterGroup}>
-                    <select
-                      className={styles.selectFilter}
-                      value={selectedRegione}
-                      onChange={(e) => setSelectedRegione(e.target.value)}
-                    >
-                      <option value="">Seleziona Regione...</option>
-                      {getUniqueRegions().map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className={styles.filterGroup}>
-                    <select
-                      className={styles.selectFilter}
-                      value={selectedProvincia}
-                      onChange={(e) => setSelectedProvincia(e.target.value)}
-                    >
-                      <option value="">Tutte le province</option>
-                      {getUniqueProvinces().map((provincia) => (
-                        <option
-                          key={provincia.normalizedCode}
-                          value={provincia.code}
-                        >
-                          {provincia.displayValue}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className={styles.filterGroup}>
-                    <button className={styles.btnMapUpdate}>
-                      <i className="fa-solid fa-map-marker-alt me-1"></i>
-                      Aggiorna Mappa
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Mappa */}
-              {!mapLoaded ? (
-                <div className={styles.mapPlaceholder}>
-                  <div className={styles.placeholderContent}>
-                    <i className="fa-solid fa-map fa-3x mb-3"></i>
-                    <h5>Caricamento mappa...</h5>
-                  </div>
-                </div>
-              ) : (
-                <div ref={mapRef} className={styles.mapContainer}></div>
-              )}
             </div>
           </div>
 
@@ -1277,6 +995,79 @@ const AffiliateManagement: React.FC = () => {
             )}
           </div>
 
+          {/* Mappa Affiliati */}
+          <div className={styles.mapSection}>
+            <div className={styles.cardHeader}>
+              <span>Mappa Affiliati</span>
+              <div className={styles.mapControls}>
+                <div className={styles.filterIcon}>
+                  <i className="fa-solid fa-filter" />
+                </div>
+                <div
+                  className={styles.expandIcon}
+                  onClick={toggleMapFullscreen}
+                  title="Espandi mappa a schermo intero"
+                >
+                  <i className="fa-solid fa-expand" />
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.mapCard}>
+              {/* Filtri mappa */}
+              <div className={styles.mapFilters}>
+                <div className={styles.filtersRow}>
+                  <div className={styles.filterGroup}>
+                    <select
+                      className={styles.selectFilter}
+                      value={selectedRegione}
+                      onChange={(e) => setSelectedRegione(e.target.value)}
+                    >
+                      <option value="">Seleziona Regione...</option>
+                      {CANONICAL_REGIONS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.filterGroup}>
+                    <select
+                      className={styles.selectFilter}
+                      value={selectedProvincia}
+                      onChange={(e) => setSelectedProvincia(e.target.value)}
+                    >
+                      <option value="">Tutte le province</option>
+                      {getUniqueProvinces().map((provincia) => (
+                        <option key={provincia.code} value={provincia.code}>
+                          {provincia.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.filterGroup}>
+                    <button className={styles.btnMapUpdate}>
+                      <i className="fa-solid fa-map-marker-alt me-1"></i>
+                      Aggiorna Mappa
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mappa */}
+              {!mapLoaded ? (
+                <div className={styles.mapPlaceholder}>
+                  <div className={styles.placeholderContent}>
+                    <i className="fa-solid fa-map fa-3x mb-3"></i>
+                    <h5>Caricamento mappa...</h5>
+                  </div>
+                </div>
+              ) : (
+                <div ref={mapRef} className={styles.mapContainer}></div>
+              )}
+            </div>
+          </div>
+
           {/* Overlay Fullscreen Mappa */}
           {isMapFullscreen && (
             <div className={styles.mapFullscreenOverlay}>
@@ -1305,7 +1096,7 @@ const AffiliateManagement: React.FC = () => {
                   onChange={(e) => setSelectedRegione(e.target.value)}
                 >
                   <option value="">Tutte le Regioni</option>
-                  {getUniqueRegions().map((r) => (
+                  {CANONICAL_REGIONS.map((r) => (
                     <option key={r} value={r}>
                       {r}
                     </option>
@@ -1319,11 +1110,8 @@ const AffiliateManagement: React.FC = () => {
                 >
                   <option value="">Tutte le Province</option>
                   {getUniqueProvinces().map((provincia) => (
-                    <option
-                      key={provincia.normalizedCode}
-                      value={provincia.code}
-                    >
-                      {provincia.displayValue}
+                    <option key={provincia.code} value={provincia.code}>
+                      {provincia.name}
                     </option>
                   ))}
                 </select>

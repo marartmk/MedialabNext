@@ -1,8 +1,37 @@
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../../../components/sidebar";
 import Topbar from "../../../components/topbar";
-import "./styles.css";
-import { CalendarDays } from "lucide-react";
+import styles from "./styles.module.css";
+import { CalendarDays, Edit, Plus } from "lucide-react";
+
+interface Operator {
+  id: string;
+  idWhr: string;
+  userName: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  regione: string;
+  provincia: string;
+  citta: string;
+  cap: string;
+  indirizzo: string | null;
+  idcompany: string | null;
+  codiceDipendente: string;
+  codiceFiscale: string | null;
+  dataNascita: string | null;
+  comuneNascita: string | null;
+  prNascita: string | null;
+  iban: string | null;
+  matricola: string | null;
+  qualificaImpiegato: string | null;
+  descriQualifica: string | null;
+  active: boolean | null;
+  dataCreazione: string;
+  isEmployee: boolean | null;
+  multiTenantId: string | null;
+}
 
 const Operators: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
@@ -11,33 +40,64 @@ const Operators: React.FC = () => {
     time: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [operators, setOperators] = useState<Operator[]>([]);
+  const [filteredOperators, setFilteredOperators] = useState<Operator[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [operatorId, setOperatorId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const cognomeInputRef = useRef<HTMLInputElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const firstNameInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [flashPanel, setFlashPanel] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [formData, setFormData] = useState({
-    tipo: "Privato",
-    cliente: true,
-    fornitore: false,
-    tipoCliente: "",
-    ragioneSociale: "",
-    indirizzo: "",
-    cognome: "",
-    nome: "",
-    cap: "",
+    userName: "",
+    email: "",
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
     regione: "",
     provincia: "",
     citta: "",
-    telefono: "",
-    email: "",
+    cap: "",
+    indirizzo: "",
+    codiceDipendente: "",
     codiceFiscale: "",
-    partitaIva: "",
-    emailPec: "",
-    codiceSdi: "",
+    dataNascita: "",
+    comuneNascita: "",
+    prNascita: "",
     iban: "",
+    matricola: "",
+    qualificaImpiegato: "",
+    descriQualifica: "",
   });
+
+  type UserDetail = {
+    id: string;
+    username?: string;
+    userName?: string;
+    email?: string | null;
+    isEnabled: boolean;
+    isAdmin: boolean;
+    accessLevel?: string | null;
+    createdAt?: string;
+  };
+
+  const [operatorUsers, setOperatorUsers] = useState<UserDetail[]>([]);
+  const [selectedOpUserId, setSelectedOpUserId] = useState<string | null>(null);
+  const [accountForm, setAccountForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    accessLevel: "User",
+    isEnabled: true,
+    isAdmin: false,
+  });
+  const [isSavingAccount, setIsSavingAccount] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -54,118 +114,346 @@ const Operators: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    loadOperators();
+  }, []);
+
+  useEffect(() => {
+    filterOperators();
+  }, [searchQuery, operators]);
+
   const toggleMenu = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
-  }; 
+  };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    setLoading(true);
-
-    const multitenantId = localStorage.getItem("IdCompany"); // oppure recuperalo da un contesto o stato
-
+  const loadOperatorUsers = async (opId: string, opCompanyId?: string) => {
     try {
-      const response = await fetch(
-        `https://localhost:7148/api/customer/search?query=${encodeURIComponent(
-          searchQuery
-        )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
+      const companyId = opCompanyId || sessionStorage.getItem("IdCompany");
+
+      if (!companyId) {
+        setOperatorUsers([]);
+        setSelectedOpUserId(null);
+        setAccountForm((p) => ({ ...p, username: "", email: "" }));
+        return;
+      }
+
+      const resp = await fetch(`${API_URL}/api/Auth/users/${companyId}`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (resp.status === 204 || resp.status === 404) {
+        setOperatorUsers([]);
+        setSelectedOpUserId(null);
+        setAccountForm((p) => ({ ...p, username: "", email: "" }));
+        return;
+      }
+      if (!resp.ok) throw new Error(await resp.text());
+
+      const json = await resp.json();
+
+      const listRaw: any[] = Array.isArray(json?.users)
+        ? json.users
+        : Array.isArray(json)
+        ? json
+        : json && typeof json === "object"
+        ? [json]
+        : [];
+
+      // Teniamo solo gli utenti legati all'operatore (idWhr === opId)
+      const filtered = listRaw.filter(
+        (u) =>
+          (u.idWhr || u.IdWhr || u.idwhr) &&
+          String(u.idWhr || u.IdWhr || u.idwhr).toLowerCase() ===
+            opId.toLowerCase()
+      );
+
+      const list = filtered.map((u) => ({
+        ...u,
+        username: u.username ?? u.userName ?? u.UserName ?? "",
+        email: u.email ?? "",
+        isEnabled: !!u.isEnabled,
+        isAdmin: !!u.isAdmin,
+        accessLevel: u.accessLevel ?? "User",
+      }));
+
+      setOperatorUsers(list);
+
+      const first = list[0] ?? null;
+      setSelectedOpUserId(first?.id ?? null);
+      setAccountForm((p) =>
+        first
+          ? {
+              ...p,
+              username: first.username,
+              email: first.email,
+              accessLevel: first.accessLevel,
+              isEnabled: first.isEnabled,
+              isAdmin: first.isAdmin,
+              password: "",
+              confirmPassword: "",
+            }
+          : { ...p, username: "", email: "", password: "", confirmPassword: "" }
+      );
+    } catch (e) {
+      console.error("loadOperatorUsers error:", e);
+      alert("Errore nel caricamento account operatore.");
+    }
+  };
+
+  const createOperatorAccount = async (opId: string, opCompanyId?: string) => {
+    if (!accountForm.username.trim() || !accountForm.password.trim()) {
+      return alert("Username e Password sono obbligatori.");
+    }
+
+    // companyId dall'operatore o da sessione (fallback)
+    const companyId =
+      opCompanyId ||
+      sessionStorage.getItem("IdCompanyAdmin") ||
+      sessionStorage.getItem("IdCompany");
+
+    if (!companyId) {
+      alert("Impossibile determinare la company dell'operatore.");
+      return;
+    }
+
+    setIsSavingAccount(true);
+    try {
+      const body = {
+        username: accountForm.username.trim(),
+        password: accountForm.password,
+        email: accountForm.email || null,
+        idCompany: companyId, // <- richiesto dallo Swagger
+        isAdmin: !!accountForm.isAdmin,
+        accessLevel: accountForm.accessLevel || null,
+        idWhr: opId, // <- usiamo questo per legare l’utente all’operatore
+      };
+
+      const resp = await fetch(`${API_URL}/api/Auth/create-user`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const text = await resp.text();
+      if (!resp.ok) throw new Error(text || "Errore creazione account");
+
+      await loadOperatorUsers(opId, companyId);
+      alert("Account operatore creato con successo.");
+    } catch (e: any) {
+      console.error("createOperatorAccount error:", e);
+      alert(e.message || "Errore nella creazione account.");
+    } finally {
+      setIsSavingAccount(false);
+    }
+  };
+
+  const updateOperatorUser = async (userId: string, opId: string) => {
+    setIsSavingAccount(true);
+    try {
+      const body = {
+        email: accountForm.email || null,
+        isEnabled: accountForm.isEnabled,
+        isAdmin: accountForm.isAdmin,
+        accessLevel: accountForm.accessLevel || null,
+      };
+      const resp = await fetch(`${API_URL}/api/Auth/update-user/${userId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      const text = await resp.text();
+      if (!resp.ok) throw new Error(text || "Errore aggiornamento utente");
+      await loadOperatorUsers(opId);
+      alert("Dati account aggiornati.");
+    } catch (e: any) {
+      console.error("updateOperatorUser error:", e);
+      alert(e.message || "Errore aggiornamento.");
+    } finally {
+      setIsSavingAccount(false);
+    }
+  };
+
+  const changeOperatorPassword = async (userId: string) => {
+    if (!accountForm.password.trim())
+      return alert("Inserisci la nuova password.");
+    if (
+      accountForm.confirmPassword &&
+      accountForm.confirmPassword !== accountForm.password
+    )
+      return alert("La conferma password non coincide.");
+
+    setIsSavingAccount(true);
+    try {
+      const body = {
+        newPassword: accountForm.password,
+        confirmPassword: accountForm.confirmPassword || undefined,
+      };
+      const resp = await fetch(
+        `${API_URL}/api/Auth/change-password/${userId}`,
         {
+          method: "PUT",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
+      const text = await resp.text();
+      if (!resp.ok) throw new Error(text || "Errore cambio password");
+      setAccountForm((p) => ({ ...p, password: "", confirmPassword: "" }));
+      alert("Password aggiornata.");
+    } catch (e: any) {
+      console.error("changeOperatorPassword error:", e);
+      alert(e.message || "Errore cambio password.");
+    } finally {
+      setIsSavingAccount(false);
+    }
+  };
+
+  const toggleOperatorUserStatus = async (userId: string, opId: string) => {
+    try {
+      const resp = await fetch(
+        `${API_URL}/api/Auth/toggle-user-status/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
         }
       );
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data);
-        setShowModal(true);
-      } else {
-        alert("Errore nella ricerca");
+      const text = await resp.text();
+      if (!resp.ok) throw new Error(text || "Errore cambio stato");
+      await loadOperatorUsers(opId);
+      alert("Stato utente aggiornato.");
+    } catch (e: any) {
+      console.error("toggleOperatorUserStatus error:", e);
+      alert(e.message || "Errore nel cambio stato.");
+    }
+  };
+
+  const loadOperators = async () => {
+    setLoading(true);
+    try {
+      const companyId = (
+        sessionStorage.getItem("IdCompany") || ""
+      ).toLowerCase();
+
+      const response = await fetch(`${API_URL}/api/operator`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        /* ... */
       }
-    } catch (error) {
-      console.error("Errore durante la ricerca:", error);
+
+      const data: Operator[] = await response.json();
+
+      // mostra solo gli operatori della company loggata
+      const filtered = (data || []).filter((o) => {
+        const mt = (o.multiTenantId || "").toLowerCase();
+        const ic = (o.idcompany || "").toLowerCase();
+        return mt === companyId || ic === companyId;
+      });
+
+      setOperators(filtered);
+      setFilteredOperators(filtered);
+      setCurrentPage(1);
     } finally {
       setLoading(false);
     }
   };
 
-  const onSelectCustomer = (c: any) => {
-    setCustomerId(c.id); // salva l'ID del cliente selezionato
-    setFormData({
-      tipo: c.tipologia === "1" ? "Privato" : "Azienda",
-      cliente: c.isCustomer ?? true,
-      fornitore: !c.isCustomer,
-      tipoCliente: c.tipoCliente || "",
-      ragioneSociale: c.ragioneSociale || "",
-      indirizzo: c.indirizzo || "",
-      cognome: c.cognome || "",
-      nome: c.nome || "",
-      cap: c.cap || "",
-      regione: c.regione || "",
-      provincia: c.provincia || "",
-      citta: c.citta || "",
-      telefono: c.telefono || "",
-      email: c.email || "",
-      codiceFiscale: c.fiscalCode || "",
-      partitaIva: c.pIva || "",
-      emailPec: c.emailPec || "",
-      codiceSdi: c.codiceSdi || "",
-      iban: c.iban || "",
-    });
-    setShowModal(false);
+  const filterOperators = () => {
+    if (!searchQuery.trim()) {
+      setFilteredOperators(operators);
+    } else {
+      const filtered = operators.filter(
+        (operator) =>
+          operator.firstName
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          operator.lastName
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          operator.codiceDipendente
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          operator.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          operator.phoneNumber?.includes(searchQuery)
+      );
+      setFilteredOperators(filtered);
+    }
+    setCurrentPage(1);
   };
 
-  const handleSaveCustomer = async () => {
-    // Rimuovi questo controllo che blocca la creazione di nuovi clienti
-    // if (!customerId) {
-    //   alert("Nessun cliente selezionato");
-    //   return;
-    // }
+  const openModal = (operator?: Operator) => {
+    if (operator) {
+      setOperatorId(operator.id);
+      setFormData({
+        userName: operator.userName || "",
+        email: operator.email || "",
+        firstName: operator.firstName || "",
+        lastName: operator.lastName || "",
+        phoneNumber: operator.phoneNumber || "",
+        regione: operator.regione || "",
+        provincia: operator.provincia || "",
+        citta: operator.citta || "",
+        cap: operator.cap || "",
+        indirizzo: operator.indirizzo || "",
+        codiceDipendente: operator.codiceDipendente || "",
+        codiceFiscale: operator.codiceFiscale || "",
+        dataNascita: operator.dataNascita
+          ? operator.dataNascita.split("T")[0]
+          : "",
+        comuneNascita: operator.comuneNascita || "",
+        prNascita: operator.prNascita || "",
+        iban: operator.iban || "",
+        matricola: operator.matricola || "",
+        qualificaImpiegato: operator.qualificaImpiegato || "",
+        descriQualifica: operator.descriQualifica || "",
+      });
+      if (operator.id) {
+        loadOperatorUsers(operator.id, operator.idcompany || undefined);
+      }
+    } else {
+      resetForm();
+    }
+    setShowModal(true);
+    setTimeout(() => {
+      firstNameInputRef.current?.focus();
+      editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // trigger del lampeggio bordo
+      setFlashPanel(true);
+      setTimeout(() => setFlashPanel(false), 1500); // torna allo stato normale
+    }, 100);
+  };
 
-    if (!formData.tipo) {
-      alert("Selezionare un tipo di cliente");
+  const closeModal = () => {
+    setShowModal(false);
+    setOperatorId(null);
+  };
+
+  const handleSaveOperator = async () => {
+    if (!formData.firstName) {
+      alert("Inserire il nome");
       return;
     }
 
-    const isPrivato = formData.tipo === "Privato";
-    const tipologia = isPrivato ? "1" : "0";
-
-    const ragioneSociale = isPrivato
-      ? `${formData.cognome} ${formData.nome}`.trim()
-      : formData.ragioneSociale;
-
-    if (!isPrivato && ragioneSociale === "") {
-      alert("Inserire una ragione sociale");
-      return;
-    }
-
-    if (!formData.indirizzo) {
-      alert("Inserire un indirizzo");
-      return;
-    }
-
-    if (!formData.cap) {
-      alert("Inserire un CAP");
-      return;
-    }
-
-    if (!formData.regione) {
-      alert("Inserire una regione");
-      return;
-    }
-
-    if (!formData.provincia) {
-      alert("Inserire una provincia");
-      return;
-    }
-
-    if (!formData.citta) {
-      alert("Inserire una città");
-      return;
-    }
-
-    if (!formData.telefono) {
-      alert("Inserire un numero di telefono");
+    if (!formData.lastName) {
+      alert("Inserire il cognome");
       return;
     }
 
@@ -174,57 +462,77 @@ const Operators: React.FC = () => {
       return;
     }
 
+    if (!formData.userName) {
+      alert("Inserire un username");
+      return;
+    }
+
+    if (!formData.phoneNumber) {
+      alert("Inserire un numero di telefono");
+      return;
+    }
+
+    if (!formData.codiceDipendente) {
+      alert("Inserire il codice dipendente");
+      return;
+    }
+
     const payload = {
-      // Includi l'ID solo se esiste (per gli aggiornamenti)
-      ...(customerId && { id: customerId }),
-      tipologia: tipologia,
-      isCustomer: formData.cliente,
-      tipoCliente: formData.tipoCliente,
-      ragioneSociale: ragioneSociale,
-      indirizzo: formData.indirizzo,
-      cognome: isPrivato ? formData.cognome : null,
-      nome: isPrivato ? formData.nome : null,
-      cap: formData.cap,
+      ...(operatorId && { id: operatorId }),
+      userName: formData.userName,
+      email: formData.email,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phoneNumber: formData.phoneNumber,
       regione: formData.regione,
       provincia: formData.provincia,
       citta: formData.citta,
-      telefono: formData.telefono,
-      email: formData.email,
-      fiscalCode: formData.codiceFiscale,
-      pIva: formData.partitaIva,
-      emailPec: formData.emailPec,
-      codiceSdi: formData.codiceSdi,
+      cap: formData.cap,
+      indirizzo: formData.indirizzo,
+      codiceDipendente: formData.codiceDipendente,
+      codiceFiscale: formData.codiceFiscale,
+      dataNascita: formData.dataNascita
+        ? new Date(formData.dataNascita).toISOString()
+        : null,
+      comuneNascita: formData.comuneNascita,
+      prNascita: formData.prNascita,
       iban: formData.iban,
-      multitenantId: localStorage.getItem("IdCompany") || "",
+      matricola: formData.matricola,
+      qualificaImpiegato: formData.qualificaImpiegato,
+      descriQualifica: formData.descriQualifica,
+      idcompany: sessionStorage.getItem("IdCompany") || null,
+      multiTenantId: sessionStorage.getItem("IdCompany") || null,
+      active: 1,
+      isEmployee: 1,
+      dataCreazione: operatorId ? undefined : new Date().toISOString(),
+      dataModifica: operatorId ? new Date().toISOString() : undefined,
+      isDeleted: false,
+      createdAt: operatorId ? undefined : new Date().toISOString(),
     };
 
     try {
-      const url = customerId
-        ? `https://localhost:7148/api/customer/${customerId}`
-        : `https://localhost:7148/api/customer`;
+      const url = operatorId
+        ? `${API_URL}/api/operator/${operatorId}`
+        : `${API_URL}/api/operator`;
 
-      const method = customerId ? "PUT" : "POST";
+      const method = operatorId ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        const message = customerId
-          ? "Cliente aggiornato con successo!"
-          : "Cliente creato con successo!";
+        const message = operatorId
+          ? "Operatore aggiornato con successo!"
+          : "Operatore creato con successo!";
         alert(message);
-
-        // Se è una creazione, imposta l'ID restituito dal server
-        if (!customerId) {
-          const newCustomer = await response.json();
-          setCustomerId(newCustomer.id);
-        }
+        closeModal();
+        loadOperators();
       } else {
         const errText = await response.text();
         alert("Errore nel salvataggio:\n" + errText);
@@ -235,381 +543,507 @@ const Operators: React.FC = () => {
     }
   };
 
+  const resetForm = () => {
+    setOperatorId(null);
+    setFormData({
+      userName: "",
+      email: "",
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
+      regione: "",
+      provincia: "",
+      citta: "",
+      cap: "",
+      indirizzo: "",
+      codiceDipendente: "",
+      codiceFiscale: "",
+      dataNascita: "",
+      comuneNascita: "",
+      prNascita: "",
+      iban: "",
+      matricola: "",
+      qualificaImpiegato: "",
+      descriQualifica: "",
+    });
+  };
+
+  // Paginazione
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredOperators.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(filteredOperators.length / itemsPerPage);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
   return (
     <>
       {loading && (
-        <div className="global-loading-overlay">
-          <div className="spinner"></div>
+        <div className={styles.globalLoadingOverlay}>
+          <div className={styles.spinner}></div>
           <p>Caricamento...</p>
         </div>
       )}
-      <div className="main-layout">
+
+      <div className={styles.mainLayout}>
         <Sidebar menuState={menuState} toggleMenu={toggleMenu} />
-        <div className="content-area">
+        <div className={styles.contentArea}>
           <Topbar toggleMenu={toggleMenu} />
 
-          <div className="scheda-header">
-            <div className="left-block">
+          <div className={styles.schedaHeader}>
+            <div className={styles.leftBlock}>
               <div
-                className="round-btn"
-                title="Aggiungi un nuovo cliente"
-                onClick={() => {
-                  setCustomerId(null); // reset ID
-                  setFormData({
-                    tipo: "Privato",
-                    cliente: true,
-                    fornitore: false,
-                    tipoCliente: "",
-                    ragioneSociale: "",
-                    indirizzo: "",
-                    cognome: "",
-                    nome: "",
-                    cap: "",
-                    regione: "",
-                    provincia: "",
-                    citta: "",
-                    telefono: "",
-                    email: "",
-                    codiceFiscale: "",
-                    partitaIva: "",
-                    emailPec: "",
-                    codiceSdi: "",
-                    iban: "",
-                  });
-
-                  // Imposta il focus sul campo cognome
-                  setTimeout(() => {
-                    cognomeInputRef.current?.focus();
-                  }, 0);
-                }}
+                className={styles.roundBtn}
+                title="Aggiungi un nuovo operatore"
+                onClick={() => openModal()}
               >
-                <span className="plus-icon">+</span>
+                <Plus size={20} />
               </div>
 
-              <div className="date-box">
-                <CalendarDays className="calendar-icon" />
-                <div className="date-text-inline">
+              <div className={styles.dateBox}>
+                <CalendarDays className={styles.calendarIcon} />
+                <div className={styles.dateTextInline}>
                   <span>{dateTime.date}</span>
                   <span>{dateTime.time}</span>
                 </div>
               </div>
             </div>
 
-            <div className="search-wrapper">
+            <div className={styles.searchWrapper}>
               <input
                 type="text"
-                className="search-input"
-                placeholder="Cerca cliente per nome, cognome o P.IVA..."
+                className={styles.searchInput}
+                placeholder="Cerca operatori..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <button
-                className="btn btn-primary search-button"
-                onClick={handleSearch}
-              >
-                Cerca
-              </button>
             </div>
 
-            <div className="breadcrumb">
-              <span className="breadcrumb-item">Home</span>
-              <span className="breadcrumb-separator"> &gt; </span>
-              <span className="breadcrumb-item">Anagrafica</span>
-              <span className="breadcrumb-separator"> &gt; </span>
-              <span className="breadcrumb-current">Aggiungi</span>
+            <div className={styles.breadcrumb}>
+              <span className={styles.breadcrumbItem}>Home</span>
+              <span className={styles.breadcrumbSeparator}> &gt; </span>
+              <span className={styles.breadcrumbItem}>Anagrafica</span>
+              <span className={styles.breadcrumbSeparator}> &gt; </span>
+              <span className={styles.breadcrumbCurrent}>Operatori</span>
             </div>
           </div>
 
-          {/* Form */}
-          <div className="page-body">
-            <div
-              className="card bg-light card text-black"
-              style={{ borderRadius: "10px" }}
-            >
-              <div className="custom-card-header">Dati Cliente / Fornitore</div>
-              <div className="card-body customer-form">
-                <div className="row">
-                  <div className="col-md-3 field-group">
-                    <label>Tipo</label>
-                    <select
-                      className="form-control"
-                      value={formData.tipo}
-                      onChange={(e) =>
-                        setFormData({ ...formData, tipo: e.target.value })
-                      }
-                    >
-                      <option>Privato</option>
-                      <option>Azienda</option>
-                    </select>
-                  </div>
-                  <div className="col-md-3 d-flex align-items-center gap-3 pt-4">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={formData.cliente}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            cliente: e.target.checked,
-                          })
-                        }
-                      />{" "}
-                      Cliente
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={formData.fornitore}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            fornitore: e.target.checked,
-                          })
-                        }
-                      />{" "}
-                      Fornitore
-                    </label>
-                  </div>
+          {/* Lista Operatori */}
+          <div className={styles.pageBody}>
+            {/* --- LISTA OPERATORI in stile 'Ricerca schede' --- */}
+            <section className={styles.tableSection}>
+              <div className={styles.tableHeader}>
+                <div className={styles.tableHeaderInfo}>
+                  <h3>Anagrafica Operatori</h3>
+                  <span>Totale: {filteredOperators.length}</span>
                 </div>
 
-                <div className="row">
-                  {formData.tipo === "Azienda" ? (
-                    <>
-                      <div className="col-md-6 field-group">
-                        <label>Ragione Sociale</label>
-                        <input
-                          className="form-control"
-                          value={formData.ragioneSociale}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              ragioneSociale: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="col-md-6 field-group">
-                        <label>Indirizzo</label>
-                        <input
-                          className="form-control"
-                          value={formData.indirizzo}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              indirizzo: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="col-md-6 d-flex gap-3 align-items-end">
-                        <div className="field-group w-50">
-                          <label>Cognome</label>
-                          <input
-                            className="form-control"
-                            value={formData.cognome}
-                            ref={cognomeInputRef}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                cognome: e.target.value,
-                              })
+                <div className={styles.tableControls}>
+                  <div className={styles.searchContainerTable}>
+                    <i
+                      className={`fa-solid fa-magnifying-glass ${styles.searchIconTable}`}
+                    ></i>
+                    <input
+                      className={styles.searchTableInput}
+                      placeholder="Cerca per nome, cognome, email, telefono…"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <table className={styles.modernTable}>
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Cognome</th>
+                    <th>Username / Email</th>
+                    <th>Telefono</th>
+                    <th>Qualifica</th>
+                    <th>Stato</th>
+                    <th style={{ textAlign: "center" }}>Azioni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOperators
+                    .slice(
+                      (currentPage - 1) * itemsPerPage,
+                      currentPage * itemsPerPage
+                    )
+                    .map((op) => (
+                      <tr key={op.id}>
+                        <td>{op.firstName || "-"}</td>
+                        <td>{op.lastName || "-"}</td>
+                        <td>
+                          <div
+                            style={{ display: "flex", flexDirection: "column" }}
+                          >
+                            <strong>{op.userName || "-"}</strong>
+                            <span style={{ fontSize: 12, color: "#666" }}>
+                              {op.email || ""}
+                            </span>
+                          </div>
+                        </td>
+                        <td>{op.phoneNumber || "-"}</td>
+                        <td>
+                          {op.qualificaImpiegato || op.descriQualifica || "-"}
+                        </td>
+                        <td>
+                          <span
+                            className={
+                              op.active
+                                ? styles.statusActive
+                                : styles.statusInactive
                             }
-                          />
-                        </div>
-                        <div className="field-group w-50">
-                          <label>Nome</label>
-                          <input
-                            className="form-control"
-                            value={formData.nome}
-                            onChange={(e) =>
-                              setFormData({ ...formData, nome: e.target.value })
-                            }
-                          />
-                        </div>
-                      </div>
-                      <div className="col-md-6 field-group">
-                        <label>Indirizzo</label>
+                          >
+                            {op.active ? "Attivo" : "Disattivo"}
+                          </span>
+                        </td>
+                        <td>
+                          <div className={styles.actionButtons}>
+                            <button
+                              className={styles.actionBtn}
+                              title="Modifica operatore"
+                              onClick={() => openModal(op)}
+                            >
+                              <i className="fa-solid fa-pen-to-square"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  {filteredOperators.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        style={{
+                          padding: 24,
+                          textAlign: "center",
+                          color: "#666",
+                        }}
+                      >
+                        Nessun operatore trovato.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              {/* Paginazione: puoi lasciare la tua esistente */}
+              <div className={styles.pagination}>
+                <div className={styles.paginationInfo}>
+                  Pagina {currentPage} di{" "}
+                  {Math.max(
+                    1,
+                    Math.ceil(filteredOperators.length / itemsPerPage)
+                  )}
+                </div>
+                <div className={styles.paginationControls}>
+                  <button
+                    className={styles.paginationBtn}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    className={styles.paginationBtn}
+                    onClick={() =>
+                      setCurrentPage((p) =>
+                        p < Math.ceil(filteredOperators.length / itemsPerPage)
+                          ? p + 1
+                          : p
+                      )
+                    }
+                    disabled={
+                      currentPage >=
+                      Math.ceil(filteredOperators.length / itemsPerPage)
+                    }
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+            </section>
+            {/* Modal Form */}
+            {/* --- Editor operatore sotto la lista (no modal) --- */}
+            {showModal && (
+              <section ref={editorRef} className={`${styles.inlineEditorCard} ${flashPanel ? styles.panelFocusFlash : ""}`}>
+                <div className={styles.inlineEditorHeader}>
+                  <h3>
+                    {operatorId ? "Modifica operatore" : "Nuovo operatore"}
+                  </h3>
+                  <button
+                    className={styles.inlineCloseBtn}
+                    onClick={closeModal}
+                    title="Chiudi"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className={styles.inlineEditorBody}>
+                  <div className={styles.customerForm}>
+                    {/* riga 1 */}
+                    <div className={styles.row}>
+                      <div className={styles.fieldGroup}>
+                        <label>Nome *</label>
                         <input
-                          className="form-control"
-                          value={formData.indirizzo}
+                          className={styles.formControl}
+                          value={formData.firstName}
+                          ref={firstNameInputRef}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              indirizzo: e.target.value,
+                              firstName: e.target.value,
                             })
                           }
                         />
                       </div>
+                      <div className={styles.fieldGroup}>
+                        <label>Cognome *</label>
+                        <input
+                          className={styles.formControl}
+                          value={formData.lastName}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              lastName: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* riga 2 */}
+                    <div className={styles.row}>
+                      <div className={styles.fieldGroup}>
+                        <label>Username *</label>
+                        <input
+                          className={styles.formControl}
+                          value={formData.userName}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              userName: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label>Email *</label>
+                        <input
+                          type="email"
+                          className={styles.formControl}
+                          value={formData.email}
+                          onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* riga 3 */}
+                    <div className={styles.row}>
+                      <div className={styles.fieldGroup}>
+                        <label>Codice Dipendente *</label>
+                        <input
+                          className={styles.formControl}
+                          value={formData.codiceDipendente}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              codiceDipendente: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label>Telefono *</label>
+                        <input
+                          className={styles.formControl}
+                          value={formData.phoneNumber}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              phoneNumber: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* riga 4 */}
+                    <div className={styles.row}>
+                      <div className={styles.fieldGroup}>
+                        <label>Codice Fiscale</label>
+                        <input
+                          className={styles.formControl}
+                          value={formData.codiceFiscale}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              codiceFiscale: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label>Matricola</label>
+                        <input
+                          className={styles.formControl}
+                          value={formData.matricola}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              matricola: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* ...continua con le altre righe già presenti nel tuo form... */}
+                  </div>
+
+                  {/* eventuale sezione “Account utente dell’operatore”, riutilizzando il tuo stato:
+          selectedOpUserId, accountForm, isSavingAccount, ecc. */}
+
+                  <div className={styles.sectionTitle}>Account di accesso</div>
+                  <div className={styles.row}>
+                    <div className={styles.fieldGroup}>
+                      <label>Username</label>
+                      <input
+                        className={styles.formControl}
+                        value={accountForm.username}
+                        onChange={(e) =>
+                          setAccountForm({
+                            ...accountForm,
+                            username: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label>Email</label>
+                      <input
+                        className={styles.formControl}
+                        type="email"
+                        value={accountForm.email ?? ""}
+                        onChange={(e) =>
+                          setAccountForm({
+                            ...accountForm,
+                            email: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.row}>
+                    <div className={styles.fieldGroup}>
+                      <label>Password</label>
+                      <input
+                        className={styles.formControl}
+                        type="password"
+                        value={accountForm.password}
+                        onChange={(e) =>
+                          setAccountForm({
+                            ...accountForm,
+                            password: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label>Conferma Password</label>
+                      <input
+                        className={styles.formControl}
+                        type="password"
+                        value={accountForm.confirmPassword}
+                        onChange={(e) =>
+                          setAccountForm({
+                            ...accountForm,
+                            confirmPassword: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+                {/* Azioni account operatore */}
+                <div className={styles.accountActions}>
+                  <button
+                    className={`${styles.btn} ${styles.btnPrimary}`}
+                    onClick={() =>
+                      selectedOpUserId
+                        ? updateOperatorUser(selectedOpUserId, operatorId!)
+                        : createOperatorAccount(operatorId!)
+                    }
+                    disabled={isSavingAccount || !operatorId}
+                  >
+                    {selectedOpUserId ? "Aggiorna account" : "Crea account"}
+                  </button>
+
+                  {selectedOpUserId && (
+                    <>
+                      <button
+                        className={`${styles.btn} ${styles.btnSecondary}`}
+                        onClick={() => changeOperatorPassword(selectedOpUserId)}
+                        disabled={isSavingAccount || !accountForm.password}
+                      >
+                        Cambia password
+                      </button>
+
+                      <button
+                        className={`${styles.btn} ${styles.btnDanger}`}
+                        onClick={() =>
+                          toggleOperatorUserStatus(
+                            selectedOpUserId,
+                            operatorId!
+                          )
+                        }
+                        disabled={isSavingAccount}
+                      >
+                        {accountForm.isEnabled ? "Disattiva" : "Attiva"} utente
+                      </button>
                     </>
                   )}
                 </div>
 
-                <div className="row">
-                  <div className="col-md-3 field-group">
-                    <label>CAP</label>
-                    <input
-                      className="form-control"
-                      value={formData.cap}
-                      onChange={(e) =>
-                        setFormData({ ...formData, cap: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
-                    <label>Regione</label>
-                    <input
-                      className="form-control"
-                      value={formData.regione}
-                      onChange={(e) =>
-                        setFormData({ ...formData, regione: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
-                    <label>Provincia</label>
-                    <input
-                      className="form-control"
-                      value={formData.provincia}
-                      onChange={(e) =>
-                        setFormData({ ...formData, provincia: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
-                    <label>Città</label>
-                    <input
-                      className="form-control"
-                      value={formData.citta}
-                      onChange={(e) =>
-                        setFormData({ ...formData, citta: e.target.value })
-                      }
-                    />
-                  </div>
+                <div className={styles.inlineEditorFooter}>
+                  <button
+                    className={`${styles.btn} ${styles.btnPrimary}`}
+                    onClick={handleSaveOperator}
+                  >
+                    SALVA
+                  </button>
+                  <button
+                    className={`${styles.btn} ${styles.btnSecondary}`}
+                    onClick={resetForm}
+                  >
+                    NUOVO
+                  </button>
                 </div>
-
-                <div className="row">
-                  <div className="col-md-3 field-group">
-                    <label>Telefono</label>
-                    <input
-                      className="form-control"
-                      value={formData.telefono}
-                      onChange={(e) =>
-                        setFormData({ ...formData, telefono: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
-                    <label>Email</label>
-                    <input
-                      className="form-control"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
-                    <label>Codice Fiscale</label>
-                    <input
-                      className="form-control"
-                      value={formData.codiceFiscale}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          codiceFiscale: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
-                    <label>Partita IVA</label>
-                    <input
-                      className="form-control"
-                      value={formData.partitaIva}
-                      onChange={(e) =>
-                        setFormData({ ...formData, partitaIva: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="row">
-                  <div className="col-md-3 field-group">
-                    <label>Email PEC</label>
-                    <input
-                      className="form-control"
-                      value={formData.emailPec}
-                      onChange={(e) =>
-                        setFormData({ ...formData, emailPec: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
-                    <label>Codice SDI</label>
-                    <input
-                      className="form-control"
-                      value={formData.codiceSdi}
-                      onChange={(e) =>
-                        setFormData({ ...formData, codiceSdi: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
-                    <label>IBAN</label>
-                    <input
-                      className="form-control"
-                      value={formData.iban}
-                      onChange={(e) =>
-                        setFormData({ ...formData, iban: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="row mt-4">
-                  <div className="d-flex justify-content-center gap-2">
-                    <button
-                      className="btn btn-primary"
-                      onClick={handleSaveCustomer}
-                    >
-                      SALVA
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+              </section>
+            )}
           </div>
         </div>
       </div>
-
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h4>Risultati ricerca</h4>
-            <ul>
-              {searchResults.map((c: any) => (
-                <li
-                  key={c.id}
-                  onClick={() => onSelectCustomer(c)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <strong>{c.ragioneSociale}</strong> - {c.telefono} -{" "}
-                  {c.indirizzo} - {c.citta} ({c.provincia})
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => setShowModal(false)}
-              className="btn btn-secondary"
-            >
-              Chiudi
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 };

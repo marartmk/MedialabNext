@@ -643,8 +643,8 @@ const RicercaSchede: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem("token");
-      const multitenantId = localStorage.getItem("IdCompany");
+      const token = sessionStorage.getItem("token");
+      const multitenantId = sessionStorage.getItem("IdCompany");
 
       if (!multitenantId) {
         throw new Error("ID azienda non trovato");
@@ -771,7 +771,7 @@ const RicercaSchede: React.FC = () => {
         `https://localhost:7148/api/repair/${repair.id}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
         }
       );
@@ -1241,8 +1241,8 @@ const RicercaSchede: React.FC = () => {
       setLoading(true);
       setError?.(null);
 
-      const token = localStorage.getItem("token");
-      const multitenantId = localStorage.getItem("IdCompany");
+      const token = sessionStorage.getItem("token");
+      const multitenantId = sessionStorage.getItem("IdCompany");
       if (!multitenantId) throw new Error("ID azienda non trovato");
 
       // Estendi a 3 anni (giorni completi, locale -> ISO/UTC)
@@ -1316,7 +1316,7 @@ const RicercaSchede: React.FC = () => {
     });
 
   const loadDiagnosticData = async (repairId: string) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) return;
 

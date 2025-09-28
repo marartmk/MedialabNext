@@ -21,7 +21,7 @@ import Operators from "./pages/ReservedArea/AnagraficaOperatori";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  const isAuthenticated = sessionStorage.getItem("isAuthenticated") === "true";
   return isAuthenticated ? children : <Navigate to="/" replace />;
 };
 

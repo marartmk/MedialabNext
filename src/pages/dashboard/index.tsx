@@ -37,8 +37,8 @@ const Dashboard: React.FC = () => {
 
     loadNews();
 
-    // Carica lo stato del menu dal localStorage
-    const savedMenuState = localStorage.getItem("menuState");
+    // Carica lo stato del menu dal sessionStorage
+    const savedMenuState = sessionStorage.getItem("menuState");
     if (savedMenuState === "closed") {
       setMenuState("closed");
     }
@@ -48,7 +48,7 @@ const Dashboard: React.FC = () => {
   const toggleMenu = () => {
     const newState = menuState === "open" ? "closed" : "open";
     setMenuState(newState);
-    localStorage.setItem("menuState", newState);
+    sessionStorage.setItem("menuState", newState);
   };
 
   // Gestione della selezione di una notizia

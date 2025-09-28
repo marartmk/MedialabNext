@@ -62,7 +62,7 @@ const Customer: React.FC = () => {
     if (!searchQuery.trim()) return;
     setLoading(true);
 
-    const multitenantId = localStorage.getItem("IdCompany"); // oppure recuperalo da un contesto o stato
+    const multitenantId = sessionStorage.getItem("IdCompany"); // oppure recuperalo da un contesto o stato
 
     try {
       const response = await fetch(
@@ -71,7 +71,7 @@ const Customer: React.FC = () => {
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
         }
       );
@@ -195,7 +195,7 @@ const Customer: React.FC = () => {
       emailPec: formData.emailPec,
       codiceSdi: formData.codiceSdi,
       iban: formData.iban,
-      multitenantId: localStorage.getItem("IdCompany") || "",
+      multitenantId: sessionStorage.getItem("IdCompany") || "",
     };
 
     try {
@@ -209,7 +209,7 @@ const Customer: React.FC = () => {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });

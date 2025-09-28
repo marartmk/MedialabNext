@@ -88,7 +88,7 @@ const Device: React.FC = () => {
     if (!searchQuery.trim()) return;
     setLoading(true);
 
-    const multitenantId = localStorage.getItem("IdCompany");
+    const multitenantId = sessionStorage.getItem("IdCompany");
 
     try {
       const response = await fetch(
@@ -97,7 +97,7 @@ const Device: React.FC = () => {
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
         }
       );
@@ -162,7 +162,7 @@ const Device: React.FC = () => {
       deviceId: formData.deviceId || generateGuid(),
       customerId: formData.customerId || null,
       companyId: formData.companyId || null,
-      multitenantId: localStorage.getItem("IdCompany") || null,
+      multitenantId: sessionStorage.getItem("IdCompany") || null,
       serialNumber: formData.serialNumber,
       brand: formData.brand,
       model: formData.model,
@@ -184,7 +184,7 @@ const Device: React.FC = () => {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });

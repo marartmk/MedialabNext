@@ -26,7 +26,7 @@ const Login: FC = () => {
 
   /* redirect se già loggato */
   useEffect(() => {
-    if (localStorage.getItem("isAuthenticated") === "true") {
+    if (sessionStorage.getItem("isAuthenticated") === "true") {
       //window.location.href = "/dashboard";
     }
   }, []);
@@ -129,17 +129,17 @@ const Login: FC = () => {
       const result: LoginResponse = await res.json();
 
       // Salva token + info
-      localStorage.setItem("token", result.token);
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("IdCompany", result.idCompany || "");
-      localStorage.setItem("fullName", result.companyName || "");
+      sessionStorage.setItem("token", result.token);
+      sessionStorage.setItem("isAuthenticated", "true");
+      sessionStorage.setItem("IdCompany", result.idCompany || "");
+      sessionStorage.setItem("fullName", result.companyName || "");
 
       // Decodifica JWT (se valido)
       try {
         const payload = JSON.parse(atob(result.token.split(".")[1] || ""));
-        localStorage.setItem("userId", payload.unique_name || "");
-        localStorage.setItem("userLevel", payload.role || "");
-        localStorage.setItem(
+        sessionStorage.setItem("userId", payload.unique_name || "");
+        sessionStorage.setItem("userLevel", payload.role || "");
+        sessionStorage.setItem(
           "isExternalUser",
           String(payload.role === "External")
         );

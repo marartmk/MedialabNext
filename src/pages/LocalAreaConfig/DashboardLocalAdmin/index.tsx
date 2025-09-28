@@ -120,8 +120,8 @@ const DashboarLocaldAdmin: React.FC = () => {
 
         console.log("Inizio caricamento dati clienti...");
 
-        const token = localStorage.getItem("token");
-        const multitenantId = localStorage.getItem("IdCompanyAdmin");
+        const token = sessionStorage.getItem("token");
+        const multitenantId = sessionStorage.getItem("IdCompanyAdmin");
         console.log("Token presente:", !!token);
 
         const url = `${API_URL}/api/Customer/customeraffiliated?multitenantId=${multitenantId}`;
@@ -189,8 +189,8 @@ const DashboarLocaldAdmin: React.FC = () => {
 
     loadNews();
 
-    // Carica lo stato del menu dal localStorage
-    const savedMenuState = localStorage.getItem("menuState");
+    // Carica lo stato del menu dal sessionStorage
+    const savedMenuState = sessionStorage.getItem("menuState");
     if (savedMenuState === "closed") {
       setMenuState("closed");
     }
@@ -200,7 +200,7 @@ const DashboarLocaldAdmin: React.FC = () => {
   const toggleMenu = () => {
     const newState = menuState === "open" ? "closed" : "open";
     setMenuState(newState);
-    localStorage.setItem("menuState", newState);
+    sessionStorage.setItem("menuState", newState);
   };
 
   // Gestione della selezione di una notizia
