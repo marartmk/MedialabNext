@@ -23,7 +23,7 @@ const LoginAdmin: FC = () => {
 
   /* redirect se già loggato */
   useEffect(() => {
-    if (localStorage.getItem("isAuthenticated") === "true") {
+    if (sessionStorage.getItem("isAuthenticated") === "true") {
       //window.location.href = "/dashboard";
     }
   }, []);
@@ -74,23 +74,23 @@ const LoginAdmin: FC = () => {
       const result: LoginResponse = await res.json();
 
       // ✅ Salvataggio token JWT
-      localStorage.setItem("token", result.token);
-      localStorage.setItem("isAuthenticated", "true");
+      sessionStorage.setItem("token", result.token);
+      sessionStorage.setItem("isAuthenticated", "true");
 
       // ✅ Salvataggio dati utente
-      localStorage.setItem("userId", formData.username);
-      localStorage.setItem("IdCompanyAdmin", result.idCompany);
+      sessionStorage.setItem("userId", formData.username);
+      sessionStorage.setItem("IdCompanyAdmin", result.idCompany);
 
       // 🔍 Se vuoi decodificare il token JWT client-side (opzionale):
       try {
         const payload = JSON.parse(atob(result.token.split(".")[1]));
 
-        localStorage.setItem(
+        sessionStorage.setItem(
           "userId",
           payload.unique_name || formData.username
         );
-        localStorage.setItem("userLevel", payload.role || "admin");
-        localStorage.setItem(
+        sessionStorage.setItem("userLevel", payload.role || "admin");
+        sessionStorage.setItem(
           "isExternalUser",
           String(payload.role === "External")
         );
@@ -100,8 +100,8 @@ const LoginAdmin: FC = () => {
       } catch (tokenError) {
         console.warn("Errore nella decodifica del token:", tokenError);
         // Fallback: usa i dati del form e vai alla dashboard admin
-        localStorage.setItem("userId", formData.username);
-        localStorage.setItem("userLevel", "admin");
+        sessionStorage.setItem("userId", formData.username);
+        sessionStorage.setItem("userLevel", "admin");
         window.location.href = "/dashboard-admin";
       }
     } catch (error: unknown) {
@@ -120,7 +120,7 @@ const LoginAdmin: FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   return (
     <div className="login-page">

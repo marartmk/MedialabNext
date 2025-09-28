@@ -11,6 +11,12 @@ interface TopbarProps {
 const Topbar: React.FC<TopbarProps> = () => {
   const navigate = useNavigate();
 
+  const logout = () => {
+  sessionStorage.clear();
+  window.location.href = "/login-admin";
+};
+
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
       <div className="container-fluid">
@@ -493,7 +499,7 @@ const Topbar: React.FC<TopbarProps> = () => {
             </button>
             <button 
               className="topbar-icon-button"
-              onClick={() => navigate('/impostazioni')}
+              onClick={() => logout()}
             >
               <i className="fa-solid fa-cog"></i>
             </button>

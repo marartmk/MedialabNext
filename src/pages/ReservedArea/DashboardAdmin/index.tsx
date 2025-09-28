@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   useReactTable,
   getCoreRowModel,
@@ -52,6 +53,7 @@ type UserAccount = {
 
 const DashboardAdmin: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
+  const navigate = useNavigate();
   //const navigate = useNavigate();
   const [rowData, setRowData] = useState<CustomerData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -205,9 +207,9 @@ const DashboardAdmin: React.FC = () => {
 
         console.log("Inizio caricamento dati clienti...");
 
-        const token = localStorage.getItem("token");
-        const multitenantId = localStorage.getItem("IdCompanyAdmin");
-        console.log("Token presente:", !!token);
+        const token = sessionStorage.getItem("token");
+        const multitenantId = sessionStorage.getItem("IdCompanyAdmin");
+        console.log("Token presente:", !!token);        
 
         const response = await fetch(
           `https://localhost:7148/api/Customer/customeraffiliated?multitenantId=${multitenantId}`,
@@ -267,9 +269,9 @@ const DashboardAdmin: React.FC = () => {
     fetchData();
   }, []);
 
-  // Carica lo stato del menu dal localStorage
+  // Carica lo stato del menu dal sessionStorage
   useEffect(() => {
-    const savedMenuState = localStorage.getItem("menuState");
+    const savedMenuState = sessionStorage.getItem("menuState");
     if (savedMenuState === "closed") {
       setMenuState("closed");
     }
@@ -279,7 +281,7 @@ const DashboardAdmin: React.FC = () => {
   const toggleMenu = () => {
     const newState = menuState === "open" ? "closed" : "open";
     setMenuState(newState);
-    localStorage.setItem("menuState", newState);
+    sessionStorage.setItem("menuState", newState);
   };
 
   // Gestione visualizzazione dettagli cliente
@@ -289,7 +291,7 @@ const DashboardAdmin: React.FC = () => {
     setLoadingAccounts(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       // carica gli account legati al cliente (se disponibile l'endpoint)
       const resp = await fetch(`${API_BASE}/api/Auth/users/${customer.id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -316,14 +318,8 @@ const DashboardAdmin: React.FC = () => {
   // Gestione modifica cliente
   const handleEditCustomer = (customer: CustomerData) => {
     console.log("Modifica cliente:", customer);
-    // Qui aprirai la form di modifica
-    // navigate(`/edit-customer/${customer.id}`);
+    navigate(`/master-company/${customer.id}`);
   };
-
-  // Navigazione alle varie pagine
-  // const navigateTo = (path: string) => {
-  //   navigate(path);
-  // };
 
   return (
     <div

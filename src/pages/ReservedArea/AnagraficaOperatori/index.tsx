@@ -98,7 +98,7 @@ const Operators: React.FC = () => {
         )}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
             "Content-Type": "application/json",
           },
         }
@@ -203,8 +203,8 @@ const Operators: React.FC = () => {
       matricola: formData.matricola,
       qualificaImpiegato: formData.qualificaImpiegato,
       descriQualifica: formData.descriQualifica,
-      idcompany: localStorage.getItem("IdCompany") || null,
-      multiTenantId: localStorage.getItem("IdCompany") || null,
+      idcompany: sessionStorage.getItem("IdCompany") || null,
+      multiTenantId: sessionStorage.getItem("IdCompany") || null,
       active: 1, // Stato attivo
       isEmployee: 1, // È un dipendente
       dataCreazione: operatorId ? undefined : new Date().toISOString(),
@@ -224,7 +224,7 @@ const Operators: React.FC = () => {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });

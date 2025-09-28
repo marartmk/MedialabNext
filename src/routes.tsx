@@ -19,7 +19,6 @@ import Magazzino from "./pages/Magazzino";
 import Logistica from "./pages/Logistica";
 import Operators from "./pages/ReservedArea/AnagraficaOperatori";
 
-
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
@@ -89,7 +88,7 @@ const AppRoutes = () => {
       />
 
       <Route
-        path="/master-company"
+        path="/master-company/:id?"
         element={
           <ProtectedRoute>
             <MasterCompany />
@@ -131,7 +130,7 @@ const AppRoutes = () => {
             <Device />
           </ProtectedRoute>
         }
-      />     
+      />
 
       <Route
         path="/ricerca-schede"
@@ -169,7 +168,7 @@ const AppRoutes = () => {
         }
       />
 
-       <Route
+      <Route
         path="/anagrafica-operatori"
         element={
           <ProtectedRoute>
@@ -177,7 +176,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      
+
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

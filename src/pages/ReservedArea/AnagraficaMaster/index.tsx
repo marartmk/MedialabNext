@@ -1,31 +1,107 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
 import Sidebar from "../../../components/sidebar-admin";
 import Topbar from "../../../components/topbar-admin";
 import styles from "./anagrafica-master.module.css";
 import { CalendarDays, Users, Shield } from "lucide-react";
 
+// Interfacce TypeScript per tipizzazione corretta
+interface SearchResult {
+  id: string;
+  ragioneSociale: string;
+  telefono: string;
+  indirizzo: string;
+  citta: string;
+  provincia: string;
+  isAffiliate?: boolean;
+  isCustomer?: boolean;
+  tipoCliente?: string;
+  cognome?: string;
+  nome?: string;
+  cap?: string;
+  regione?: string;
+  email?: string;
+  fiscalCode?: string;
+  pIva?: string;
+  emailPec?: string;
+  codiceSdi?: string;
+  iban?: string;
+  affiliateCode?: string;
+  affiliatedDataStart?: string;
+  affiliatedDataEnd?: string;
+  affiliateStatus?: boolean | number;
+}
+
+type UserDetail = {
+  id: string;
+  username?: string;
+  userName?: string;
+  email?: string | null;
+  isEnabled: boolean;
+  isAdmin: boolean;
+  accessLevel?: string | null;
+  createdAt: string;
+};
+
+// Interfacce TypeScript per tipizzazione corretta
+interface SearchResult {
+  id: string;
+  ragioneSociale: string;
+  telefono: string;
+  indirizzo: string;
+  citta: string;
+  provincia: string;
+  isAffiliate?: boolean;
+  isCustomer?: boolean;
+  tipoCliente?: string;
+  cognome?: string;
+  nome?: string;
+  cap?: string;
+  regione?: string;
+  email?: string;
+  fiscalCode?: string;
+  pIva?: string;
+  emailPec?: string;
+  codiceSdi?: string;
+  iban?: string;
+  affiliateCode?: string;
+  affiliatedDataStart?: string;
+  affiliatedDataEnd?: string;
+  affiliateStatus?: boolean | number;
+}
+
+// Interfacce per la geolocalizzazione
+interface GeolocationRequest {
+  affiliateId: string;
+  latitude?: number;
+  longitude?: number;
+  address: string;
+  quality: string;
+  notes?: string;
+  geocodingSource: string;
+}
+
+interface GeolocationResponse {
+  id: number;
+  affiliateId: string;
+  latitude?: number;
+  longitude?: number;
+  address: string;
+  geocodedDate: string;
+  quality: string;
+  hasValidCoordinates: boolean;
+}
+
 const CompanyMaster: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
-  const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
-    date: "",
-    time: "",
-  });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const { id: customerIdFromUrl } = useParams<{ id: string }>(); // AGGIUNTO
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const ragioneSocialeInputRef = useRef<HTMLInputElement>(null);
-
-  type UserDetail = {
-    id: string;
-    username: string;
-    email?: string | null;
-    isEnabled: boolean;
-    isAdmin: boolean;
-    accessLevel?: string | null;
-    createdAt: string;
-  };
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isGeocodingInProgress, setIsGeocodingInProgress] = useState(false);
 
   const [companyUsers, setCompanyUsers] = useState<UserDetail[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -39,11 +115,15 @@ const CompanyMaster: React.FC = () => {
     isAdmin: false,
   });
   const [isSavingAccount, setIsSavingAccount] = useState(false);
+  const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
+    date: "",
+    time: "",
+  });
 
   const API_BASE = "https://localhost:7148";
 
   const authHeaders = () => ({
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
+    Authorization: `Bearer ${sessionStorage.getItem("token")}`,
     "Content-Type": "application/json",
   });
 
@@ -90,8 +170,59 @@ const CompanyMaster: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // useEffect per caricare i dati del cliente dall'URL
+  useEffect(() => {
+    if (customerIdFromUrl) {
+      console.log("ID cliente dall'URL:", customerIdFromUrl);
+      loadCustomerData(customerIdFromUrl);
+    }
+  }, [customerIdFromUrl]);
+
+  // Carica gli utenti affiliati quando cambia customerId o isAffiliate
+  useEffect(() => {
+    if (customerId) {
+      loadCompanyUsers();
+    }
+  }, [customerId, formData.isAffiliate]);
+
   const toggleMenu = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
+  };
+
+  // FUNZIONE AGGIUNTA - Carica i dati del cliente dall'ID
+  const loadCustomerData = async (id: string) => {
+    if (!id) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/customer/${id}`, {
+        headers: authHeaders(),
+      });
+
+      if (response.ok) {
+        const customerData = await response.json();
+        console.log("Dati cliente caricati:", customerData);
+
+        // Usa la funzione esistente per popolare il form
+        onSelectCustomer(customerData);
+
+        // Carica anche gli utenti affiliati se è un affiliato
+        if (customerData.isAffiliate) {
+          setTimeout(() => {
+            loadCompanyUsers();
+          }, 100);
+        }
+      } else {
+        const errorText = await response.text();
+        console.error("Errore caricamento cliente:", errorText);
+        alert(`Errore nel caricamento del cliente: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Errore di rete:", error);
+      alert("Errore di connessione durante il caricamento del cliente");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Funzione per generare codice affiliato automatico
@@ -118,12 +249,12 @@ const CompanyMaster: React.FC = () => {
         )}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
         }
       );
       if (response.ok) {
-        const data = await response.json();
+        const data: SearchResult[] = await response.json();
         setSearchResults(data);
         setShowModal(true);
       } else {
@@ -139,41 +270,85 @@ const CompanyMaster: React.FC = () => {
   // Carica gli utenti dell'azienda (companyId == customerId)
   const loadCompanyUsers = async () => {
     if (!customerId) return;
+
     try {
-      const resp = await fetch(`${API_BASE}/api/Auth/users/${customerId}`, {
-        headers: authHeaders(),
-      });
-      if (!resp.ok) throw new Error(await resp.text());
-      const data: UserDetail[] = await resp.json();
-      setCompanyUsers(data || []);
-      setSelectedUserId(data?.[0]?.id ?? null);
-      if (data?.[0]) {
-        // pre-compila la form con il primo utente trovato
+      const url = `${API_BASE}/api/Auth/users/${customerId}`;
+      const resp = await fetch(url, { headers: authHeaders() });
+
+      // 204/404 = nessun utente creato → UI in modalità "crea"
+      if (resp.status === 204 || resp.status === 404) {
+        setCompanyUsers([]);
+        setSelectedUserId(null);
         setAccountForm((prev) => ({
           ...prev,
-          username: data[0].username,
-          email: data[0].email ?? "",
-          accessLevel: data[0].accessLevel ?? "Affiliate",
-          isEnabled: data[0].isEnabled,
-          isAdmin: data[0].isAdmin,
-          password: "",
-          confirmPassword: "",
-        }));
-      } else {
-        // nessun account esistente
-        setAccountForm({
           username: "",
           email: formData.email || "",
-          password: "",
-          confirmPassword: "",
           accessLevel: "Affiliate",
           isEnabled: true,
           isAdmin: false,
-        });
+          password: "",
+          confirmPassword: "",
+        }));
+        return;
       }
+
+      if (!resp.ok) {
+        const t = await resp.text();
+        throw new Error(t || `HTTP ${resp.status}`);
+      }
+
+      const json = await resp.json();
+
+      // >>> QUI: il backend restituisce { users: [...] }
+      const listRaw: any[] = Array.isArray(json?.users)
+        ? json.users
+        : Array.isArray(json) // fallback: array “nudo”
+        ? json
+        : json && typeof json === "object"
+        ? [json] // fallback: oggetto singolo
+        : [];
+
+      // Normalizza username / userName
+      const list = listRaw.map((u) => ({
+        ...u,
+        username: u.username ?? u.userName ?? u.UserName ?? "",
+        email: u.email ?? "",
+        accessLevel: u.accessLevel ?? "Affiliate",
+        isEnabled: !!u.isEnabled,
+        isAdmin: !!u.isAdmin,
+      }));
+
+      setCompanyUsers(list);
+
+      const first = list[0] ?? null;
+      setSelectedUserId(first?.id ?? null);
+
+      setAccountForm((prev) =>
+        first
+          ? {
+              ...prev,
+              username: first.username,
+              email: first.email,
+              accessLevel: first.accessLevel, // lascia quello del BE (es. "User")
+              isEnabled: first.isEnabled,
+              isAdmin: first.isAdmin,
+              password: "",
+              confirmPassword: "",
+            }
+          : {
+              ...prev,
+              username: "",
+              email: formData.email || "",
+              accessLevel: "Affiliate",
+              isEnabled: true,
+              isAdmin: false,
+              password: "",
+              confirmPassword: "",
+            }
+      );
     } catch (e: any) {
-      console.error("Errore loadCompanyUsers:", e);
-      alert("Errore nel caricamento utenti affiliato.");
+      console.error("loadCompanyUsers error:", e);
+      alert(`Errore nel caricamento utenti affiliato: ${e?.message ?? e}`);
     }
   };
 
@@ -205,9 +380,10 @@ const CompanyMaster: React.FC = () => {
       if (!resp.ok) throw new Error(text || "Errore creazione account");
       await loadCompanyUsers();
       alert("Account affiliato creato con successo.");
-    } catch (e: any) {
-      console.error("Errore createAffiliateAccount:", e);
-      alert(e.message || "Errore nella creazione account.");
+    } catch (e: unknown) {
+      const error = e as Error;
+      console.error("Errore createAffiliateAccount:", error);
+      alert(error.message || "Errore nella creazione account.");
     } finally {
       setIsSavingAccount(false);
     }
@@ -236,9 +412,10 @@ const CompanyMaster: React.FC = () => {
       if (!resp.ok) throw new Error(text || "Errore aggiornamento utente");
       await loadCompanyUsers();
       alert("Dati account aggiornati.");
-    } catch (e: any) {
-      console.error("Errore updateSelectedUser:", e);
-      alert(e.message || "Errore aggiornamento.");
+    } catch (e: unknown) {
+      const error = e as Error;
+      console.error("Errore updateSelectedUser:", error);
+      alert(error.message || "Errore aggiornamento.");
     } finally {
       setIsSavingAccount(false);
     }
@@ -273,9 +450,10 @@ const CompanyMaster: React.FC = () => {
       if (!resp.ok) throw new Error(text || "Errore cambio password");
       setAccountForm((p) => ({ ...p, password: "", confirmPassword: "" }));
       alert("Password aggiornata.");
-    } catch (e: any) {
-      console.error("Errore changePassword:", e);
-      alert(e.message || "Errore cambio password.");
+    } catch (e: unknown) {
+      const error = e as Error;
+      console.error("Errore changePassword:", error);
+      alert(error.message || "Errore cambio password.");
     } finally {
       setIsSavingAccount(false);
     }
@@ -296,13 +474,14 @@ const CompanyMaster: React.FC = () => {
       if (!resp.ok) throw new Error(text || "Errore cambio stato");
       await loadCompanyUsers();
       alert("Stato utente aggiornato.");
-    } catch (e: any) {
-      console.error("Errore toggleUserStatus:", e);
-      alert(e.message || "Errore nel cambio stato.");
+    } catch (e: unknown) {
+      const error = e as Error;
+      console.error("Errore toggleUserStatus:", error);
+      alert(error.message || "Errore nel cambio stato.");
     }
   };
 
-  const onSelectCustomer = (c: any) => {
+  const onSelectCustomer = (c: SearchResult) => {
     setCustomerId(c.id);
     setFormData({
       tipo: "Azienda",
@@ -333,9 +512,20 @@ const CompanyMaster: React.FC = () => {
       affiliatedDataEnd: c.affiliatedDataEnd
         ? c.affiliatedDataEnd.split("T")[0]
         : "",
-      affiliateStatus: c.affiliateStatus ?? true,
+      affiliateStatus:
+        typeof c.affiliateStatus === "number"
+          ? c.affiliateStatus === 1
+          : c.affiliateStatus ?? true,
     });
     setShowModal(false);
+
+    // Se è un affiliato, carica automaticamente gli utenti
+    if (c.isAffiliate) {
+      // Piccolo delay per permettere al customerId di essere settato
+      setTimeout(() => {
+        loadCompanyUsers();
+      }, 100);
+    }
   };
 
   const resetForm = () => {
@@ -367,14 +557,27 @@ const CompanyMaster: React.FC = () => {
       affiliateStatus: true,
     });
 
+    // Pulisci l'URL se stiamo creando un nuovo cliente
+    if (customerIdFromUrl) {
+      window.history.pushState({}, "", "/master-company");
+    }
+
     setTimeout(() => {
       ragioneSocialeInputRef.current?.focus();
     }, 0);
   };
 
-  // Saòva i dati del Customer
+  // Salva i dati del Customer
   const handleSaveCustomer = async () => {
-    // Validazioni esistenti
+    // ... [mantieni tutte le validazioni esistenti] ...
+
+    const multitenantId = sessionStorage.getItem("IdCompanyAdmin");
+
+    if (!multitenantId) {
+      alert("Multitenant ID mancante");
+      return;
+    }
+
     if (!formData.ragioneSociale) {
       alert("Inserire una ragione sociale");
       return;
@@ -451,6 +654,7 @@ const CompanyMaster: React.FC = () => {
       emailPec: formData.emailPec || null,
       codiceSdi: formData.codiceSdi || null,
       iban: formData.iban || null,
+      multitenantId: sessionStorage.getItem("IdCompanyAdmin"),
 
       // Campi affiliazione - CORRETTI secondo lo schema
       isAffiliate: formData.isAffiliate,
@@ -465,11 +669,10 @@ const CompanyMaster: React.FC = () => {
           : null,
 
       // IMPORTANTE: affiliateStatus deve essere un INTEGER, non boolean
-      // 0 = Inattivo, 1 = Attivo (o viceversa - verifica con il backend)
       affiliateStatus: formData.isAffiliate
         ? formData.affiliateStatus
           ? 1
-          : 0 // Converti boolean a integer
+          : 0
         : null,
 
       // Altri campi che potrebbero essere richiesti
@@ -481,36 +684,6 @@ const CompanyMaster: React.FC = () => {
       isVendoloFE: false,
     };
 
-    // DEBUG DETTAGLIATO - AGGIUNGI QUESTO
-    console.log("=== DEBUG SALVATAGGIO CLIENTE ===");
-    console.log("customerId:", customerId);
-    console.log("Tipo operazione:", customerId ? "UPDATE" : "CREATE");
-    console.log(
-      "formData.isAffiliate:",
-      formData.isAffiliate,
-      typeof formData.isAffiliate
-    );
-    console.log(
-      "formData.affiliateStatus:",
-      formData.affiliateStatus,
-      typeof formData.affiliateStatus
-    );
-    console.log("formData.affiliateCode:", formData.affiliateCode);
-    console.log("formData.affiliatedDataStart:", formData.affiliatedDataStart);
-    console.log(
-      "payload.isAffiliate:",
-      payload.isAffiliate,
-      typeof payload.isAffiliate
-    );
-    console.log(
-      "payload.affiliateStatus:",
-      payload.affiliateStatus,
-      typeof payload.affiliateStatus
-    );
-    console.log("payload.affiliateCode:", payload.affiliateCode);
-    console.log("Payload completo:", JSON.stringify(payload, null, 2));
-    console.log("================================");
-
     try {
       const url = customerId
         ? `https://localhost:7148/api/customer/${customerId}`
@@ -518,31 +691,14 @@ const CompanyMaster: React.FC = () => {
 
       const method = customerId ? "PUT" : "POST";
 
-      console.log(`Chiamando ${method} ${url}`);
-      console.log("Headers:", {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${
-          localStorage.getItem("token")
-            ? "***TOKEN_PRESENTE***"
-            : "***NO_TOKEN***"
-        }`,
-      });
-
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });
-
-      console.log("=== RESPONSE INFO ===");
-      console.log("Response status:", response.status);
-      console.log("Response statusText:", response.statusText);
-      console.log("Response ok:", response.ok);
-      console.log("Response headers:", Array.from(response.headers.entries()));
-      console.log("====================");
 
       if (response.ok) {
         const message = customerId
@@ -550,63 +706,35 @@ const CompanyMaster: React.FC = () => {
           : "Cliente creato con successo!";
         alert(message);
 
+        let finalCustomerId = customerId;
+
+        // Se è una creazione, ottieni l'ID del nuovo cliente
         if (!customerId) {
           try {
             const newCustomer = await response.json();
-            console.log("Nuovo cliente creato dal server:", newCustomer);
-            setCustomerId(newCustomer.id);
-          } catch (parseError) {
+            finalCustomerId = newCustomer.id;
+            setCustomerId(finalCustomerId);
+          } catch {
             console.log(
               "Nessun JSON di risposta (normale per alcuni endpoint)"
             );
           }
         }
 
-        // VERIFICA IMMEDIATA: ricarica i dati per vedere se sono stati salvati correttamente
-        if (customerId) {
+        // 🆕 GEOCODIFICA AUTOMATICA PER AFFILIATI
+        if (formData.isAffiliate && finalCustomerId) {
           console.log(
-            "Verificando se i dati sono stati salvati correttamente..."
+            "Avvio geocodifica automatica per affiliato:",
+            finalCustomerId
           );
-          try {
-            const verifyResponse = await fetch(
-              `https://localhost:7148/api/customer/${customerId}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${localStorage.getItem("token")}`,
-                },
-              }
-            );
-
-            if (verifyResponse.ok) {
-              const savedCustomer = await verifyResponse.json();
-              console.log("VERIFICA - Cliente salvato nel DB:", savedCustomer);
-              console.log(
-                "VERIFICA - isAffiliate nel DB:",
-                savedCustomer.isAffiliate
-              );
-              console.log(
-                "VERIFICA - affiliateStatus nel DB:",
-                savedCustomer.affiliateStatus
-              );
-            }
-          } catch (verifyError) {
-            console.log("Errore nella verifica:", verifyError);
-          }
+          await handleAutomaticGeocoding(finalCustomerId, formData);
         }
       } else {
-        // Migliore gestione degli errori
         const errorText = await response.text();
-        console.error("=== ERRORE DAL SERVER ===");
-        console.error("Status:", response.status);
-        console.error("StatusText:", response.statusText);
-        console.error("Body:", errorText);
-        console.error("========================");
-
         let errorMessage = "Errore nel salvataggio";
         try {
           const errorJson = JSON.parse(errorText);
           if (errorJson.errors) {
-            // Se l'errore ha un formato strutturato con errori di validazione
             const validationErrors = Object.entries(errorJson.errors)
               .map(
                 ([field, errors]) =>
@@ -622,25 +750,22 @@ const CompanyMaster: React.FC = () => {
             errorMessage = errorJson.title;
           }
         } catch (e) {
-          // Se non è JSON, usa il testo grezzo
           errorMessage = `Errore nel salvataggio (${response.status}):\n${errorText}`;
+          console.log("Errore parsing JSON:", e);
         }
-
         alert(errorMessage);
       }
-    } catch (error) {
-      console.error("=== ERRORE DI RETE ===");
-      console.error("Errore completo:", error);
-      console.error("Message:", error.message);
-      console.error("Stack:", error.stack);
-      console.error("======================");
-      alert(`Errore di connessione: ${error.message}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert(`Errore di connessione: ${error.message}`);
+      } else {
+        alert("Errore di connessione sconosciuto");
+      }
     }
   };
 
   // Handler per gli switch - con debug
   const handleAffiliateToggle = (checked: boolean) => {
-    console.log("Affiliate toggle clicked:", checked);
     setFormData((prev) => ({
       ...prev,
       isAffiliate: checked,
@@ -655,11 +780,196 @@ const CompanyMaster: React.FC = () => {
   };
 
   const handleAffiliateStatusToggle = (checked: boolean) => {
-    console.log("Affiliate status toggle clicked:", checked);
     setFormData((prev) => ({
       ...prev,
       affiliateStatus: checked,
     }));
+  };
+
+  // Funzione per costruire l'indirizzo completo
+  const buildFullAddress = (formData: any): string => {
+    const parts = [
+      formData.indirizzo,
+      formData.cap && formData.citta
+        ? `${formData.cap} ${formData.citta}`
+        : formData.citta,
+      formData.provincia,
+      formData.regione,
+      "Italy",
+    ].filter(Boolean);
+
+    return parts.join(", ");
+  };
+
+  // Funzione per geocodificare un indirizzo tramite Google Maps
+  const geocodeAddress = async (
+    address: string
+  ): Promise<{ lat: number; lng: number; quality: string } | null> => {
+    return new Promise((resolve) => {
+      if (!window.google || !window.google.maps) {
+        console.warn("Google Maps non disponibile per la geocodifica");
+        resolve(null);
+        return;
+      }
+
+      const geocoder = new window.google.maps.Geocoder();
+
+      geocoder.geocode({ address }, (results: any[], status: string) => {
+        if (status === "OK" && results[0]) {
+          const location = results[0].geometry.location;
+          const quality =
+            results[0].geometry.location_type === "ROOFTOP"
+              ? "EXACT"
+              : "APPROXIMATE";
+
+          resolve({
+            lat: location.lat(),
+            lng: location.lng(),
+            quality,
+          });
+        } else {
+          console.warn(`Geocodifica fallita per "${address}": ${status}`);
+          resolve(null);
+        }
+      });
+    });
+  };
+
+  // Funzione per salvare la geolocalizzazione nel database
+  const saveGeolocation = async (
+    affiliateId: string,
+    coordinates: { lat: number; lng: number; quality: string },
+    address: string
+  ): Promise<boolean> => {
+    try {
+      const geolocationData: GeolocationRequest = {
+        affiliateId,
+        latitude: coordinates.lat,
+        longitude: coordinates.lng,
+        address,
+        quality: coordinates.quality,
+        geocodingSource: "GoogleMaps",
+        notes:
+          "Geocodificato automaticamente durante il salvataggio anagrafica",
+      };
+
+      // Prima controlla se esiste già una geolocalizzazione
+      const checkResponse = await fetch(
+        `${API_BASE}/api/customer/${affiliateId}/geolocation`,
+        {
+          headers: authHeaders(),
+        }
+      );
+
+      let method = "POST";
+      let url = `${API_BASE}/api/customer/${affiliateId}/geolocation`;
+
+      if (checkResponse.ok) {
+        // Esiste già, aggiorna
+        method = "PUT";
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers: authHeaders(),
+        body: JSON.stringify(geolocationData),
+      });
+
+      if (response.ok) {
+        console.log("Geolocalizzazione salvata con successo");
+        return true;
+      } else {
+        const errorText = await response.text();
+        console.error("Errore nel salvataggio geolocalizzazione:", errorText);
+        return false;
+      }
+    } catch (error) {
+      console.error("Errore nella richiesta di geolocalizzazione:", error);
+      return false;
+    }
+  };
+
+  // Funzione per gestire la geocodifica automatica
+  const handleAutomaticGeocoding = async (
+    affiliateId: string,
+    formData: any
+  ): Promise<void> => {
+    // Solo per affiliati con dati di indirizzo completi
+    if (
+      !formData.isAffiliate ||
+      !formData.indirizzo ||
+      !formData.citta ||
+      !formData.provincia
+    ) {
+      return;
+    }
+
+    setIsGeocodingInProgress(true);
+
+    try {
+      const fullAddress = buildFullAddress(formData);
+      console.log("Geocodifica indirizzo:", fullAddress);
+
+      // Carica Google Maps se non è già disponibile
+      if (!window.google || !window.google.maps) {
+        console.log("Caricamento Google Maps per geocodifica...");
+        await loadGoogleMaps();
+      }
+
+      // Geocodifica l'indirizzo
+      const coordinates = await geocodeAddress(fullAddress);
+
+      if (coordinates) {
+        const success = await saveGeolocation(
+          affiliateId,
+          coordinates,
+          fullAddress
+        );
+
+        if (success) {
+          console.log(
+            `Geolocalizzazione salvata: ${coordinates.lat}, ${coordinates.lng} (${coordinates.quality})`
+          );
+          // Opzionale: mostra un toast di successo
+          // showToast('Indirizzo geocodificato automaticamente', 'success');
+        } else {
+          console.warn("Geocodifica riuscita ma salvataggio fallito");
+        }
+      } else {
+        console.warn("Impossibile geocodificare l'indirizzo fornito");
+        // Salva comunque i dati senza coordinate
+        await saveGeolocation(
+          affiliateId,
+          { lat: 0, lng: 0, quality: "FAILED" },
+          fullAddress
+        );
+      }
+    } catch (error) {
+      console.error("Errore durante la geocodifica automatica:", error);
+    } finally {
+      setIsGeocodingInProgress(false);
+    }
+  };
+
+  // Funzione per caricare Google Maps dinamicamente
+  const loadGoogleMaps = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (window.google && window.google.maps) {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBdIcimFZ-qXj-7YzYX0kbCGGxIpAnOA0I&libraries=places`;
+      script.async = true;
+      script.defer = true;
+
+      script.onload = () => resolve();
+      script.onerror = () =>
+        reject(new Error("Impossibile caricare Google Maps"));
+
+      document.head.appendChild(script);
+    });
   };
 
   return (
@@ -667,7 +977,7 @@ const CompanyMaster: React.FC = () => {
       {loading && (
         <div className={styles.globalLoadingOverlay}>
           <div className={styles.spinner}></div>
-          <p>Caricamento...</p>
+          <p>Caricamento dati cliente...</p>
         </div>
       )}
       <div className="main-layout">
@@ -879,7 +1189,7 @@ const CompanyMaster: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Sezione Affiliazione - CORRETTA E FUNZIONALE */}
+                {/* Sezione Affiliazione */}
                 <div className={styles.affiliateSection}>
                   <div className={styles.affiliateTitle}>
                     <Shield size={20} />
@@ -977,17 +1287,53 @@ const CompanyMaster: React.FC = () => {
                                   })
                                 }
                                 placeholder="Es: AFF123456ABC"
+                                readOnly={
+                                  !!formData.affiliateCode && !!customerId
+                                }
+                                style={{
+                                  backgroundColor:
+                                    !!formData.affiliateCode && !!customerId
+                                      ? "#f8f9fa"
+                                      : "white",
+                                  cursor:
+                                    !!formData.affiliateCode && !!customerId
+                                      ? "not-allowed"
+                                      : "text",
+                                }}
                               />
                             </div>
                             <button
                               type="button"
                               className={styles.codeGenerateBtn}
                               onClick={generateAffiliateCode}
-                              title="Genera codice automatico"
+                              title={
+                                !!formData.affiliateCode && !!customerId
+                                  ? "Codice affiliato esistente - non modificabile"
+                                  : "Genera codice automatico"
+                              }
+                              disabled={
+                                !!formData.affiliateCode && !!customerId
+                              }
+                              style={{
+                                opacity:
+                                  !!formData.affiliateCode && !!customerId
+                                    ? 0.5
+                                    : 1,
+                                cursor:
+                                  !!formData.affiliateCode && !!customerId
+                                    ? "not-allowed"
+                                    : "pointer",
+                              }}
                             >
                               Genera
                             </button>
                           </div>
+                          {!!formData.affiliateCode && !!customerId && (
+                            <small className="text-muted mt-1">
+                              ⚠️ Il codice affiliato non può essere modificato
+                              per preservare l'integrità dei dati esistenti
+                            </small>
+                          )}
                         </div>
                       </div>
 
@@ -1080,9 +1426,13 @@ const CompanyMaster: React.FC = () => {
                                   (x) => x.id === id!
                                 );
                                 if (u) {
+                                  const uname =
+                                    (u as any).username ??
+                                    (u as any).userName ??
+                                    "";
                                   setAccountForm((p) => ({
                                     ...p,
-                                    username: u.username,
+                                    username: uname,
                                     email: u.email ?? "",
                                     accessLevel: u.accessLevel ?? "Affiliate",
                                     isEnabled: u.isEnabled,
@@ -1215,26 +1565,24 @@ const CompanyMaster: React.FC = () => {
 
                       {/* Azioni */}
                       <div className="d-flex gap-2 mt-3">
-                        {!selectedUserId ? (
-                          <button
-                            type="button"
-                            className={`${styles.btn} ${styles.btnPrimary}`}
-                            onClick={createAffiliateAccount}
-                            disabled={isSavingAccount}
-                          >
-                            Crea account affiliato
-                          </button>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              className={`${styles.btn} ${styles.btnPrimary}`}
-                              onClick={updateSelectedUser}
-                              disabled={isSavingAccount}
-                            >
-                              Salva modifiche
-                            </button>
+                        <button
+                          type="button"
+                          className={`${styles.btn} ${styles.btnPrimary}`}
+                          onClick={
+                            selectedUserId
+                              ? updateSelectedUser
+                              : createAffiliateAccount
+                          }
+                          disabled={isSavingAccount}
+                        >
+                          {selectedUserId
+                            ? "Aggiorna account affiliato"
+                            : "Crea account affiliato"}
+                        </button>
 
+                        {/* Questi restano visibili solo se sto modificando un utente esistente */}
+                        {selectedUserId && (
+                          <>
                             <button
                               type="button"
                               className={`${styles.btn} ${styles.btnSecondary}`}
@@ -1277,6 +1625,16 @@ const CompanyMaster: React.FC = () => {
                       NUOVO
                     </button>
                   </div>
+
+                  {/* Indicatore geocodifica */}
+                  {isGeocodingInProgress && (
+                    <div className={styles.geocodingProgress}>
+                      <div className="d-flex align-items-center justify-content-center gap-2">
+                        <div className={styles.spinner}></div>
+                        <span>Geocodifica indirizzo in corso...</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1295,7 +1653,7 @@ const CompanyMaster: React.FC = () => {
           >
             <h4>Risultati ricerca</h4>
             <ul>
-              {searchResults.map((c: any) => (
+              {searchResults.map((c: SearchResult) => (
                 <li
                   key={c.id}
                   onClick={() => onSelectCustomer(c)}

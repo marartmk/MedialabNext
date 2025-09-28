@@ -52,6 +52,22 @@ const Login: FC = () => {
     return true;
   };
 
+  // helper per leggere messaggi di errore robustamente (JSON o testo)
+  async function readErrorMessage(res: Response): Promise<string> {
+    const ct = res.headers.get("content-type") || "";
+    const raw = await res.text(); // leggiamo una sola volta
+    if (ct.includes("application/json")) {
+      try {
+        const j = raw ? JSON.parse(raw) : {};
+        // prova campi comuni
+        return j.message || j.error || j.title || JSON.stringify(j);
+      } catch {
+        // cade su testo se JSON malformato
+      }
+    }
+    return raw || ""; // testo semplice
+  }
+
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -64,47 +80,81 @@ const Login: FC = () => {
     try {
       const res = await fetch(urlLogin, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json", // hint al BE
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        setError(err.message || "UserId o Password errata");
-        return;
+        const serverMsg = await readErrorMessage(res);
+
+        // mapping messaggi per status
+        let friendly = "";
+        switch (res.status) {
+          case 400:
+            friendly = serverMsg || "Richiesta non valida.";
+            break;
+          case 401:
+            friendly =
+              "User ID o Password errati.";
+            break;
+          case 403:
+            friendly = "Accesso negato. Permessi insufficienti.";
+            break;
+          case 423:
+            friendly = "Account bloccato. Contatta l’amministratore.";
+            break;
+          case 429:
+            friendly = "Troppe richieste. Riprova tra poco.";
+            break;
+          case 500:
+            friendly = "Errore interno del server. Riprova più tardi.";
+            break;
+          default:
+            friendly =
+              serverMsg ||
+              `Errore durante l’accesso (HTTP ${res.status}). Riprova.`;
+        }
+
+        setError(friendly);
+        return; // stop qui, niente parsing success
       }
 
+      // ✅ Successo: corpo JSON
       const result: LoginResponse = await res.json();
 
-      // ✅ Salvataggio token JWT
+      // Salva token + info
       localStorage.setItem("token", result.token);
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("IdCompany", result.idCompany || "");
       localStorage.setItem("fullName", result.companyName || "");
 
-      // 🔍 Se vuoi decodificare il token JWT client-side (opzionale):
-      const payload = JSON.parse(atob(result.token.split(".")[1]));
-
-      localStorage.setItem("userId", payload.unique_name || ""); // o email
-      localStorage.setItem("userLevel", payload.role || "");
-      localStorage.setItem(
-        "isExternalUser",
-        String(payload.role === "External")
-      ); // esempio
-
-      // 🔀 Redirect condizionato
-      window.location.href =
-        payload.role === "External" ? "/external-dashboard" : "/dashboard";
-    } catch (error: unknown) {
-      console.error("Errore durante il login:", error);
-
-      if (
-        error instanceof TypeError &&
-        error.message.includes("Failed to fetch")
-      ) {
+      // Decodifica JWT (se valido)
+      try {
+        const payload = JSON.parse(atob(result.token.split(".")[1] || ""));
+        localStorage.setItem("userId", payload.unique_name || "");
+        localStorage.setItem("userLevel", payload.role || "");
+        localStorage.setItem(
+          "isExternalUser",
+          String(payload.role === "External")
+        );
+        window.location.href =
+          payload.role === "External" ? "/external-dashboard" : "/dashboard";
+      } catch {
+        // Se il token non è decodificabile, vai comunque in dashboard
+        window.location.href = "/dashboard";
+      }
+    } catch (err: unknown) {
+      console.error("Errore durante il login:", err);
+      if (err instanceof TypeError && err.message.includes("Failed to fetch")) {
         setError("Impossibile connettersi al server. Verifica la rete.");
-      } else if (error instanceof Error) {
-        setError(error.message || "Errore sconosciuto durante la connessione.");
+      } else if (err instanceof Error) {
+        setError(err.message || "Errore sconosciuto durante la connessione.");
       } else {
         setError("Errore sconosciuto durante la connessione.");
       }
