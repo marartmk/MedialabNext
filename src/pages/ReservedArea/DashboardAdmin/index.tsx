@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-table";
 import styles from "./styles.module.css";
 import Sidebar from "../../../components/sidebar-admin";
-import Topbar from "../../../components/topbar";
+import Topbar from "../../../components/topbar-admin";
 
 // Definisci il tipo per i dati del cliente
 interface CustomerData {
@@ -25,6 +25,31 @@ interface CustomerData {
   pIva: string;
 }
 
+type AffiliateStatus = "ATTIVO" | "DISATTIVO";
+interface CustomerData {
+  id: string;
+  ragioneSociale: string;
+  nome: string;
+  cognome: string;
+  citta: string;
+  provincia: string;
+  telefono: string;
+  emailAziendale: string;
+  pIva: string;
+  // nuovo:
+  affiliateStatus?: AffiliateStatus | string | null;
+}
+
+type UserAccount = {
+  id: string;
+  username: string;
+  email?: string | null;
+  isEnabled: boolean;
+  isAdmin: boolean;
+  accessLevel?: string | null;
+  createdAt?: string | null;
+};
+
 const DashboardAdmin: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
   //const navigate = useNavigate();
@@ -32,6 +57,36 @@ const DashboardAdmin: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [globalFilter, setGlobalFilter] = useState("");
+
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(
+    null
+  );
+  const [accounts, setAccounts] = useState<UserAccount[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+
+  // 🔹 Config base API (opzionale: meglio da .env)
+  const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
+  // Helper per badge di stato
+  const renderStatusBadge = (status?: string | null) => {
+    const s = (status || "").toString().trim().toUpperCase();
+    const isActive =
+      s === "ATTIVO" ||
+      s === "ACTIVE" ||
+      s === "ENABLED" ||
+      s === "TRUE" ||
+      s === "1";
+    return (
+      <span
+        className={`${styles.statusBadge} ${
+          isActive ? styles.statusActive : styles.statusInactive
+        }`}
+      >
+        {isActive ? "ATTIVO" : "DISATTIVO"}
+      </span>
+    );
+  };
 
   // Definisci le colonne usando createColumnHelper
   const columnHelper = createColumnHelper<CustomerData>();
@@ -92,6 +147,10 @@ const DashboardAdmin: React.FC = () => {
           {info.getValue()}
         </div>
       ),
+    }),
+    columnHelper.accessor("affiliateStatus", {
+      header: "Stato",
+      cell: (info) => renderStatusBadge(info.getValue()),
     }),
     // Colonna Azioni
     columnHelper.display({
@@ -172,6 +231,30 @@ const DashboardAdmin: React.FC = () => {
         console.log("Numero di record:", data.length);
         console.log("Primo record:", data[0]);
 
+        const normalized = (data ?? []).map((d: any) => {
+          const raw =
+            d?.affiliateStatus ??
+            d?.status ??
+            d?.isEnabled ??
+            d?.enabled ??
+            null;
+          let affiliateStatus: AffiliateStatus | string | null = null;
+          if (typeof raw === "boolean")
+            affiliateStatus = raw ? "ATTIVO" : "DISATTIVO";
+          else if (raw != null)
+            affiliateStatus =
+              String(raw).toUpperCase() === "ATTIVO"
+                ? "ATTIVO"
+                : ["ACTIVE", "ENABLED", "TRUE", "1"].includes(
+                    String(raw).toUpperCase()
+                  )
+                ? "ATTIVO"
+                : "DISATTIVO";
+          return { ...d, affiliateStatus };
+        });
+
+        setRowData(normalized);
+
         setRowData(data);
       } catch (error: any) {
         console.error("Errore nel caricamento dei clienti:", error);
@@ -200,10 +283,34 @@ const DashboardAdmin: React.FC = () => {
   };
 
   // Gestione visualizzazione dettagli cliente
-  const handleViewCustomer = (customer: CustomerData) => {
-    console.log("Visualizza cliente:", customer);
-    // Qui aprirai la form di visualizzazione
-    // navigate(`/view-customer/${customer.id}`);
+  const handleViewCustomer = async (customer: CustomerData) => {
+    setSelectedCustomer(customer);
+    setViewModalOpen(true);
+    setLoadingAccounts(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      // carica gli account legati al cliente (se disponibile l'endpoint)
+      const resp = await fetch(`${API_BASE}/api/Auth/users/${customer.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (resp.ok) {
+        const list: UserAccount[] = await resp.json();
+        setAccounts(list ?? []);
+      } else {
+        setAccounts([]);
+      }
+    } catch {
+      setAccounts([]);
+    } finally {
+      setLoadingAccounts(false);
+    }
+  };
+
+  const closeViewModal = () => {
+    setViewModalOpen(false);
+    setSelectedCustomer(null);
+    setAccounts([]);
   };
 
   // Gestione modifica cliente
@@ -449,6 +556,132 @@ const DashboardAdmin: React.FC = () => {
           </div>
         </div>
       </div>
+      {/* === MODAL DETTAGLI AFFILIATO === */}
+      {viewModalOpen && selectedCustomer && (
+        <div className={styles.modalOverlay} onClick={closeViewModal}>
+          <div
+            className={styles.modalContainer}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h4>Dettagli affiliato</h4>
+              <button
+                className={styles.modalClose}
+                onClick={closeViewModal}
+                aria-label="Chiudi"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              {/* Riepilogo anagrafica */}
+              <div className={styles.detailGrid}>
+                <div>
+                  <div className={styles.detailLabel}>Ragione Sociale</div>
+                  <div className={styles.detailValue}>
+                    {selectedCustomer.ragioneSociale}
+                  </div>
+                </div>
+                <div>
+                  <div className={styles.detailLabel}>Referente</div>
+                  <div className={styles.detailValue}>
+                    {selectedCustomer.nome} {selectedCustomer.cognome}
+                  </div>
+                </div>
+                <div>
+                  <div className={styles.detailLabel}>Città</div>
+                  <div className={styles.detailValue}>
+                    {selectedCustomer.citta} ({selectedCustomer.provincia})
+                  </div>
+                </div>
+                <div>
+                  <div className={styles.detailLabel}>Telefono</div>
+                  <div className={styles.detailValue}>
+                    {selectedCustomer.telefono}
+                  </div>
+                </div>
+                <div>
+                  <div className={styles.detailLabel}>Email</div>
+                  <div className={styles.detailValue}>
+                    {selectedCustomer.emailAziendale}
+                  </div>
+                </div>
+                <div>
+                  <div className={styles.detailLabel}>P. IVA</div>
+                  <div className={styles.detailValue}>
+                    {selectedCustomer.pIva}
+                  </div>
+                </div>
+                <div>
+                  <div className={styles.detailLabel}>Stato</div>
+                  <div className={styles.detailValue}>
+                    {renderStatusBadge(selectedCustomer.affiliateStatus)}
+                  </div>
+                </div>
+                <div>
+                  <div className={styles.detailLabel}>ID</div>
+                  <div className={styles.detailValue}>
+                    <code>{selectedCustomer.id}</code>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sezione account associati */}
+              <div className={styles.accountsSection}>
+                <div className={styles.sectionTitle}>Account associati</div>
+                {loadingAccounts ? (
+                  <div className={styles.loadingInline}>
+                    <span className={styles.loadingSpinner}></span> Caricamento
+                    account...
+                  </div>
+                ) : accounts.length === 0 ? (
+                  <div className={styles.muted}>Nessun account associato.</div>
+                ) : (
+                  <div className={styles.accountsList}>
+                    {accounts.map((u) => {
+                      const badge = renderStatusBadge(
+                        u.isEnabled ? "ATTIVO" : "DISATTIVO"
+                      );
+                      return (
+                        <div key={u.id} className={styles.accountItem}>
+                          <div className={styles.accountMain}>
+                            <div className={styles.accountUsername}>
+                              {u.username}
+                            </div>
+                            <div className={styles.accountMeta}>
+                              {u.email ? (
+                                <span className={styles.tableBadge}>
+                                  {u.email}
+                                </span>
+                              ) : null}
+                              {u.accessLevel ? (
+                                <span className={styles.tableBadge}>
+                                  Level: {u.accessLevel}
+                                </span>
+                              ) : null}
+                              {u.isAdmin ? (
+                                <span className={styles.tableBadge}>Admin</span>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className={styles.accountStatus}>{badge}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button className={styles.modalPrimary} onClick={closeViewModal}>
+                Chiudi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

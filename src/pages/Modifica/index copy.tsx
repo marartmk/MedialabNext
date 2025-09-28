@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import {
+  useNavigate,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import BottomBar from "../../components/BottomBar";
 import { CalendarDays, ArrowLeft } from "lucide-react";
 import "./modifica-styles.css";
-
-import {
-  searchPartsQuick,
-  consumeWarehouseLines,
-  type PartSearchItem,
-} from "@/services/warehouseService";
 // Tipi per i dati
 interface DiagnosticItem {
   id: string;
@@ -102,19 +100,27 @@ interface Operator {
   phoneNumber?: string;
 }
 
-interface RepairPartLine {
-  tempId: string;
-  warehouseItemId: number; // id numerico della riga di magazzino
-  itemId: string; // GUID dell’articolo
+interface PartSearchItem {
+  id: string;
   code: string;
-  name: string; // es. "Display (Samsung S20)"
-  qty: number; // quantità usata nella riparazione
+  name: string;
+  brand: string;
+  model: string;
   unitPrice: number;
-  lineTotal: number; // qty * unitPrice
-  stock: number; // giacenza disponibile al momento dell'aggiunta
+  quantity: number; // giacenza attuale
 }
 
-const Modifica: React.FC = () => {
+interface RepairPartLine {
+  tempId: string;
+  itemId: string;
+  code: string;
+  name: string;
+  qty: number;
+  unitPrice: number;
+  lineTotal: number;
+}
+
+const Modifica: React.FC = () => {  
   const navigate = useNavigate();
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
   const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
@@ -150,6 +156,46 @@ const Modifica: React.FC = () => {
     { code: "COMPLETED", label: "✅ Completato" },
     { code: "DELIVERED", label: "📦 Consegnato" },
     { code: "CANCELLED", label: "❌ Annullato" },
+  ];
+
+  // Simulazione di dati per i ricambi
+  const fakeParts: PartSearchItem[] = [
+    {
+      id: "1",
+      code: "LCD-S23",
+      name: "Display IPhone 13",
+      brand: "Apple",
+      model: "S23",
+      unitPrice: 220,
+      quantity: 5,
+    },
+    {
+      id: "2",
+      code: "BAT-IP13",
+      name: "Batteria iPhone 13",
+      brand: "Apple",
+      model: "iPhone 13",
+      unitPrice: 89,
+      quantity: 12,
+    },
+    {
+      id: "3",
+      code: "CONN-XIA12",
+      name: "Connettore ricarica IPhone 12",
+      brand: "Apple",
+      model: "iPhone 12",
+      unitPrice: 25,
+      quantity: 8,
+    },
+    {
+      id: "4",
+      code: "CAM-HUA-P50",
+      name: "Fotocamera IPhone 13",
+      brand: "Apple",
+      model: "iPhone 13",
+      unitPrice: 140,
+      quantity: 2,
+    },
   ];
 
   // Ricerca ricambi + righe utilizzate
@@ -1033,47 +1079,40 @@ const Modifica: React.FC = () => {
       return;
     }
     setPartsSearching(true);
-    try {
-      const rows = await searchPartsQuick(q.trim()); // <-- chiama il BE reale
-      setPartsResults(rows);
-    } catch (e) {
-      console.error("searchPartsQuick error:", e);
-      setPartsResults([]);
-    } finally {
+    setTimeout(() => {
+      const lower = q.toLowerCase();
+      const filtered = fakeParts.filter(
+        (p) =>
+          p.code.toLowerCase().includes(lower) ||
+          p.name.toLowerCase().includes(lower) ||
+          p.brand.toLowerCase().includes(lower) ||
+          p.model.toLowerCase().includes(lower)
+      );
+      setPartsResults(filtered);
       setPartsSearching(false);
-    }
+    }, 300); // simuliamo piccolo delay
   };
 
   // Aggiunge una riga ricambio alla scheda
   const addPartLine = (item: PartSearchItem) => {
     setUsedParts((prev) => {
-      // item.id è numerico (warehouse item id)
-      const idx = prev.findIndex((p) => p.warehouseItemId === item.id);
-      if (idx >= 0) {
-        // incrementa ma non superare lo stock reale
-        const clone = [...prev];
-        const cur = clone[idx];
-        const nextQty = Math.min(cur.qty + 1, item.quantity ?? cur.stock ?? 1);
-        clone[idx] = {
-          ...cur,
-          qty: nextQty,
-          lineTotal: nextQty * cur.unitPrice,
-          stock: item.quantity ?? cur.stock ?? nextQty,
-        };
-        return clone;
+      // se già presente, incrementa qty
+      const existing = prev.find((p) => p.itemId === item.id);
+      if (existing) {
+        return prev.map((p) =>
+          p.itemId === item.id
+            ? { ...p, qty: p.qty + 1, lineTotal: (p.qty + 1) * p.unitPrice }
+            : p
+        );
       }
-
-      // nuova riga: usa i campi REALI (id numerico + itemId GUID)
       const line: RepairPartLine = {
         tempId: crypto.randomUUID(),
-        warehouseItemId: item.id, // <-- numero
-        itemId: item.itemId, // <-- GUID dal BE
+        itemId: item.id,
         code: item.code,
         name: `${item.name} (${item.brand} ${item.model})`,
         qty: 1,
         unitPrice: item.unitPrice ?? 0,
         lineTotal: item.unitPrice ?? 0,
-        stock: item.quantity ?? 0,
       };
       return [...prev, line];
     });
@@ -1081,13 +1120,13 @@ const Modifica: React.FC = () => {
 
   // Aggiorna quantità
   const updateLineQty = (tempId: string, qty: number) => {
-    const requested = Math.max(1, Math.floor(qty || 1));
+    const safeQty = Math.max(1, Math.floor(qty || 1));
     setUsedParts((prev) =>
-      prev.map((l) => {
-        if (l.tempId !== tempId) return l;
-        const clamped = Math.min(requested, l.stock ?? requested);
-        return { ...l, qty: clamped, lineTotal: clamped * l.unitPrice };
-      })
+      prev.map((l) =>
+        l.tempId === tempId
+          ? { ...l, qty: safeQty, lineTotal: safeQty * l.unitPrice }
+          : l
+      )
     );
   };
 
@@ -1120,16 +1159,10 @@ const Modifica: React.FC = () => {
   // };
 
   const handleConsumeFromWarehouse = async () => {
-    if (usedParts.length === 0) return;
-    try {
-      await consumeWarehouseLines(
-        usedParts.map((l) => ({ id: l.warehouseItemId, qty: l.qty }))
-      );
-      alert("Ricambi scaricati dal magazzino ✅");
-    } catch (e) {
-      console.error(e);
-      alert("Errore nello scarico dal magazzino ❌");
-    }
+    console.log("Scarico simulato:", usedParts);
+    alert(
+      "Scarico magazzino simulato ✅\n" + JSON.stringify(usedParts, null, 2)
+    );
   };
 
   // Rendering condizionale per loading e errori

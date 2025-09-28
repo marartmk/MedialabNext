@@ -328,54 +328,52 @@ const Accettazione: React.FC = () => {
   const loadOperators = async () => {
     try {
       // Per ora usiamo dati fake, poi sostituiremo con la vera API
-      const fakeOperators = [
-        {
-          id: "1",
-          firstName: "Mario",
-          lastName: "Rossi",
-          codiceDipendente: "TEC001",
-          email: "mario.rossi@medialab.it",
-          phoneNumber: "+39 333 1234567",
+      // const fakeOperators = [
+      //   {
+      //     id: "1",
+      //     firstName: "Mario",
+      //     lastName: "Rossi",
+      //     codiceDipendente: "TEC001",
+      //     email: "mario.rossi@medialab.it",
+      //     phoneNumber: "+39 333 1234567",
+      //   },
+      //   {
+      //     id: "2",
+      //     firstName: "Luigi",
+      //     lastName: "Verdi",
+      //     codiceDipendente: "TEC002",
+      //     email: "luigi.verdi@medialab.it",
+      //     phoneNumber: "+39 333 2345678",
+      //   },
+      //   {
+      //     id: "3",
+      //     firstName: "Giuseppe",
+      //     lastName: "Bianchi",
+      //     codiceDipendente: "TEC003",
+      //     email: "giuseppe.bianchi@medialab.it",
+      //     phoneNumber: "+39 333 3456789",
+      //   },
+      // ];
+
+      // // Simula un piccolo delay come se fosse una vera chiamata API
+      // await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // setOperators(fakeOperators);
+      // console.log("Operatori fake caricati:", fakeOperators);
+
+      // Questo sarà il codice vero quando avremo l'API:
+      const response = await fetch("https://localhost:7148/api/operator", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        {
-          id: "2",
-          firstName: "Luigi",
-          lastName: "Verdi",
-          codiceDipendente: "TEC002",
-          email: "luigi.verdi@medialab.it",
-          phoneNumber: "+39 333 2345678",
-        },
-        {
-          id: "3",
-          firstName: "Giuseppe",
-          lastName: "Bianchi",
-          codiceDipendente: "TEC003",
-          email: "giuseppe.bianchi@medialab.it",
-          phoneNumber: "+39 333 3456789",
-        },
-      ];
+      });
 
-      // Simula un piccolo delay come se fosse una vera chiamata API
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      setOperators(fakeOperators);
-      console.log("Operatori fake caricati:", fakeOperators);
-
-      /* 
-    // Questo sarà il codice vero quando avremo l'API:
-    const response = await fetch('https://localhost:7148/api/operator', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-    });
-
-    if (response.ok) {
-      const operatorsData = await response.json();
-      setOperators(operatorsData);
-    } else {
-      console.error('Errore nel caricamento operatori');
-    }
-    */
+      if (response.ok) {
+        const operatorsData = await response.json();
+        setOperators(operatorsData);
+      } else {
+        console.error("Errore nel caricamento operatori");
+      }
     } catch (error) {
       console.error("Errore durante il caricamento operatori:", error);
 
@@ -1299,7 +1297,10 @@ const Accettazione: React.FC = () => {
       const cssLinks = Array.from(
         document.querySelectorAll('link[rel="stylesheet"]')
       )
-        .map((link) => `<link rel="stylesheet" href="${(link as HTMLLinkElement).href}">`)
+        .map(
+          (link) =>
+            `<link rel="stylesheet" href="${(link as HTMLLinkElement).href}">`
+        )
         .join("");
 
       const cssStyles = Array.from(document.querySelectorAll("style"))

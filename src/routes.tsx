@@ -17,6 +17,8 @@ import RicercaSchede from "./pages/RicercaSchede";
 import Modifica from "./pages/Modifica";
 import Magazzino from "./pages/Magazzino";
 import Logistica from "./pages/Logistica";
+import Operators from "./pages/ReservedArea/AnagraficaOperatori";
+
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -167,6 +169,15 @@ const AppRoutes = () => {
         }
       />
 
+       <Route
+        path="/anagrafica-operatori"
+        element={
+          <ProtectedRoute>
+            <Operators />
+          </ProtectedRoute>
+        }
+      />
+      
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -1,7 +1,7 @@
-/* ✨ STILI TABELLA - VERSIONE MONOCROMATICA PULITA */
+/* ✨ STILI TABELLA - VERSIONE MONOCROMATICA PULITA - CSS MODULES */
 
 /* TanStack Table Styles - Versione Nero/Bianco/Grigio */
-.table-section {
+.tableSection {
   background: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -10,7 +10,7 @@
   border: 1px solid #e5e5e5;
 }
 
-.table-header {
+.tableHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -21,7 +21,7 @@
   border-bottom: 2px solid #f5f5f5;
 }
 
-.table-header h3 {
+.tableHeader h3 {
   margin: 0;
   color: #1a1a1a;
   font-weight: 700;
@@ -31,18 +31,18 @@
   gap: 10px;
 }
 
-.table-header h3::before {
+.tableHeader h3::before {
   content: "👥";
   font-size: 1.2rem;
 }
 
-.table-controls {
+.tableControls {
   display: flex;
   gap: 12px;
   align-items: center;
 }
 
-.search-table-input {
+.searchTableInput {
   padding: 12px 20px 12px 45px;
   border: 2px solid #d1d1d1;
   border-radius: 25px;
@@ -55,19 +55,19 @@
   color: #333;
 }
 
-.search-table-input:focus {
+.searchTableInput:focus {
   border-color: #666666;
   box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
   background-color: #ffffff;
 }
 
-.search-container-table {
+.searchContainerTable {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.search-icon-table {
+.searchIconTable {
   position: absolute;
   left: 15px;
   color: #666666;
@@ -76,7 +76,7 @@
 }
 
 /* Tabella Moderna Monocromatica */
-.modern-table {
+.modernTable {
   width: 100%;
   border-collapse: collapse;
   background: #ffffff;
@@ -85,12 +85,12 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.modern-table thead {
+.modernTable thead {
   background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
   color: white;
 }
 
-.modern-table th {
+.modernTable th {
   padding: 16px 20px !important;
   text-align: left !important;
   font-weight: 600 !important;
@@ -103,34 +103,34 @@
   position: relative;
 }
 
-.modern-table th:hover {
+.modernTable th:hover {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.modern-table th:first-child {
+.modernTable th:first-child {
   border-top-left-radius: 8px;
 }
 
-.modern-table th:last-child {
+.modernTable th:last-child {
   border-top-right-radius: 8px;
 }
 
-.modern-table tbody tr {
+.modernTable tbody tr {
   border-bottom: 1px solid #e8e8e8 !important;
   transition: all 0.2s ease;
 }
 
-.modern-table tbody tr:hover {
+.modernTable tbody tr:hover {
   background-color: #f5f5f5 !important;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.modern-table tbody tr:last-child {
+.modernTable tbody tr:last-child {
   border-bottom: none !important;
 }
 
-.modern-table td {
+.modernTable td {
   padding: 16px 20px !important;
   font-size: 14px !important;
   color: #2a2a2a !important;
@@ -138,24 +138,100 @@
   border: none !important;
 }
 
-.modern-table tbody tr:nth-child(even) {
+.modernTable tbody tr:nth-child(even) {
   background-color: #fafafa;
 }
 
-.modern-table tbody tr:nth-child(even):hover {
+.modernTable tbody tr:nth-child(even):hover {
   background-color: #f0f0f0 !important;
 }
 
 /* Sort indicators monocromatici */
-.sort-indicator {
+.sortIndicator {
   font-size: 12px;
   margin-left: 8px;
   opacity: 0.8;
   color: #ffffff;
 }
 
+/* Badge styles */
+.tableBadge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.badgePhone {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.badgeEmail {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.badgePiva {
+  background-color: #fafafa;
+  color: #404040;
+  border: 1px solid #e5e5e5;
+}
+
+/* Pulsanti Azioni */
+.actionButtons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.actionBtn {
+  padding: 8px 10px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  outline: none !important;
+}
+
+.viewBtn {
+  background-color: #4a5568 !important;
+  color: white !important;
+}
+
+.viewBtn:hover {
+  background-color: #2d3748 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(74, 85, 104, 0.3);
+}
+
+.editBtn {
+  background-color: #1a1a1a !important;
+  color: white !important;
+}
+
+.editBtn:hover {
+  background-color: #000000 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(26, 26, 26, 0.3);
+}
+
+.actionBtn i {
+  font-size: 14px;
+}
+
 /* Loading e Error states monocromatici */
-.loading-container {
+.loadingContainer {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -167,7 +243,7 @@
   border: 2px dashed #cccccc;
 }
 
-.loading-spinner {
+.loadingSpinner {
   width: 24px;
   height: 24px;
   border: 3px solid #e0e0e0;
@@ -181,7 +257,7 @@
   100% { transform: rotate(360deg); }
 }
 
-.error-container {
+.errorContainer {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -194,11 +270,11 @@
   font-weight: 500;
 }
 
-.error-container i {
+.errorContainer i {
   font-size: 18px;
 }
 
-.empty-state {
+.emptyState {
   text-align: center;
   padding: 80px 20px;
   color: #666666;
@@ -207,20 +283,20 @@
   border: 2px dashed #cccccc;
 }
 
-.empty-state h4 {
+.emptyState h4 {
   margin: 0 0 12px 0;
   color: #2a2a2a;
   font-size: 1.25rem;
   font-weight: 600;
 }
 
-.empty-state p {
+.emptyState p {
   margin: 0;
   font-size: 14px;
 }
 
 /* Paginazione monocromatica */
-.pagination-container {
+.paginationContainer {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -231,19 +307,19 @@
   border-radius: 0 0 8px 8px;
 }
 
-.pagination-info {
+.paginationInfo {
   font-size: 14px;
   color: #666666;
   font-weight: 500;
 }
 
-.pagination-controls {
+.paginationControls {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.pagination-btn {
+.paginationBtn {
   padding: 8px 12px !important;
   border: 2px solid #d1d1d1 !important;
   border-radius: 6px !important;
@@ -254,9 +330,10 @@
   font-size: 14px !important;
   font-weight: 500 !important;
   min-width: 40px !important;
+  outline: none !important;
 }
 
-.pagination-btn:hover:not(:disabled) {
+.paginationBtn:hover:not(:disabled) {
   border-color: #666666 !important;
   background-color: #2a2a2a !important;
   color: white !important;
@@ -264,14 +341,14 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.pagination-btn:disabled {
+.paginationBtn:disabled {
   background-color: #f0f0f0 !important;
   color: #999999 !important;
   cursor: not-allowed !important;
   border-color: #e0e0e0 !important;
 }
 
-.pagination-info-text {
+.paginationInfoText {
   padding: 0 16px;
   font-size: 14px;
   color: #666666;
@@ -280,34 +357,45 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .table-header {
+  .tableHeader {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
   }
   
-  .table-controls {
+  .tableControls {
     width: 100%;
     justify-content: center;
   }
   
-  .search-table-input {
+  .searchTableInput {
     width: 100%;
     max-width: 400px;
   }
   
-  .pagination-container {
+  .paginationContainer {
     flex-direction: column;
     gap: 16px;
   }
   
-  .modern-table {
+  .modernTable {
     font-size: 12px;
   }
   
-  .modern-table th,
-  .modern-table td {
+  .modernTable th,
+  .modernTable td {
     padding: 12px 8px !important;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .actionBtn {
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 6px 8px !important;
   }
 }
 
@@ -317,6 +405,7 @@
   100% { transform: translateY(-2px); }
 }
 
-.modern-table tbody tr:hover {
+.modernTable tbody tr:hover {
   animation: rowHover 0.2s ease-out forwards;
 }
+

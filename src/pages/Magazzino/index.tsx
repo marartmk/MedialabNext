@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import BottomBar from "../../components/BottomBar";
@@ -6,60 +6,52 @@ import {
   Package,
   Search,
   BarChart3,
-  X,  
+  X,
   Grid3X3,
   List,
+  Download,
+  AlertTriangle,
 } from "lucide-react";
+import warehouseService, {
+  type WarehouseItem,
+  type WarehouseStats,
+  type CategoryInfo,
+  type WarehouseSupplier,
+  type CreateWarehouseItem,
+  type UpdateWarehouseItem,
+} from "../../services/warehouseService";
 import "./magazzino-styles.css";
 
-// Tipi per i dati
-interface WarehouseItem {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  category: string;
-  subcategory: string;
-  brand: string;
-  model: string;
-  supplier: string;
-  quantity: number;
-  minQuantity: number;
-  maxQuantity: number;
-  unitPrice: number;
-  totalValue: number;
-  location: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-}
-
-interface Supplier {
-  id: string;
-  name: string;
-  contact: string;
-}
-
 const Magazzino: React.FC = () => {
-  const [menuState, setMenuState] = useState<"open" | "closed">("open"); 
+  const [menuState, setMenuState] = useState<"open" | "closed">("open");
   const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
     date: "",
     time: "",
   });
-  console.log(dateTime);
 
   // Stati per i dati
   const [warehouseItems, setWarehouseItems] = useState<WarehouseItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<WarehouseItem[]>([]);
+  const [categories, setCategories] = useState<CategoryInfo[]>([]);
+  const [suppliers, setSuppliers] = useState<WarehouseSupplier[]>([]);
+  const [stats, setStats] = useState<WarehouseStats>({
+    totalItems: 0,
+    availableItems: 0,
+    lowStockItems: 0,
+    outOfStockItems: 0,
+    totalValue: 0,
+    totalCategories: 0,
+    totalSuppliers: 0,
+  });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Stati per la paginazione
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 20;
 
   // Stati per i filtri
   const [searchQuery, setSearchQuery] = useState("");
@@ -84,137 +76,11 @@ const Magazzino: React.FC = () => {
     supplier: "",
     quantity: 0,
     minQuantity: 0,
+    maxQuantity: 0,
     unitPrice: 0,
     location: "",
     notes: "",
   });
-
-  // Dati statici
-  const categories: Category[] = [
-    { id: "screens", name: "Schermi", icon: "📱", color: "#17a2b8" },
-    { id: "batteries", name: "Batterie", icon: "🔋", color: "#28a745" },
-    { id: "cameras", name: "Fotocamere", icon: "📷", color: "#6f42c1" },
-    { id: "speakers", name: "Speaker", icon: "🔊", color: "#fd7e14" },
-    { id: "motherboards", name: "Schede Madri", icon: "💾", color: "#dc3545" },
-    { id: "connectors", name: "Connettori", icon: "🔌", color: "#20c997" },
-    { id: "buttons", name: "Pulsanti", icon: "⚫", color: "#6c757d" },
-    { id: "chassis", name: "Telai", icon: "🔧", color: "#ffc107" },
-    { id: "other", name: "Altri", icon: "📦", color: "#6c757d" },
-  ];
-
-  const suppliers: Supplier[] = [
-    { id: "supplier1", name: "TechParts Italy", contact: "info@techparts.it" },
-    { id: "supplier2", name: "Mobile Components", contact: "order@mobile.com" },
-    {
-      id: "supplier3",
-      name: "RepairPro Supply",
-      contact: "sales@repairpro.it",
-    },
-    {
-      id: "supplier4",
-      name: "GlobalTech Parts",
-      contact: "support@global.com",
-    },
-  ];
-
-  // Dati di esempio
-  const sampleItems: WarehouseItem[] = [
-    {
-      id: "1",
-      code: "SCR-IP14-BLK",
-      name: "Schermo iPhone 14",
-      description: "Display OLED con touch integrato - Colore Nero",
-      category: "screens",
-      subcategory: "OLED",
-      brand: "Apple",
-      model: "iPhone 14",
-      supplier: "supplier1",
-      quantity: 15,
-      minQuantity: 5,
-      maxQuantity: 50,
-      unitPrice: 89.99,
-      totalValue: 1349.85,
-      location: "A-01-015",
-      createdAt: "2024-01-15T09:30:00Z",
-      updatedAt: "2024-02-01T14:22:00Z",
-    },
-    {
-      id: "2",
-      code: "BAT-IP13-PRO",
-      name: "Batteria iPhone 13 Pro",
-      description: "Batteria Li-Ion 3095mAh originale",
-      category: "batteries",
-      subcategory: "Li-Ion",
-      brand: "Apple",
-      model: "iPhone 13 Pro",
-      supplier: "supplier2",
-      quantity: 3,
-      minQuantity: 8,
-      maxQuantity: 30,
-      unitPrice: 45.5,
-      totalValue: 136.5,
-      location: "B-02-008",
-      createdAt: "2024-01-10T11:15:00Z",
-      updatedAt: "2024-02-08T16:45:00Z",
-    },
-    {
-      id: "3",
-      code: "CAM-SAM-S23",
-      name: "Fotocamera Samsung S23",
-      description: "Fotocamera posteriore principale 50MP",
-      category: "cameras",
-      subcategory: "Principale",
-      brand: "Samsung",
-      model: "Galaxy S23",
-      supplier: "supplier3",
-      quantity: 12,
-      minQuantity: 6,
-      maxQuantity: 25,
-      unitPrice: 67.8,
-      totalValue: 813.6,
-      location: "C-01-012",
-      createdAt: "2024-01-20T08:45:00Z",
-      updatedAt: "2024-02-05T10:30:00Z",
-    },
-    {
-      id: "4",
-      code: "SPK-IP12-MIN",
-      name: "Speaker iPhone 12 Mini",
-      description: "Altoparlante auricolare interno",
-      category: "speakers",
-      subcategory: "Auricolare",
-      brand: "Apple",
-      model: "iPhone 12 Mini",
-      supplier: "supplier1",
-      quantity: 0,
-      minQuantity: 4,
-      maxQuantity: 20,
-      unitPrice: 23.9,
-      totalValue: 0,
-      location: "D-03-007",
-      createdAt: "2024-01-08T15:20:00Z",
-      updatedAt: "2024-02-10T12:15:00Z",
-    },
-    {
-      id: "5",
-      code: "MB-OPPO-A54",
-      name: "Scheda Madre OPPO A54",
-      description: "Mainboard completa con processore",
-      category: "motherboards",
-      subcategory: "Completa",
-      brand: "OPPO",
-      model: "A54",
-      supplier: "supplier4",
-      quantity: 8,
-      minQuantity: 3,
-      maxQuantity: 15,
-      unitPrice: 125.0,
-      totalValue: 1000.0,
-      location: "E-01-003",
-      createdAt: "2024-01-25T13:40:00Z",
-      updatedAt: "2024-02-03T09:20:00Z",
-    },
-  ];
 
   // Effetti
   useEffect(() => {
@@ -233,76 +99,79 @@ const Magazzino: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    loadWarehouseData();
+    loadInitialData();
   }, []);
 
   useEffect(() => {
-    applyFilters();
+    loadWarehouseData();
   }, [
     searchQuery,
     selectedCategory,
     selectedSupplier,
     stockStatus,
-    warehouseItems,
+    currentPage,
   ]);
 
   // Funzioni per il caricamento dei dati
-  const loadWarehouseData = async () => {
-    setLoading(true);
+  const loadInitialData = async () => {
     try {
-      // Simula chiamata API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setWarehouseItems(sampleItems);
-      setError(null);
+      setLoading(true);
+
+      // Carica categorie e fornitori in parallelo
+      const [categoriesData, suppliersData] = await Promise.all([
+        warehouseService.getCategories(),
+        warehouseService.getSuppliers(),
+      ]);
+
+      setCategories(categoriesData);
+      setSuppliers(suppliersData);
     } catch (err) {
-      setError("Errore nel caricamento dei dati del magazzino");
-      console.log(err);
+      console.error("Errore nel caricamento dati iniziali:", err);
+      setError("Errore nel caricamento delle categorie e fornitori");
     } finally {
       setLoading(false);
     }
   };
 
-  // Funzioni per i filtri
-  const applyFilters = () => {
-    let filtered = warehouseItems;
+  const loadWarehouseData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    // Filtro ricerca
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (item) =>
-          item.name.toLowerCase().includes(query) ||
-          item.code.toLowerCase().includes(query) ||
-          item.brand.toLowerCase().includes(query) ||
-          item.model.toLowerCase().includes(query) ||
-          item.description.toLowerCase().includes(query)
-      );
+      const searchParams = {
+        searchQuery: searchQuery.trim() || undefined,
+        category: selectedCategory || undefined,
+        supplier: selectedSupplier || undefined,
+        stockStatus: stockStatus || undefined,
+        page: currentPage,
+        pageSize: pageSize,
+        sortBy: "name",
+        sortDescending: false,
+      };
+
+      const response = await warehouseService.searchItems(searchParams);
+
+      setWarehouseItems(response.items);
+      setFilteredItems(response.items);
+      setStats(response.stats);
+      setCurrentPage(response.page);
+      setTotalPages(response.totalPages);
+      setTotalCount(response.totalCount);
+    } catch (err: any) {
+      console.error("Errore nel caricamento magazzino:", err);
+      setError(err.message || "Errore nel caricamento dei dati del magazzino");
+      setWarehouseItems([]);
+      setFilteredItems([]);
+    } finally {
+      setLoading(false);
     }
-
-    // Filtro categoria
-    if (selectedCategory) {
-      filtered = filtered.filter((item) => item.category === selectedCategory);
-    }
-
-    // Filtro fornitore
-    if (selectedSupplier) {
-      filtered = filtered.filter((item) => item.supplier === selectedSupplier);
-    }
-
-    // Filtro stato scorte
-    if (stockStatus) {
-      filtered = filtered.filter((item) => {
-        if (stockStatus === "available")
-          return item.quantity > item.minQuantity;
-        if (stockStatus === "low")
-          return item.quantity > 0 && item.quantity <= item.minQuantity;
-        if (stockStatus === "out") return item.quantity === 0;
-        return true;
-      });
-    }
-
-    setFilteredItems(filtered);
-  };
+  }, [
+    searchQuery,
+    selectedCategory,
+    selectedSupplier,
+    stockStatus,
+    currentPage,
+  ]);
 
   // Funzioni per la gestione del modal
   const openModal = (mode: "add" | "edit" | "view", item?: WarehouseItem) => {
@@ -313,15 +182,16 @@ const Magazzino: React.FC = () => {
       setFormData({
         code: item.code,
         name: item.name,
-        description: item.description,
+        description: item.description || "",
         category: item.category,
         brand: item.brand,
         model: item.model,
         supplier: item.supplier,
         quantity: item.quantity,
         minQuantity: item.minQuantity,
+        maxQuantity: item.maxQuantity,
         unitPrice: item.unitPrice,
-        location: item.location,
+        location: item.location || "",
         notes: item.notes || "",
       });
     } else {
@@ -348,6 +218,7 @@ const Magazzino: React.FC = () => {
       supplier: "",
       quantity: 0,
       minQuantity: 0,
+      maxQuantity: 0,
       unitPrice: 0,
       location: "",
       notes: "",
@@ -356,50 +227,99 @@ const Magazzino: React.FC = () => {
 
   const handleSaveItem = async () => {
     try {
+      // Validazione basic
+      if (
+        !formData.code.trim() ||
+        !formData.name.trim() ||
+        !formData.category ||
+        !formData.brand.trim() ||
+        !formData.model.trim() ||
+        !formData.supplier
+      ) {
+        alert("Compila tutti i campi obbligatori (contrassegnati con *)");
+        return;
+      }
+
+      setLoading(true);
+
       if (modalMode === "add") {
-        // Logica per aggiungere nuovo item
-        const newItem: WarehouseItem = {
-          id: Date.now().toString(),
-          ...formData,
-          subcategory: "",
-          maxQuantity: formData.minQuantity * 5,
-          totalValue: formData.quantity * formData.unitPrice,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+        const newItemData: CreateWarehouseItem = {
+          code: formData.code.trim(),
+          name: formData.name.trim(),
+          description: formData.description.trim() || undefined,
+          category: formData.category,
+          brand: formData.brand.trim(),
+          model: formData.model.trim(),
+          supplier: formData.supplier,
+          quantity: formData.quantity,
+          minQuantity: formData.minQuantity,
+          maxQuantity: formData.maxQuantity || formData.minQuantity * 5,
+          unitPrice: formData.unitPrice,
+          location: formData.location.trim() || undefined,
+          notes: formData.notes.trim() || undefined,
+          multitenantId: warehouseService.getMultitenantId() || "",
         };
-        setWarehouseItems((prev) => [...prev, newItem]);
+
+        await warehouseService.createItem(newItemData);
+        alert("Articolo aggiunto con successo!");
       } else if (modalMode === "edit" && selectedItem) {
-        // Logica per modificare item esistente
-        setWarehouseItems((prev) =>
-          prev.map((item) =>
-            item.id === selectedItem.id
-              ? {
-                  ...item,
-                  ...formData,
-                  totalValue: formData.quantity * formData.unitPrice,
-                  updatedAt: new Date().toISOString(),
-                }
-              : item
-          )
-        );
+        const updateData: UpdateWarehouseItem = {
+          code: formData.code.trim(),
+          name: formData.name.trim(),
+          description: formData.description.trim() || undefined,
+          category: formData.category,
+          brand: formData.brand.trim(),
+          model: formData.model.trim(),
+          supplier: formData.supplier,
+          quantity: formData.quantity,
+          minQuantity: formData.minQuantity,
+          maxQuantity: formData.maxQuantity,
+          unitPrice: formData.unitPrice,
+          location: formData.location.trim() || undefined,
+          notes: formData.notes.trim() || undefined,
+        };
+
+        await warehouseService.updateItem(selectedItem.id, updateData);
+        alert("Articolo modificato con successo!");
       }
 
       closeModal();
-      alert(
-        modalMode === "add"
-          ? "Articolo aggiunto con successo!"
-          : "Articolo modificato con successo!"
-      );
-    } catch (error) {
-      alert("Errore durante il salvataggio dell'articolo");
-      console.log(error);
+      await loadWarehouseData(); // Ricarica i dati
+    } catch (err: any) {
+      console.error("Errore nel salvataggio:", err);
+      alert(err.message || "Errore durante il salvataggio dell'articolo");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDeleteItem = async (itemId: string) => {
-    if (confirm("Sei sicuro di voler eliminare questo articolo?")) {
-      setWarehouseItems((prev) => prev.filter((item) => item.id !== itemId));
-      alert("Articolo eliminato con successo!");
+  const handleDeleteItem = async (item: WarehouseItem) => {
+    if (confirm(`Sei sicuro di voler eliminare l'articolo "${item.name}"?`)) {
+      try {
+        setLoading(true);
+        await warehouseService.deleteItem(item.id);
+        alert("Articolo eliminato con successo!");
+        await loadWarehouseData(); // Ricarica i dati
+      } catch (err: any) {
+        console.error("Errore nell'eliminazione:", err);
+        alert(err.message || "Errore durante l'eliminazione dell'articolo");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      setLoading(true);
+      const blob = await warehouseService.exportToCsv();
+      warehouseService.downloadCsvFile(blob);
+      alert("Export completato con successo!");
+    } catch (err: any) {
+      console.error("Errore nell'export:", err);
+      alert(err.message || "Errore durante l'export dei dati");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -408,10 +328,14 @@ const Magazzino: React.FC = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
   };
 
-  const getStockStatus = (item: WarehouseItem) => {
-    if (item.quantity === 0) return "out";
-    if (item.quantity <= item.minQuantity) return "low";
-    return "available";
+  const getCategoryInfo = (categoryId: string): CategoryInfo | undefined => {
+    return categories.find((cat) => cat.id === categoryId);
+  };
+
+  const getSupplierInfo = (
+    supplierId: string
+  ): WarehouseSupplier | undefined => {
+    return suppliers.find((sup) => sup.supplierId === supplierId);
   };
 
   const getStockBadgeClass = (status: string) => {
@@ -440,38 +364,42 @@ const Magazzino: React.FC = () => {
     }
   };
 
-  const getCategoryIcon = (categoryId: string) => {
-    const category = categories.find((cat) => cat.id === categoryId);
-    return category?.icon || "📦";
+  // Handlers per filtri
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1); // Reset alla prima pagina
   };
 
-  const getSupplierName = (supplierId: string) => {
-    const supplier = suppliers.find((sup) => sup.id === supplierId);
-    return supplier?.name || "Sconosciuto";
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    setCurrentPage(1);
   };
 
-  // Statistiche
-  const stats = useMemo(() => {
-    const total = warehouseItems.length;
-    const available = warehouseItems.filter(
-      (item) => getStockStatus(item) === "available"
-    ).length;
-    const low = warehouseItems.filter(
-      (item) => getStockStatus(item) === "low"
-    ).length;
-    const out = warehouseItems.filter(
-      (item) => getStockStatus(item) === "out"
-    ).length;
-    const totalValue = warehouseItems.reduce(
-      (sum, item) => sum + item.totalValue,
-      0
-    );
+  const handleSupplierChange = (value: string) => {
+    setSelectedSupplier(value);
+    setCurrentPage(1);
+  };
 
-    return { total, available, low, out, totalValue };
-  }, [warehouseItems]);
+  const handleStockStatusChange = (value: string) => {
+    setStockStatus(value);
+    setCurrentPage(1);
+  };
+
+  // Paginazione
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   // Rendering condizionale per loading e errori
-  if (loading) {
+  if (loading && warehouseItems.length === 0) {
     return (
       <div className="main-layout">
         <Sidebar menuState={menuState} toggleMenu={toggleMenu} />
@@ -487,14 +415,16 @@ const Magazzino: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error && warehouseItems.length === 0) {
     return (
       <div className="main-layout">
         <Sidebar menuState={menuState} toggleMenu={toggleMenu} />
         <div className="content-area">
           <Topbar toggleMenu={toggleMenu} />
           <div className="error-container">
-            <h2>⛔ Errore nel caricamento</h2>
+            <h2>
+              <AlertTriangle /> Errore nel caricamento
+            </h2>
             <p>{error}</p>
             <button className="btn btn-primary" onClick={loadWarehouseData}>
               Riprova
@@ -525,7 +455,7 @@ const Magazzino: React.FC = () => {
             <div className="stats-box">
               <BarChart3 className="stats-icon" />
               <div className="stats-text">
-                <span>{stats.total} Articoli Totali</span>
+                <span>{stats.totalItems} Articoli Totali</span>
                 <span>€ {stats.totalValue.toFixed(2)} Valore</span>
               </div>
             </div>
@@ -552,18 +482,18 @@ const Magazzino: React.FC = () => {
             {/* Statistiche rapide */}
             <div className="quick-stats">
               <div className="stat-card">
-                <h3 className="stat-number">{stats.available}</h3>
+                <h3 className="stat-number">{stats.availableItems}</h3>
                 <p className="stat-label">Disponibili</p>
               </div>
               <div className="stat-card">
                 <h3 className="stat-number" style={{ color: "#ffc107" }}>
-                  {stats.low}
+                  {stats.lowStockItems}
                 </h3>
                 <p className="stat-label">In Esaurimento</p>
               </div>
               <div className="stat-card">
                 <h3 className="stat-number" style={{ color: "#dc3545" }}>
-                  {stats.out}
+                  {stats.outOfStockItems}
                 </h3>
                 <p className="stat-label">Esauriti</p>
               </div>
@@ -580,25 +510,25 @@ const Magazzino: React.FC = () => {
               {/* Sidebar filtri */}
               <div className="filters-sidebar">
                 <div className="filter-section">
-                  <h3>🔍 Ricerca</h3>
+                  <h3>Ricerca</h3>
                   <div className="form-group">
                     <input
                       type="text"
                       className="form-control"
                       placeholder="Cerca per nome, codice, marca..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => handleSearchChange(e.target.value)}
                     />
                   </div>
                 </div>
 
                 <div className="filter-section">
-                  <h3>📂 Categoria</h3>
+                  <h3>Categoria</h3>
                   <div className="form-group">
                     <select
                       className="form-control"
                       value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      onChange={(e) => handleCategoryChange(e.target.value)}
                     >
                       <option value="">Tutte le categorie</option>
                       {categories.map((category) => (
@@ -611,16 +541,19 @@ const Magazzino: React.FC = () => {
                 </div>
 
                 <div className="filter-section">
-                  <h3>🏪 Fornitore</h3>
+                  <h3>Fornitore</h3>
                   <div className="form-group">
                     <select
                       className="form-control"
                       value={selectedSupplier}
-                      onChange={(e) => setSelectedSupplier(e.target.value)}
+                      onChange={(e) => handleSupplierChange(e.target.value)}
                     >
                       <option value="">Tutti i fornitori</option>
                       {suppliers.map((supplier) => (
-                        <option key={supplier.id} value={supplier.id}>
+                        <option
+                          key={supplier.supplierId}
+                          value={supplier.supplierId}
+                        >
                           {supplier.name}
                         </option>
                       ))}
@@ -629,17 +562,17 @@ const Magazzino: React.FC = () => {
                 </div>
 
                 <div className="filter-section">
-                  <h3>📊 Stato Scorte</h3>
+                  <h3>Stato Scorte</h3>
                   <div className="form-group">
                     <select
                       className="form-control"
                       value={stockStatus}
-                      onChange={(e) => setStockStatus(e.target.value)}
+                      onChange={(e) => handleStockStatusChange(e.target.value)}
                     >
                       <option value="">Tutti gli stati</option>
-                      <option value="available">✅ Disponibili</option>
-                      <option value="low">⚠️ In Esaurimento</option>
-                      <option value="out">❌ Esauriti</option>
+                      <option value="available">Disponibili</option>
+                      <option value="low">In Esaurimento</option>
+                      <option value="out">Esauriti</option>
                     </select>
                   </div>
                 </div>
@@ -656,7 +589,7 @@ const Magazzino: React.FC = () => {
                       className="search-input"
                       placeholder="Ricerca rapida nel magazzino..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => handleSearchChange(e.target.value)}
                     />
                   </div>
 
@@ -684,40 +617,64 @@ const Magazzino: React.FC = () => {
 
                   <div className="toolbar-actions">
                     <button
+                      className="btn btn-secondary"
+                      onClick={handleExportCsv}
+                      disabled={loading}
+                      title="Esporta CSV"
+                    >
+                      <Download
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          marginRight: "4px",
+                        }}
+                      />
+                      Export CSV
+                    </button>
+                    <button
                       className="btn btn-success"
                       onClick={() => openModal("add")}
+                      disabled={loading}
                     >
                       Aggiungi Articolo
                     </button>
                   </div>
                 </div>
 
+                {/* Loading overlay per operazioni */}
+                {loading && warehouseItems.length > 0 && (
+                  <div className="loading-overlay">
+                    <div className="loading-spinner"></div>
+                  </div>
+                )}
+
                 {/* Area contenuto - Vista condizionale */}
                 {viewMode === "grid" ? (
                   /* Griglia articoli */
                   <div className="items-grid">
                     {filteredItems.map((item) => {
-                      const stockStatus = getStockStatus(item);
+                      const categoryInfo = getCategoryInfo(item.category);
+                      const supplierInfo = getSupplierInfo(item.supplier);
 
                       return (
                         <div key={item.id} className="item-card">
                           <div className="item-header">
                             <div className={`item-icon ${item.category}`}>
-                              {getCategoryIcon(item.category)}
+                              {categoryInfo?.icon || "📦"}
                             </div>
                             <div className="item-info">
                               <div className="item-code">{item.code}</div>
                               <h4 className="item-name">{item.name}</h4>
                               <p className="item-description">
-                                {item.description}
+                                {item.description || "Nessuna descrizione"}
                               </p>
                             </div>
                             <div
                               className={`stock-badge ${getStockBadgeClass(
-                                stockStatus
+                                item.stockStatus
                               )}`}
                             >
-                              {getStockBadgeText(stockStatus)}
+                              {getStockBadgeText(item.stockStatus)}
                             </div>
                           </div>
 
@@ -734,9 +691,9 @@ const Magazzino: React.FC = () => {
                               <span className="item-label">Scorte:</span>
                               <span
                                 className={`stock-quantity ${
-                                  stockStatus === "low"
+                                  item.stockStatus === "low"
                                     ? "quantity-low"
-                                    : stockStatus === "out"
+                                    : item.stockStatus === "out"
                                     ? "quantity-out"
                                     : ""
                                 }`}
@@ -753,13 +710,13 @@ const Magazzino: React.FC = () => {
                             <div className="item-row">
                               <span className="item-label">Ubicazione:</span>
                               <span className="item-value">
-                                {item.location}
+                                {item.location || "Non specificata"}
                               </span>
                             </div>
                             <div className="item-row">
                               <span className="item-label">Fornitore:</span>
                               <span className="item-value">
-                                {getSupplierName(item.supplier)}
+                                {supplierInfo?.name || "Sconosciuto"}
                               </span>
                             </div>
 
@@ -797,7 +754,7 @@ const Magazzino: React.FC = () => {
                                   padding: "6px 12px",
                                   fontSize: "0.75rem",
                                 }}
-                                onClick={() => handleDeleteItem(item.id)}
+                                onClick={() => handleDeleteItem(item)}
                               >
                                 Elimina
                               </button>
@@ -826,10 +783,7 @@ const Magazzino: React.FC = () => {
                       </thead>
                       <tbody>
                         {filteredItems.map((item) => {
-                          const stockStatus = getStockStatus(item);
-                          const category = categories.find(
-                            (cat) => cat.id === item.category
-                          );
+                          const categoryInfo = getCategoryInfo(item.category);
 
                           return (
                             <tr key={item.id} className="table-row">
@@ -839,14 +793,15 @@ const Magazzino: React.FC = () => {
                                   <div
                                     className={`table-icon ${item.category}`}
                                   >
-                                    {getCategoryIcon(item.category)}
+                                    {categoryInfo?.icon || "📦"}
                                   </div>
                                   <div>
                                     <div className="table-item-name">
                                       {item.name}
                                     </div>
                                     <div className="table-item-desc">
-                                      {item.description}
+                                      {item.description ||
+                                        "Nessuna descrizione"}
                                     </div>
                                   </div>
                                 </div>
@@ -857,19 +812,19 @@ const Magazzino: React.FC = () => {
                                 <span
                                   className="category-badge"
                                   style={{
-                                    backgroundColor: category?.color + "20",
-                                    color: category?.color,
+                                    backgroundColor: categoryInfo?.color + "20",
+                                    color: categoryInfo?.color,
                                   }}
                                 >
-                                  {category?.icon} {category?.name}
+                                  {categoryInfo?.icon} {categoryInfo?.name}
                                 </span>
                               </td>
                               <td>
                                 <span
                                   className={`stock-quantity ${
-                                    stockStatus === "low"
+                                    item.stockStatus === "low"
                                       ? "quantity-low"
-                                      : stockStatus === "out"
+                                      : item.stockStatus === "out"
                                       ? "quantity-out"
                                       : ""
                                   }`}
@@ -880,23 +835,26 @@ const Magazzino: React.FC = () => {
                               <td className="table-price">
                                 € {item.unitPrice.toFixed(2)}
                               </td>
-                              <td>{item.location}</td>
+                              <td>{item.location || "Non specificata"}</td>
                               <td className="table-actions">
                                 <button
                                   className="action-btn btn-view"
                                   onClick={() => openModal("view", item)}
+                                  title="Visualizza dettagli"
                                 >
                                   👁️
                                 </button>
                                 <button
                                   className="action-btn btn-edit"
                                   onClick={() => openModal("edit", item)}
+                                  title="Modifica articolo"
                                 >
                                   ✏️
                                 </button>
                                 <button
                                   className="action-btn btn-delete"
-                                  onClick={() => handleDeleteItem(item.id)}
+                                  onClick={() => handleDeleteItem(item)}
+                                  title="Elimina articolo"
                                 >
                                   🗑️
                                 </button>
@@ -909,14 +867,46 @@ const Magazzino: React.FC = () => {
                   </div>
                 )}
 
+                {/* Paginazione */}
+                {totalPages > 1 && (
+                  <div className="pagination">
+                    <button
+                      className="btn btn-secondary"
+                      onClick={handlePreviousPage}
+                      disabled={currentPage <= 1 || loading}
+                    >
+                      Precedente
+                    </button>
+
+                    <span className="pagination-info">
+                      Pagina {currentPage} di {totalPages}({totalCount} articoli
+                      totali)
+                    </span>
+
+                    <button
+                      className="btn btn-secondary"
+                      onClick={handleNextPage}
+                      disabled={currentPage >= totalPages || loading}
+                    >
+                      Successiva
+                    </button>
+                  </div>
+                )}
+
                 {/* Messaggio se non ci sono risultati */}
-                {filteredItems.length === 0 && (
+                {filteredItems.length === 0 && !loading && (
                   <div className="error-container">
                     <h2>📦 Nessun articolo trovato</h2>
                     <p>
                       Modifica i filtri di ricerca o aggiungi nuovi articoli al
                       magazzino
                     </p>
+                    <button
+                      className="btn btn-success"
+                      onClick={() => openModal("add")}
+                    >
+                      Aggiungi Primo Articolo
+                    </button>
                   </div>
                 )}
               </div>
@@ -933,9 +923,9 @@ const Magazzino: React.FC = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h3 className="modal-title">
-                  {modalMode === "add" && "➕ Aggiungi Nuovo Articolo"}
-                  {modalMode === "edit" && "✏️ Modifica Articolo"}
-                  {modalMode === "view" && "👁️ Dettagli Articolo"}
+                  {modalMode === "add" && "Aggiungi Nuovo Articolo"}
+                  {modalMode === "edit" && "Modifica Articolo"}
+                  {modalMode === "view" && "Dettagli Articolo"}
                 </h3>
                 <button className="modal-close" onClick={closeModal}>
                   <X />
@@ -1052,7 +1042,10 @@ const Magazzino: React.FC = () => {
                   >
                     <option value="">Seleziona fornitore</option>
                     {suppliers.map((supplier) => (
-                      <option key={supplier.id} value={supplier.id}>
+                      <option
+                        key={supplier.supplierId}
+                        value={supplier.supplierId}
+                      >
                         {supplier.name}
                       </option>
                     ))}
@@ -1101,22 +1094,39 @@ const Magazzino: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Prezzo Unitario €</label>
+                    <label>Scorta Massima</label>
                     <input
                       type="number"
-                      step="0.01"
                       className="form-control"
-                      value={formData.unitPrice}
+                      value={formData.maxQuantity}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          unitPrice: parseFloat(e.target.value) || 0,
+                          maxQuantity: parseInt(e.target.value) || 0,
                         })
                       }
                       min="0"
                       readOnly={modalMode === "view"}
                     />
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Prezzo Unitario € *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="form-control"
+                    value={formData.unitPrice}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        unitPrice: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    min="0"
+                    readOnly={modalMode === "view"}
+                  />
                 </div>
 
                 <div className="form-group">
@@ -1146,15 +1156,76 @@ const Magazzino: React.FC = () => {
                     readOnly={modalMode === "view"}
                   />
                 </div>
+
+                {/* Informazioni aggiuntive in modalità view */}
+                {modalMode === "view" && selectedItem && (
+                  <>
+                    <hr />
+                    <div className="form-group">
+                      <label>Valore Totale</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={`€ ${selectedItem.totalValue.toFixed(2)}`}
+                        readOnly
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "16px",
+                      }}
+                    >
+                      <div className="form-group">
+                        <label>Creato il</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={new Date(
+                            selectedItem.createdAt
+                          ).toLocaleDateString("it-IT")}
+                          readOnly
+                        />
+                      </div>
+                      {selectedItem.updatedAt && (
+                        <div className="form-group">
+                          <label>Modificato il</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={new Date(
+                              selectedItem.updatedAt
+                            ).toLocaleDateString("it-IT")}
+                            readOnly
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="modal-actions">
-                <button className="btn btn-secondary" onClick={closeModal}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={closeModal}
+                  disabled={loading}
+                >
                   {modalMode === "view" ? "Chiudi" : "Annulla"}
                 </button>
                 {modalMode !== "view" && (
-                  <button className="btn btn-primary" onClick={handleSaveItem}>
-                    {modalMode === "add" ? "Aggiungi" : "Salva Modifiche"}
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleSaveItem}
+                    disabled={loading}
+                  >
+                    {loading
+                      ? "Salvando..."
+                      : modalMode === "add"
+                      ? "Aggiungi"
+                      : "Salva Modifiche"}
                   </button>
                 )}
               </div>

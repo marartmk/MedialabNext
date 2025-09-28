@@ -408,3 +408,145 @@
 .modernTable tbody tr:hover {
   animation: rowHover 0.2s ease-out forwards;
 }
+
+/* === Badge stato ATTIVO/DISATTIVO (aggiunta) === */
+.statusBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  letter-spacing: .02em;
+}
+.statusActive {
+  background: #e8f5e9;   /* verde chiaro */
+  color: #1b5e20;
+  border-color: #a5d6a7;
+}
+.statusInactive {
+  background: #fbeaea;   /* rosso chiarissimo */
+  color: #7f1d1d;
+  border-color: #f5b5b5;
+}
+
+/* === Modal Dettagli Affiliato (aggiunta) === */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px; /* spazio su mobile */
+}
+.modalContainer {
+  width: min(980px, 92vw);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+}
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eeeeee;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  color: #ffffff;
+}
+.modalHeader h4 { margin: 0; font-weight: 800; }
+.modalClose {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.9;
+}
+.modalClose:hover { opacity: 1; }
+.modalBody { padding: 20px; background: #ffffff; }
+.modalFooter {
+  padding: 14px 20px;
+  border-top: 1px solid #eeeeee;
+  background: #f8f8f8;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.modalPrimary {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 2px solid #1a1a1a;
+  background: #1a1a1a;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+}
+.modalPrimary:hover { background: #000000; }
+
+/* === Griglia dettagli nel modal (aggiunta) === */
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 20px;
+}
+@media (max-width: 720px) {
+  .detailGrid { grid-template-columns: 1fr; }
+}
+.detailLabel {
+  font-size: 12px;
+  color: #6b7280;          /* gray-500 */
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 4px;
+}
+.detailValue {
+  font-size: 14px;
+  color: #1f2937;          /* gray-800 */
+  font-weight: 700;
+  word-break: break-word;
+}
+
+/* === Sezione account nel modal (aggiunta) === */
+.accountsSection { margin-top: 20px; }
+.sectionTitle {
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+.loadingInline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #666666;
+}
+/* usa .loadingSpinner già presente nel file */
+
+.muted { color: #6b7280; }
+
+.accountsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.accountItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fafafa;
+}
+.accountMain { display: flex; flex-direction: column; gap: 6px; }
+.accountUsername { font-weight: 800; color: #111827; }
+.accountMeta { display: flex; flex-wrap: wrap; gap: 6px; }
+.accountStatus { display: flex; align-items: center; }
+
+

@@ -28,11 +28,13 @@ interface CustomerData {
 const DashboarLocaldAdmin: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
   const [selectedNews, setSelectedNews] = useState<any>(null);
-  const [newsData, setNewsData] = useState<any[]>([]);  
+  const [newsData, setNewsData] = useState<any[]>([]);
   const [rowData, setRowData] = useState<CustomerData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [globalFilter, setGlobalFilter] = useState("");
+
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Definisci le colonne usando createColumnHelper
   const columnHelper = createColumnHelper<CustomerData>();
@@ -64,7 +66,7 @@ const DashboarLocaldAdmin: React.FC = () => {
     }),
     columnHelper.accessor("provincia", {
       header: "Provincia",
-     cell: (info) => (
+      cell: (info) => (
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           {info.getValue()}
         </div>
@@ -73,19 +75,13 @@ const DashboarLocaldAdmin: React.FC = () => {
     columnHelper.accessor("telefono", {
       header: "Telefono",
       cell: (info) => (
-        <div className="table-badge badge-phone">
-        
-          {info.getValue()}
-        </div>
+        <div className="table-badge badge-phone">{info.getValue()}</div>
       ),
     }),
     columnHelper.accessor("emailAziendale", {
       header: "Email",
       cell: (info) => (
-        <div className="table-badge badge-email">
-         
-          {info.getValue()}
-        </div>
+        <div className="table-badge badge-email">{info.getValue()}</div>
       ),
     }),
     columnHelper.accessor("pIva", {
@@ -128,12 +124,17 @@ const DashboarLocaldAdmin: React.FC = () => {
         const multitenantId = localStorage.getItem("IdCompanyAdmin");
         console.log("Token presente:", !!token);
 
-        const response = await fetch(`https://localhost:7148/api/Customer/customeraffiliated?multitenantId=${multitenantId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const url = `${API_URL}/api/Customer/customeraffiliated?multitenantId=${multitenantId}`;
+
+        const response = await fetch(
+          url,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         console.log("Response status:", response.status);
         console.log("Response ok:", response.ok);
@@ -207,7 +208,7 @@ const DashboarLocaldAdmin: React.FC = () => {
     const newsItem = newsData.find((item) => item.id === newsId);
     setSelectedNews(newsItem);
   };
- 
+
   return (
     <div
       className={`d-flex ${menuState === "closed" ? "menu-closed" : ""}`}

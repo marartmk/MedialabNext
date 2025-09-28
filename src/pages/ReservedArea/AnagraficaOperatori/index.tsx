@@ -1,8 +1,37 @@
 import React, { useState, useEffect, useRef } from "react";
-import Sidebar from "../../../components/sidebar-admin";
+import Sidebar from "../../../components/sidebar";
 import Topbar from "../../../components/topbar";
 import "./styles.css";
 import { CalendarDays } from "lucide-react";
+
+interface Operator {
+  id: string;
+  idWhr: string;
+  userName: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  regione: string;
+  provincia: string;
+  citta: string;
+  cap: string;
+  indirizzo: string | null;
+  idcompany: string | null;
+  codiceDipendente: string;
+  codiceFiscale: string | null;
+  dataNascita: string | null;
+  comuneNascita: string | null;
+  prNascita: string | null;
+  iban: string | null;
+  matricola: string | null;
+  qualificaImpiegato: string | null;
+  descriQualifica: string | null;
+  active: boolean | null;
+  dataCreazione: string;
+  isEmployee: boolean | null;
+  multiTenantId: string | null;
+}
 
 const Operators: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
@@ -11,32 +40,32 @@ const Operators: React.FC = () => {
     time: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<Operator[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [operatorId, setOperatorId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const cognomeInputRef = useRef<HTMLInputElement>(null);
+  const firstNameInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    tipo: "Privato",
-    cliente: true,
-    fornitore: false,
-    tipoCliente: "",
-    ragioneSociale: "",
-    indirizzo: "",
-    cognome: "",
-    nome: "",
-    cap: "",
+    userName: "",
+    email: "",
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
     regione: "",
     provincia: "",
     citta: "",
-    telefono: "",
-    email: "",
+    cap: "",
+    indirizzo: "",
+    codiceDipendente: "",
     codiceFiscale: "",
-    partitaIva: "",
-    emailPec: "",
-    codiceSdi: "",
+    dataNascita: "",
+    comuneNascita: "",
+    prNascita: "",
     iban: "",
+    matricola: "",
+    qualificaImpiegato: "",
+    descriQualifica: "",
   });
 
   useEffect(() => {
@@ -56,116 +85,77 @@ const Operators: React.FC = () => {
 
   const toggleMenu = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
-  }; 
+  };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setLoading(true);
 
-    const multitenantId = localStorage.getItem("IdCompany"); // oppure recuperalo da un contesto o stato
-
     try {
       const response = await fetch(
-        `https://localhost:7148/api/customer/search?query=${encodeURIComponent(
+        `https://localhost:7148/api/operator/search?query=${encodeURIComponent(
           searchQuery
-        )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
+        )}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
           },
         }
       );
+
       if (response.ok) {
         const data = await response.json();
         setSearchResults(data);
         setShowModal(true);
       } else {
-        alert("Errore nella ricerca");
+        const errorText = await response.text();
+        alert(`Errore nella ricerca: ${response.status} - ${errorText}`);
       }
     } catch (error) {
       console.error("Errore durante la ricerca:", error);
+      alert("Errore di connessione durante la ricerca");
     } finally {
       setLoading(false);
     }
   };
 
-  const onSelectCustomer = (c: any) => {
-    setCustomerId(c.id); // salva l'ID del cliente selezionato
+  const onSelectOperator = (operator: Operator) => {
+    setOperatorId(operator.id);
     setFormData({
-      tipo: c.tipologia === "1" ? "Privato" : "Azienda",
-      cliente: c.isCustomer ?? true,
-      fornitore: !c.isCustomer,
-      tipoCliente: c.tipoCliente || "",
-      ragioneSociale: c.ragioneSociale || "",
-      indirizzo: c.indirizzo || "",
-      cognome: c.cognome || "",
-      nome: c.nome || "",
-      cap: c.cap || "",
-      regione: c.regione || "",
-      provincia: c.provincia || "",
-      citta: c.citta || "",
-      telefono: c.telefono || "",
-      email: c.email || "",
-      codiceFiscale: c.fiscalCode || "",
-      partitaIva: c.pIva || "",
-      emailPec: c.emailPec || "",
-      codiceSdi: c.codiceSdi || "",
-      iban: c.iban || "",
+      userName: operator.userName || "",
+      email: operator.email || "",
+      firstName: operator.firstName || "",
+      lastName: operator.lastName || "",
+      phoneNumber: operator.phoneNumber || "",
+      regione: operator.regione || "",
+      provincia: operator.provincia || "",
+      citta: operator.citta || "",
+      cap: operator.cap || "",
+      indirizzo: operator.indirizzo || "",
+      codiceDipendente: operator.codiceDipendente || "",
+      codiceFiscale: operator.codiceFiscale || "",
+      dataNascita: operator.dataNascita
+        ? operator.dataNascita.split("T")[0]
+        : "",
+      comuneNascita: operator.comuneNascita || "",
+      prNascita: operator.prNascita || "",
+      iban: operator.iban || "",
+      matricola: operator.matricola || "",
+      qualificaImpiegato: operator.qualificaImpiegato || "",
+      descriQualifica: operator.descriQualifica || "",
     });
     setShowModal(false);
   };
 
-  const handleSaveCustomer = async () => {
-    // Rimuovi questo controllo che blocca la creazione di nuovi clienti
-    // if (!customerId) {
-    //   alert("Nessun cliente selezionato");
-    //   return;
-    // }
-
-    if (!formData.tipo) {
-      alert("Selezionare un tipo di cliente");
+  const handleSaveOperator = async () => {
+    if (!formData.firstName) {
+      alert("Inserire il nome");
       return;
     }
 
-    const isPrivato = formData.tipo === "Privato";
-    const tipologia = isPrivato ? "1" : "0";
-
-    const ragioneSociale = isPrivato
-      ? `${formData.cognome} ${formData.nome}`.trim()
-      : formData.ragioneSociale;
-
-    if (!isPrivato && ragioneSociale === "") {
-      alert("Inserire una ragione sociale");
-      return;
-    }
-
-    if (!formData.indirizzo) {
-      alert("Inserire un indirizzo");
-      return;
-    }
-
-    if (!formData.cap) {
-      alert("Inserire un CAP");
-      return;
-    }
-
-    if (!formData.regione) {
-      alert("Inserire una regione");
-      return;
-    }
-
-    if (!formData.provincia) {
-      alert("Inserire una provincia");
-      return;
-    }
-
-    if (!formData.citta) {
-      alert("Inserire una città");
-      return;
-    }
-
-    if (!formData.telefono) {
-      alert("Inserire un numero di telefono");
+    if (!formData.lastName) {
+      alert("Inserire il cognome");
       return;
     }
 
@@ -174,36 +164,61 @@ const Operators: React.FC = () => {
       return;
     }
 
+    if (!formData.userName) {
+      alert("Inserire un username");
+      return;
+    }
+
+    if (!formData.phoneNumber) {
+      alert("Inserire un numero di telefono");
+      return;
+    }
+
+    if (!formData.codiceDipendente) {
+      alert("Inserire il codice dipendente");
+      return;
+    }
+
+    // Payload secondo lo schema C_ANA_Operators dello swagger
     const payload = {
-      // Includi l'ID solo se esiste (per gli aggiornamenti)
-      ...(customerId && { id: customerId }),
-      tipologia: tipologia,
-      isCustomer: formData.cliente,
-      tipoCliente: formData.tipoCliente,
-      ragioneSociale: ragioneSociale,
-      indirizzo: formData.indirizzo,
-      cognome: isPrivato ? formData.cognome : null,
-      nome: isPrivato ? formData.nome : null,
-      cap: formData.cap,
+      ...(operatorId && { id: operatorId }),
+      userName: formData.userName,
+      email: formData.email,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phoneNumber: formData.phoneNumber,
       regione: formData.regione,
       provincia: formData.provincia,
       citta: formData.citta,
-      telefono: formData.telefono,
-      email: formData.email,
-      fiscalCode: formData.codiceFiscale,
-      pIva: formData.partitaIva,
-      emailPec: formData.emailPec,
-      codiceSdi: formData.codiceSdi,
+      cap: formData.cap,
+      indirizzo: formData.indirizzo,
+      codiceDipendente: formData.codiceDipendente,
+      codiceFiscale: formData.codiceFiscale,
+      dataNascita: formData.dataNascita
+        ? new Date(formData.dataNascita).toISOString()
+        : null,
+      comuneNascita: formData.comuneNascita,
+      prNascita: formData.prNascita,
       iban: formData.iban,
-      multitenantId: localStorage.getItem("IdCompany") || "",
+      matricola: formData.matricola,
+      qualificaImpiegato: formData.qualificaImpiegato,
+      descriQualifica: formData.descriQualifica,
+      idcompany: localStorage.getItem("IdCompany") || null,
+      multiTenantId: localStorage.getItem("IdCompany") || null,
+      active: 1, // Stato attivo
+      isEmployee: 1, // È un dipendente
+      dataCreazione: operatorId ? undefined : new Date().toISOString(),
+      dataModifica: operatorId ? new Date().toISOString() : undefined,
+      isDeleted: false,
+      createdAt: operatorId ? undefined : new Date().toISOString(),
     };
 
     try {
-      const url = customerId
-        ? `https://localhost:7148/api/customer/${customerId}`
-        : `https://localhost:7148/api/customer`;
+      const url = operatorId
+        ? `https://localhost:7148/api/operator/${operatorId}`
+        : `https://localhost:7148/api/operator`;
 
-      const method = customerId ? "PUT" : "POST";
+      const method = operatorId ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
@@ -215,15 +230,14 @@ const Operators: React.FC = () => {
       });
 
       if (response.ok) {
-        const message = customerId
-          ? "Cliente aggiornato con successo!"
-          : "Cliente creato con successo!";
+        const message = operatorId
+          ? "Operatore aggiornato con successo!"
+          : "Operatore creato con successo!";
         alert(message);
 
-        // Se è una creazione, imposta l'ID restituito dal server
-        if (!customerId) {
-          const newCustomer = await response.json();
-          setCustomerId(newCustomer.id);
+        if (!operatorId) {
+          const newOperator = await response.json();
+          setOperatorId(newOperator.id);
         }
       } else {
         const errText = await response.text();
@@ -233,6 +247,34 @@ const Operators: React.FC = () => {
       console.error("Errore durante il salvataggio:", error);
       alert("Errore durante il salvataggio");
     }
+  };
+
+  const resetForm = () => {
+    setOperatorId(null);
+    setFormData({
+      userName: "",
+      email: "",
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
+      regione: "",
+      provincia: "",
+      citta: "",
+      cap: "",
+      indirizzo: "",
+      codiceDipendente: "",
+      codiceFiscale: "",
+      dataNascita: "",
+      comuneNascita: "",
+      prNascita: "",
+      iban: "",
+      matricola: "",
+      qualificaImpiegato: "",
+      descriQualifica: "",
+    });
+    setTimeout(() => {
+      firstNameInputRef.current?.focus();
+    }, 0);
   };
 
   return (
@@ -252,36 +294,8 @@ const Operators: React.FC = () => {
             <div className="left-block">
               <div
                 className="round-btn"
-                title="Aggiungi un nuovo cliente"
-                onClick={() => {
-                  setCustomerId(null); // reset ID
-                  setFormData({
-                    tipo: "Privato",
-                    cliente: true,
-                    fornitore: false,
-                    tipoCliente: "",
-                    ragioneSociale: "",
-                    indirizzo: "",
-                    cognome: "",
-                    nome: "",
-                    cap: "",
-                    regione: "",
-                    provincia: "",
-                    citta: "",
-                    telefono: "",
-                    email: "",
-                    codiceFiscale: "",
-                    partitaIva: "",
-                    emailPec: "",
-                    codiceSdi: "",
-                    iban: "",
-                  });
-
-                  // Imposta il focus sul campo cognome
-                  setTimeout(() => {
-                    cognomeInputRef.current?.focus();
-                  }, 0);
-                }}
+                title="Aggiungi un nuovo operatore"
+                onClick={resetForm}
               >
                 <span className="plus-icon">+</span>
               </div>
@@ -299,7 +313,7 @@ const Operators: React.FC = () => {
               <input
                 type="text"
                 className="search-input"
-                placeholder="Cerca cliente per nome, cognome o P.IVA..."
+                placeholder="Cerca operatore per nome, cognome o codice..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -316,7 +330,7 @@ const Operators: React.FC = () => {
               <span className="breadcrumb-separator"> &gt; </span>
               <span className="breadcrumb-item">Anagrafica</span>
               <span className="breadcrumb-separator"> &gt; </span>
-              <span className="breadcrumb-current">Aggiungi</span>
+              <span className="breadcrumb-current">Operatori</span>
             </div>
           </div>
 
@@ -326,125 +340,167 @@ const Operators: React.FC = () => {
               className="card bg-light card text-black"
               style={{ borderRadius: "10px" }}
             >
-              <div className="custom-card-header">Dati Cliente / Fornitore</div>
+              <div className="custom-card-header">Dati Operatore</div>
               <div className="card-body customer-form">
                 <div className="row">
-                  <div className="col-md-3 field-group">
-                    <label>Tipo</label>
-                    <select
-                      className="form-control"
-                      value={formData.tipo}
-                      onChange={(e) =>
-                        setFormData({ ...formData, tipo: e.target.value })
-                      }
-                    >
-                      <option>Privato</option>
-                      <option>Azienda</option>
-                    </select>
+                  <div className="col-md-6 d-flex gap-3 align-items-end">
+                    <div className="field-group w-50">
+                      <label>Nome *</label>
+                      <input
+                        className="form-control"
+                        value={formData.firstName}
+                        ref={firstNameInputRef}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            firstName: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="field-group w-50">
+                      <label>Cognome *</label>
+                      <input
+                        className="form-control"
+                        value={formData.lastName}
+                        onChange={(e) =>
+                          setFormData({ ...formData, lastName: e.target.value })
+                        }
+                      />
+                    </div>
                   </div>
-                  <div className="col-md-3 d-flex align-items-center gap-3 pt-4">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={formData.cliente}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            cliente: e.target.checked,
-                          })
-                        }
-                      />{" "}
-                      Cliente
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={formData.fornitore}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            fornitore: e.target.checked,
-                          })
-                        }
-                      />{" "}
-                      Fornitore
-                    </label>
+                  <div className="col-md-6 field-group">
+                    <label>Codice Dipendente *</label>
+                    <input
+                      className="form-control"
+                      value={formData.codiceDipendente}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          codiceDipendente: e.target.value,
+                        })
+                      }
+                    />
                   </div>
                 </div>
 
                 <div className="row">
-                  {formData.tipo === "Azienda" ? (
-                    <>
-                      <div className="col-md-6 field-group">
-                        <label>Ragione Sociale</label>
-                        <input
-                          className="form-control"
-                          value={formData.ragioneSociale}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              ragioneSociale: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="col-md-6 field-group">
-                        <label>Indirizzo</label>
-                        <input
-                          className="form-control"
-                          value={formData.indirizzo}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              indirizzo: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="col-md-6 d-flex gap-3 align-items-end">
-                        <div className="field-group w-50">
-                          <label>Cognome</label>
-                          <input
-                            className="form-control"
-                            value={formData.cognome}
-                            ref={cognomeInputRef}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                cognome: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                        <div className="field-group w-50">
-                          <label>Nome</label>
-                          <input
-                            className="form-control"
-                            value={formData.nome}
-                            onChange={(e) =>
-                              setFormData({ ...formData, nome: e.target.value })
-                            }
-                          />
-                        </div>
-                      </div>
-                      <div className="col-md-6 field-group">
-                        <label>Indirizzo</label>
-                        <input
-                          className="form-control"
-                          value={formData.indirizzo}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              indirizzo: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                    </>
-                  )}
+                  <div className="col-md-6 field-group">
+                    <label>Username *</label>
+                    <input
+                      className="form-control"
+                      value={formData.userName}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          userName: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-6 field-group">
+                    <label>Email *</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-4 field-group">
+                    <label>Telefono *</label>
+                    <input
+                      className="form-control"
+                      value={formData.phoneNumber}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          phoneNumber: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-4 field-group">
+                    <label>Codice Fiscale</label>
+                    <input
+                      className="form-control"
+                      value={formData.codiceFiscale}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          codiceFiscale: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-4 field-group">
+                    <label>Matricola</label>
+                    <input
+                      className="form-control"
+                      value={formData.matricola}
+                      onChange={(e) =>
+                        setFormData({ ...formData, matricola: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-4 field-group">
+                    <label>Data di Nascita</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={formData.dataNascita}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          dataNascita: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-4 field-group">
+                    <label>Comune di Nascita</label>
+                    <input
+                      className="form-control"
+                      value={formData.comuneNascita}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          comuneNascita: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="col-md-4 field-group">
+                    <label>Provincia di Nascita</label>
+                    <input
+                      className="form-control"
+                      value={formData.prNascita}
+                      onChange={(e) =>
+                        setFormData({ ...formData, prNascita: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-12 field-group">
+                    <label>Indirizzo</label>
+                    <input
+                      className="form-control"
+                      value={formData.indirizzo}
+                      onChange={(e) =>
+                        setFormData({ ...formData, indirizzo: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
 
                 <div className="row">
@@ -491,73 +547,36 @@ const Operators: React.FC = () => {
                 </div>
 
                 <div className="row">
-                  <div className="col-md-3 field-group">
-                    <label>Telefono</label>
+                  <div className="col-md-6 field-group">
+                    <label>Qualifica Impiegato</label>
                     <input
                       className="form-control"
-                      value={formData.telefono}
-                      onChange={(e) =>
-                        setFormData({ ...formData, telefono: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
-                    <label>Email</label>
-                    <input
-                      className="form-control"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
-                    <label>Codice Fiscale</label>
-                    <input
-                      className="form-control"
-                      value={formData.codiceFiscale}
+                      value={formData.qualificaImpiegato}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          codiceFiscale: e.target.value,
+                          qualificaImpiegato: e.target.value,
                         })
                       }
                     />
                   </div>
-                  <div className="col-md-3 field-group">
-                    <label>Partita IVA</label>
+                  <div className="col-md-6 field-group">
+                    <label>Descrizione Qualifica</label>
                     <input
                       className="form-control"
-                      value={formData.partitaIva}
+                      value={formData.descriQualifica}
                       onChange={(e) =>
-                        setFormData({ ...formData, partitaIva: e.target.value })
+                        setFormData({
+                          ...formData,
+                          descriQualifica: e.target.value,
+                        })
                       }
                     />
                   </div>
                 </div>
 
                 <div className="row">
-                  <div className="col-md-3 field-group">
-                    <label>Email PEC</label>
-                    <input
-                      className="form-control"
-                      value={formData.emailPec}
-                      onChange={(e) =>
-                        setFormData({ ...formData, emailPec: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
-                    <label>Codice SDI</label>
-                    <input
-                      className="form-control"
-                      value={formData.codiceSdi}
-                      onChange={(e) =>
-                        setFormData({ ...formData, codiceSdi: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col-md-3 field-group">
+                  <div className="col-md-12 field-group">
                     <label>IBAN</label>
                     <input
                       className="form-control"
@@ -573,9 +592,12 @@ const Operators: React.FC = () => {
                   <div className="d-flex justify-content-center gap-2">
                     <button
                       className="btn btn-primary"
-                      onClick={handleSaveCustomer}
+                      onClick={handleSaveOperator}
                     >
                       SALVA
+                    </button>
+                    <button className="btn btn-secondary" onClick={resetForm}>
+                      NUOVO
                     </button>
                   </div>
                 </div>
@@ -588,16 +610,31 @@ const Operators: React.FC = () => {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h4>Risultati ricerca</h4>
+            <h4>Risultati ricerca operatori</h4>
             <ul>
-              {searchResults.map((c: any) => (
+              {searchResults.map((operator) => (
                 <li
-                  key={c.id}
-                  onClick={() => onSelectCustomer(c)}
+                  key={operator.id}
+                  onClick={() => onSelectOperator(operator)}
                   style={{ cursor: "pointer" }}
                 >
-                  <strong>{c.ragioneSociale}</strong> - {c.telefono} -{" "}
-                  {c.indirizzo} - {c.citta} ({c.provincia})
+                  <strong>
+                    {operator.firstName} {operator.lastName}
+                  </strong>{" "}
+                  - {operator.codiceDipendente}
+                  <br />
+                  <small>
+                    {operator.email} - {operator.phoneNumber}
+                    {operator.citta && operator.provincia && (
+                      <span>
+                        {" "}
+                        - {operator.citta} ({operator.provincia})
+                      </span>
+                    )}
+                    {operator.matricola && (
+                      <span> - Matricola: {operator.matricola}</span>
+                    )}
+                  </small>
                 </li>
               ))}
             </ul>
