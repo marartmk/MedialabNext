@@ -5,6 +5,7 @@ import styles from "./styles.module.css";
 import { CalendarDays } from "lucide-react";
 import BottomBar from "../../components/BottomBar";
 import logoUrl from "../../assets/logo-black-white.jpg";
+import { useSearchParams } from "react-router-dom";
 
 // Definizione dei tipi per la diagnostica
 interface DiagnosticItem {
@@ -60,6 +61,14 @@ const Accettazione: React.FC = () => {
     date: "",
     time: "",
   });
+
+  // Funzione per ottenere i parametri di query
+  // ✅ USA QUESTO
+  const [searchParams] = useSearchParams();
+  const noteIdFromQuery = searchParams.get("noteId");
+
+  // 🆕 Stato per sapere se stiamo caricando i dati da una nota
+  const [isLoadingFromNote, setIsLoadingFromNote] = useState(false);
 
   // Stati per la ricerca cliente
   const [searchQuery, setSearchQuery] = useState("");
@@ -320,6 +329,172 @@ const Accettazione: React.FC = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // 🆕 useEffect per caricare i dati della nota quando arriva il noteId
+  useEffect(() => {
+    if (noteIdFromQuery && !isLoadingFromNote) {
+      console.log("📝 Caricamento nota con GUID:", noteIdFromQuery);
+      loadNoteDataForRepair(noteIdFromQuery);
+    }
+  }, [noteIdFromQuery]);
+
+  // 🆕 Funzione per caricare i dati della nota tramite GUID
+  const loadNoteDataForRepair = async (noteGuid: string) => {
+    setIsLoadingFromNote(true);
+
+    try {
+      const token = sessionStorage.getItem("token");
+
+      console.log("🔍 Chiamata API per nota:", noteGuid);
+
+      const response = await fetch(
+        `https://localhost:7148/api/Repair/quick-note/guid/${noteGuid}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Errore ${response.status}: impossibile caricare la nota`
+        );
+      }
+
+      const noteData = await response.json();
+      console.log("✅ Dati nota caricati:", noteData);
+
+      // Pre-compila il form con i dati della nota
+      await prePopulateFormFromNote(noteData);
+
+      alert(
+        "✅ Dati della nota caricati con successo!\n\nControlla i campi pre-compilati."
+      );
+    } catch (error) {
+      console.error("❌ Errore durante il caricamento nota:", error);
+      alert(
+        "❌ Impossibile caricare i dati della nota.\n\nVerifica che la nota esista."
+      );
+    } finally {
+      setIsLoadingFromNote(false);
+    }
+  };
+
+  // 🆕 Funzione per pre-compilare il form con i dati della nota
+  const prePopulateFormFromNote = async (noteData: any) => {
+    console.log("📝 Pre-compilazione form da nota:", noteData);
+
+    // ==================== CLIENTE ====================
+    if (noteData.customerId) {
+      // ✅ CASO 1: Ha customerId → carica e seleziona il cliente
+      console.log("👤 Caricamento cliente con ID:", noteData.customerId);
+      await loadAndSelectCustomer(noteData.customerId);
+    } else {
+      // ✅ CASO 2: NON ha customerId → inserisci solo come testo
+      console.log("👤 Inserimento dati cliente come testo (nessun ID)");
+
+      const fullName = `${noteData.cognome || ""} ${
+        noteData.nome || ""
+      }`.trim();
+      setSearchQuery(fullName);
+
+      setClienteData({
+        email: noteData.email || "",
+        nome: noteData.nome || "",
+        cognome: noteData.cognome || "",
+        telefono: noteData.telefono || "",
+        cap: noteData.cap || "",
+      });
+    }
+
+    // ==================== DISPOSITIVO ====================
+    if (noteData.deviceId) {
+      // ✅ CASO 1: Ha deviceId → carica e seleziona il dispositivo
+      console.log("📱 Caricamento dispositivo con ID:", noteData.deviceId);
+      await loadAndSelectDevice(noteData.deviceId);
+    } else {
+      // ✅ CASO 2: NON ha deviceId → inserisci solo come testo
+      console.log("📱 Inserimento dati dispositivo come testo (nessun ID)");
+
+      const deviceName = `${noteData.brand || ""} ${
+        noteData.model || ""
+      }`.trim();
+      setDeviceSearchQuery(deviceName);
+
+      setDispositivoData({
+        serialNumber: noteData.serialNumber || "",
+        brand: noteData.brand || "",
+        model: noteData.model || "",
+        deviceType: noteData.deviceType || "Mobile",
+        color: noteData.color || "",
+        unlockCode: noteData.codiceRiparazione || "",
+        courtesyPhone: "",
+      });
+    }
+
+    // ==================== RIPARAZIONE ====================
+    setRepairData({
+      ...repairData,
+      faultDeclared: noteData.problema || "",
+      estimatedPrice: noteData.prezzoPreventivo || 0,
+    });
+
+    console.log("✅ Pre-compilazione completata");
+  };
+
+  // 🆕 Carica e seleziona automaticamente un cliente esistente
+  const loadAndSelectCustomer = async (customerId: string) => {
+    try {
+      const token = sessionStorage.getItem("token");
+
+      const response = await fetch(
+        `https://localhost:7148/api/customer/${customerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const customerData = await response.json();
+        console.log("✅ Cliente caricato:", customerData);
+        onSelectCustomer(customerData);
+      } else {
+        console.error("❌ Cliente non trovato, inserisco come testo");
+      }
+    } catch (error) {
+      console.error("❌ Errore durante il caricamento cliente:", error);
+    }
+  };
+
+  // 🆕 Carica e seleziona automaticamente un dispositivo esistente
+  const loadAndSelectDevice = async (deviceId: string) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      //const multitenantId = sessionStorage.getItem("IdCompany");
+
+      const response = await fetch(
+        `https://localhost:7148/api/device/deviceid/${deviceId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const deviceData = await response.json();
+        console.log("✅ Dispositivo caricato:", deviceData);
+        onSelectDevice(deviceData);
+      } else {
+        console.error("❌ Dispositivo non trovato, inserisco come testo");
+      }
+    } catch (error) {
+      console.error("❌ Errore durante il caricamento dispositivo:", error);
+    }
+  };
 
   const toggleMenu = () => {
     setMenuState(menuState === "open" ? "closed" : "open");

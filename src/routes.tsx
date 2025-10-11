@@ -20,7 +20,7 @@ import Logistica from "./pages/Logistica";
 import Operators from "./pages/ReservedArea/AnagraficaOperatori";
 import ConsegnaCliente from "./pages/ConsegnaCliente";
 import NotaRiparazione from "./pages/NotaRiparazione";
-
+import RicercaNote from "./pages/RicercaNote";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -180,7 +180,7 @@ const AppRoutes = () => {
         }
       />
 
-       <Route
+      <Route
         path="/consegna-cliente"
         element={
           <ProtectedRoute>
@@ -189,14 +189,23 @@ const AppRoutes = () => {
         }
       />
 
-       <Route
+      <Route
         path="/nota-riparazione"
         element={
           <ProtectedRoute>
             <NotaRiparazione />
           </ProtectedRoute>
         }
-      />      
+      />
+
+      <Route
+        path="/ricerca-note"
+        element={
+          <ProtectedRoute>
+            <RicercaNote />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
