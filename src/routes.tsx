@@ -18,6 +18,9 @@ import Modifica from "./pages/Modifica";
 import Magazzino from "./pages/Magazzino";
 import Logistica from "./pages/Logistica";
 import Operators from "./pages/ReservedArea/AnagraficaOperatori";
+import ConsegnaCliente from "./pages/ConsegnaCliente";
+import NotaRiparazione from "./pages/NotaRiparazione";
+
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -176,6 +179,24 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+       <Route
+        path="/consegna-cliente"
+        element={
+          <ProtectedRoute>
+            <ConsegnaCliente />
+          </ProtectedRoute>
+        }
+      />
+
+       <Route
+        path="/nota-riparazione"
+        element={
+          <ProtectedRoute>
+            <NotaRiparazione />
+          </ProtectedRoute>
+        }
+      />      
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />

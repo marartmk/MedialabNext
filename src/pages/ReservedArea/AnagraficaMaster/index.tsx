@@ -195,7 +195,7 @@ const CompanyMaster: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/api/customer/${id}`, {
+      const response = await fetch(`${API_URL}/api/customer/${id}`, {
         headers: authHeaders(),
       });
 
@@ -272,7 +272,7 @@ const CompanyMaster: React.FC = () => {
     if (!customerId) return;
 
     try {
-      const url = `${API_BASE}/api/Auth/users/${customerId}`;
+      const url = `${API_URL}/api/Auth/users/${customerId}`;
       const resp = await fetch(url, { headers: authHeaders() });
 
       // 204/404 = nessun utente creato → UI in modalità "crea"
@@ -371,7 +371,7 @@ const CompanyMaster: React.FC = () => {
         email: accountForm.email || null,
         accessLevel: accountForm.accessLevel || null,
       };
-      const resp = await fetch(`${API_BASE}/api/Auth/create-affiliate-user`, {
+      const resp = await fetch(`${API_URL}/api/Auth/create-affiliate-user`, {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify(body),
@@ -401,7 +401,7 @@ const CompanyMaster: React.FC = () => {
         accessLevel: accountForm.accessLevel || null,
       };
       const resp = await fetch(
-        `${API_BASE}/api/Auth/update-user/${selectedUserId}`,
+        `${API_URL}/api/Auth/update-user/${selectedUserId}`,
         {
           method: "PUT",
           headers: authHeaders(),
@@ -439,7 +439,7 @@ const CompanyMaster: React.FC = () => {
         confirmPassword: accountForm.confirmPassword || undefined,
       };
       const resp = await fetch(
-        `${API_BASE}/api/Auth/change-password/${selectedUserId}`,
+        `${API_URL}/api/Auth/change-password/${selectedUserId}`,
         {
           method: "PUT",
           headers: authHeaders(),
@@ -464,7 +464,7 @@ const CompanyMaster: React.FC = () => {
     if (!selectedUserId) return;
     try {
       const resp = await fetch(
-        `${API_BASE}/api/Auth/toggle-user-status/${selectedUserId}`,
+        `${API_URL}/api/Auth/toggle-user-status/${selectedUserId}`,
         {
           method: "PUT",
           headers: authHeaders(),
@@ -855,14 +855,14 @@ const CompanyMaster: React.FC = () => {
 
       // Prima controlla se esiste già una geolocalizzazione
       const checkResponse = await fetch(
-        `${API_BASE}/api/customer/${affiliateId}/geolocation`,
+        `${API_URL}/api/customer/${affiliateId}/geolocation`,
         {
           headers: authHeaders(),
         }
       );
 
       let method = "POST";
-      let url = `${API_BASE}/api/customer/${affiliateId}/geolocation`;
+      let url = `${API_URL}/api/customer/${affiliateId}/geolocation`;
 
       if (checkResponse.ok) {
         // Esiste già, aggiorna

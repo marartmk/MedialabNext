@@ -122,6 +122,9 @@ const Modifica: React.FC = () => {
     time: "",
   });
 
+  const [companyName, setCompanyName] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
+
   const location = useLocation();
   const [search] = useSearchParams();
 
@@ -283,6 +286,13 @@ const Modifica: React.FC = () => {
     }
   }, [numericId]);
 
+  useEffect(() => {
+    const company = sessionStorage.getItem("fullName") || "Azienda";
+    const user = sessionStorage.getItem("userId") || "Utente";
+    setCompanyName(company);
+    setUserName(user);
+  }, []);
+
   const toggleDiagnosticItem = (id: string) => {
     if (diagnosticMode === "incoming") {
       setIncomingDiagnosticItems((prev) =>
@@ -305,7 +315,9 @@ const Modifica: React.FC = () => {
       const rIn = await fetch(
         `https://localhost:7148/api/repair/${repairGuid}/incoming-test`,
         {
-          headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
         }
       );
       if (rIn.ok) {
@@ -323,7 +335,9 @@ const Modifica: React.FC = () => {
       const rEx = await fetch(
         `https://localhost:7148/api/repair/${repairGuid}/exit-test`,
         {
-          headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
         }
       );
       if (rEx.ok) {
@@ -910,10 +924,51 @@ const Modifica: React.FC = () => {
     }
   };
 
+  const updateStatusRepair = async (repairGuid: string) => {
+    const payload = {
+      StatusCode: repairStatusCode || null,
+      Status:
+        REPAIR_STATUS.find((s) => s.code === repairStatusCode)?.label?.replace(
+          /^[^\p{L}\p{N}]+/u,
+          ""
+        ) || null,
+    };
+    const res = await fetch(
+      `https://localhost:7148/api/repair/${repairGuid}/status`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`Salvataggio exit-test fallito (${res.status}) ${t}`);
+    }
+  };
+
   const handleUpdateRepair = async () => {
     if (!repairData) return;
 
     const validation = validateForm();
+    const isCompleted = repairStatusCode;
+
+    if (isCompleted && isCompleted === "COMPLETED") {
+      const confirmCompleted = window.confirm(
+        "La riparazione è nello stato 'COMPLETATO'. Sei sicuro di voler modificare la riparazione?"
+      );
+      if (!confirmCompleted) return;
+    }
+
+    if (isCompleted && isCompleted === "DELIVERED") {
+      const confirmCompleted = window.confirm(
+        "Lo stato delle riparazione è 'CONSEGNATO'. Sei sicuro di voler modificare la riparazione?"
+      );
+      if (!confirmCompleted) return;
+    }
 
     if (!validation.isValid) {
       setValidationErrors(validation.errors);
@@ -953,7 +1008,7 @@ const Modifica: React.FC = () => {
           )?.label?.replace(/^.\s/, "") || null,
       };
 
-      console.log("Payload aggiornamento:", payload);
+      console.log("Payload aggiornamento:", JSON.stringify(payload, null, 2));
 
       const response = await fetch(
         `https://localhost:7148/api/repair/${repairData.repairId}`,
@@ -969,9 +1024,13 @@ const Modifica: React.FC = () => {
 
       if (response.ok) {
         try {
-          await upsertIncomingTest(repairData.repairId, diagnosticItems);
+          await upsertIncomingTest(
+            repairData.repairId,
+            incomingDiagnosticItems
+          );
           await upsertExitTest(repairData.repairId, exitDiagnosticItems);
           alert("✅ Riparazione aggiornata con successo!");
+          await updateStatusRepair(repairData.repairId);
         } catch (e: unknown) {
           console.error(e);
           const message = e instanceof Error ? e.message : String(e);
@@ -1188,21 +1247,12 @@ const Modifica: React.FC = () => {
                 Status: {repairData.repairStatus}
               </div>
             </div>
-            <div className="date-box">
-              <CalendarDays className="calendar-icon" />
-              <div className="date-text-inline">
-                <span>{dateTime.date}</span>
-                <span>{dateTime.time}</span>
-              </div>
-            </div>
           </div>
 
           <div className="breadcrumb">
-            <span className="breadcrumb-item">Roma - Next srl</span>
-            <span className="breadcrumb-separator"> &gt; </span>
-            <span className="breadcrumb-current">
-              Modifica - Completa Riparazione
-            </span>
+            <span className="breadcrumb-item">{companyName}</span>
+            <span className="breadcrumb-separator"> • </span>
+            <span className="breadcrumb-item">{userName}</span>
           </div>
         </div>
 
@@ -1931,6 +1981,35 @@ const Modifica: React.FC = () => {
                       }
                       placeholder="Note aggiuntive per la fatturazione..."
                     />
+                  </div>
+                  {/* Pulsanti Pagamento e Consegna */}
+                  <div className="payment-delivery-actions">
+                    <button
+                      type="button"
+                      className="btn btn-payment"
+                      onClick={() =>
+                        navigate("/consegna-cliente", {
+                          state: {
+                            repairGuid: repairData.repairGuid,
+                            id: repairData.id,
+                            repairCode: repairData.repairCode,
+                          },
+                        })
+                      }
+                    >
+                      💳 Pagamento
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-delivery"
+                      onClick={() => {
+                        // Logica per consegna - da definire
+                        alert("Funzionalità Consegna in arrivo!");
+                      }}
+                    >
+                      📦 Consegna
+                    </button>
                   </div>
                 </div>
 

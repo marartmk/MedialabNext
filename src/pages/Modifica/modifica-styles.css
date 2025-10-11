@@ -965,4 +965,78 @@
   color:#777;
   font-size:.78rem;
 }
+/* Pulsanti Pagamento e Consegna */
+.payment-delivery-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.btn-payment {
+  flex: 1;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+}
+
+.btn-payment:hover {
+  background: linear-gradient(135deg, #218838 0%, #1ba87d 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(40, 167, 69, 0.3);
+}
+
+.btn-delivery {
+  flex: 1;
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(23, 162, 184, 0.2);
+}
+
+.btn-delivery:hover {
+  background: linear-gradient(135deg, #138496 0%, #0f6674 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(23, 162, 184, 0.3);
+}
+
+/* Responsive per i pulsanti */
+@media (max-width: 768px) {
+  .payment-delivery-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+.breadcrumb {
+  font-size: 0.9rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.breadcrumb-item {
+  color: #007bff;
+}
+
+.breadcrumb-separator {
+  margin: 0 8px;
+  color: #999;
+  font-weight: 400;
+}
+
 

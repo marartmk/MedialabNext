@@ -354,6 +354,14 @@ const Topbar: React.FC<TopbarProps> = () => {
                 <li>
                   <button
                     className="dropdown-item custom-bg-green"
+                    onClick={() => navigate("/nota-riparazione")}
+                  >
+                    Crea Nota di Riparazione Veloce
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item custom-bg-green"
                     onClick={() => navigate("/riparazioni-attive")}
                   >
                     Tutte le Riparazioni Attive

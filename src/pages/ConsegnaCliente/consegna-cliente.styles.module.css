@@ -1,0 +1,829 @@
+/* ✨ STILI PAGINA CONSEGNA CLIENTE - VERSIONE OTTIMIZZATA */
+
+/* Layout principale */
+.mainLayout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.contentArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageBody {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  min-height: 0;
+  background-color: #f8f9fa;
+}
+
+/* Header della scheda */
+.schedaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #ccc;
+  margin: 0 20px;
+  background: white;
+}
+
+.leftBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.backBtn {
+  width: 45px !important;
+  height: 45px !important;
+  background-color: #444 !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  border: none;
+  min-width: 45px;
+  min-height: 45px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.backBtn:hover {
+  background-color: #333 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.backIcon {
+  color: white !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.repairInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.repairCode {
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  font-family: monospace;
+}
+
+.repairStatus {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.dateBox {
+  display: flex;
+  flex-direction: row; 
+  align-items: center; 
+  justify-content: flex-start;
+  background-color: #444;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  gap: 6px;
+  max-width: fit-content;
+  min-width: 200px;
+  height: 45px;
+}
+
+.calendarIcon {
+  color: white;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.dateTextInline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 0.75rem;
+  font-weight: normal;
+  line-height: 1.1;
+}
+
+.breadcrumb {
+  font-size: 0.8rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbItem {
+  color: #007bff;
+}
+
+.breadcrumbCurrent {
+  font-weight: bold;
+}
+
+.breadcrumbSeparator {
+  margin: 0 4px;
+}
+
+/* Container principale del form */
+.deliveryFormContainer {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e5e5;
+}
+
+/* Titolo della pagina */
+.pageTitle {
+  text-align: right;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 16px;
+}
+
+.pageTitle h1 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+.pageTitle p {
+  margin: 6px 0 0 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Layout principale a due colonne */
+.pageContainer {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Sezioni del form */
+.formSection {
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  padding: 16px;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.formSection:hover {
+  border-color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.formSection h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Info grid */
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoItem label {
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.infoValue {
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  font-weight: 500;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+}
+
+/* Card dispositivo */
+.deviceCard {
+  background: white;
+  border: 1px solid #28a745;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.deviceHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+  border-bottom: 1px solid #28a745;
+}
+
+.deviceIcon {
+  font-size: 2rem;
+}
+
+.deviceName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.deviceSerial {
+  font-size: 0.85rem;
+  color: #666;
+  font-family: monospace;
+}
+
+.deviceDetails {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.detailLabel {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.detailValue {
+  font-size: 0.85rem;
+  color: #333;
+}
+
+/* Selettore tipo documento */
+.documentTypeSelector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.documentTypeBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 2px solid #e5e5e5;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.documentTypeBtn:hover {
+  border-color: #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.documentTypeBtn.active {
+  border-color: #007bff;
+  background: linear-gradient(135deg, #f0f4ff 0%, #dbe4ff 100%);
+  box-shadow: 0 4px 16px rgba(0, 123, 255, 0.2);
+}
+
+.docIcon {
+  width: 32px;
+  height: 32px;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.documentTypeBtn.active .docIcon {
+  color: #007bff;
+}
+
+.docInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.docTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.docDesc {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+/* Gruppi di campi */
+.formGroup {
+  margin-bottom: 12px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  color: #1a1a1a;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+
+/* Controlli del form */
+.formControl {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+  color: #333;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.formControl:focus {
+  outline: none;
+  border-color: #333;
+  box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.1);
+  background-color: #ffffff;
+}
+
+.formControl:hover {
+  border-color: #999;
+}
+
+.formControl.error {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.15);
+}
+
+/* Container per il prezzo */
+.priceInputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.priceInputContainer .formControl {
+  padding-right: 32px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.currencyLabel {
+  position: absolute;
+  right: 12px;
+  color: #666;
+  font-weight: 700;
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+
+/* Resto da pagare */
+.remainingAmount {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+
+.remainingLabel {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #856404;
+}
+
+.remainingValue {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #856404;
+}
+
+/* Sezione riepilogo */
+.summarySection {
+  border: 2px solid #007bff;
+  border-radius: 10px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e3f2fd 100%);
+}
+
+.summarySection h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0056b3;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #007bff;
+}
+
+.summaryGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #cce5ff;
+}
+
+.summaryLabel {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.summaryValue {
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+.summaryValue.highlight {
+  font-size: 1.1rem;
+  color: #007bff;
+}
+
+/* Errori di validazione */
+.validationErrorsContainer {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  border: 1px solid #f5c6cb;
+  border-radius: 10px;
+  padding: 16px;
+  margin: 16px 0;
+  color: #721c24;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
+}
+
+.validationErrorsContainer h4 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+  color: #721c24;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.validationErrorsContainer ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: none;
+}
+
+.validationError {
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  position: relative;
+  padding-left: 16px;
+}
+
+.validationError::before {
+  content: "⚠️";
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Bottoni azioni */
+.formActions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 24px;
+}
+
+.btnPrimary,
+.btnSecondary {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btnPrimary:disabled,
+.btnSecondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btnPrimary {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  color: white;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #218838 0%, #155724 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(40, 167, 69, 0.3);
+}
+
+.btnSecondary {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  color: white;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a6268 0%, #343a40 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(108, 117, 125, 0.3);
+}
+
+/* Stati di caricamento */
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  gap: 12px;
+  color: #666666;
+  background: #f8f8f8;
+  border-radius: 10px;
+  border: 1px dashed #cccccc;
+  flex-direction: column;
+}
+
+.loadingSpinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #e0e0e0;
+  border-top: 2px solid #333333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Container errore */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 20px;
+  gap: 12px;
+  color: #dc3545;
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  border: 1px solid #f5c6cb;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.errorContainer h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.errorContainer p {
+  margin: 0;
+  font-size: 0.95rem;
+  max-width: 500px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .pageContainer {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageBody {
+    padding: 12px;
+  }
+  
+  .deliveryFormContainer {
+    padding: 12px;
+  }
+  
+  .schedaHeader {
+    margin: 0 12px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  
+  .leftBlock {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+  
+  .dateBox {
+    min-width: auto;
+    width: 100%;
+    height: 40px;
+  }
+  
+  .pageTitle {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .pageTitle h1 {
+    font-size: 1.5rem;
+  }
+  
+  .documentTypeSelector {
+    grid-template-columns: 1fr;
+  }
+  
+  .formActions {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .btnPrimary,
+  .btnSecondary {
+    width: 100%;
+    max-width: 280px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageBody {
+    padding: 8px;
+  }
+  
+  .deliveryFormContainer {
+    padding: 10px;
+  }
+  
+  .pageTitle h1 {
+    font-size: 1.3rem;
+  }
+  
+  .pageTitle p {
+    font-size: 0.85rem;
+  }
+  
+  .formSection {
+    padding: 12px;
+  }
+  
+  .formSection h3 {
+    font-size: 1rem;
+  }
+  
+  .backBtn {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .dateBox {
+    height: 40px;
+    min-width: 160px;
+  }
+  
+  .remainingValue {
+    font-size: 1.2rem;
+  }
+}
+
+/* Miglioramenti per l'accessibilità */
+.formControl:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 1px;
+}
+
+.btnPrimary:focus-visible,
+.btnSecondary:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 1px;
+}
+
+.documentTypeBtn:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 1px;
+}
+
+/* Effetti hover sui dispositivi con mouse */
+@media (hover: hover) {
+  .formSection:hover {
+    transform: translateY(-1px);
+  }
+  
+  .btnPrimary:hover,
+  .btnSecondary:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Animazioni per le transizioni */
+.formSection {
+  animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar personalizzata per webkit browsers */
+.pageBody::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pageBody::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.pageBody::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.pageBody::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
