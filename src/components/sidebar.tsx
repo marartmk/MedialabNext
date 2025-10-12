@@ -142,7 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         </button>
         <button
           className="list-group-item"
-          onClick={() => window.open("https://vendolo.dea40.it", "_blank")}
+          onClick={() => window.open("https://vendolo.dea40.it/ProductShop.aspx", "_blank")}
         >
           <ShoppingCart className="icon" />
           <span className="item-text">Shop</span>

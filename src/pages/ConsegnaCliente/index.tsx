@@ -64,6 +64,9 @@ const ConsegnaCliente: React.FC = () => {
   const location = useLocation();
   const [search] = useSearchParams();
 
+  const [companyName, setCompanyName] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
+
   const navState = (location.state || {}) as {
     repairGuid?: string;
     id?: number;
@@ -118,6 +121,13 @@ const ConsegnaCliente: React.FC = () => {
       loadRepairData(String(numericId));
     }
   }, [numericId]);
+
+  useEffect(() => {
+    const company = sessionStorage.getItem("fullName") || "Azienda";
+    const user = sessionStorage.getItem("userId") || "Utente";
+    setCompanyName(company);
+    setUserName(user);
+  }, []);
 
   const loadRepairData = async (id: string) => {
     setLoadingRepairData(true);
@@ -296,21 +306,12 @@ const ConsegnaCliente: React.FC = () => {
                 Status: {repairData.repairStatus}
               </div>
             </div>
-            <div className={styles.dateBox}>
-              <CalendarDays className={styles.calendarIcon} />
-              <div className={styles.dateTextInline}>
-                <span>{dateTime.date}</span>
-                <span>{dateTime.time}</span>
-              </div>
-            </div>
           </div>
 
-          <div className={styles.breadcrumb}>
-            <span className={styles.breadcrumbItem}>Roma - Next srl</span>
-            <span className={styles.breadcrumbSeparator}> &gt; </span>
-            <span className={styles.breadcrumbCurrent}>
-              Consegna e Pagamento Cliente
-            </span>
+          <div className="breadcrumb">
+            <span className="breadcrumb-item">{companyName}</span>
+            <span className="breadcrumb-separator"> • </span>
+            <span className="breadcrumb-item">{userName}</span>
           </div>
         </div>
 

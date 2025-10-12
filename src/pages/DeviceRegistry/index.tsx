@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import styles from "./styles.module.css";
-import { CalendarDays, Smartphone, Tv, HardDrive } from "lucide-react";
+import { Smartphone, Tv, HardDrive } from "lucide-react";
 
 interface DeviceRegistry {
   id: number;
@@ -24,10 +24,6 @@ interface DeviceRegistry {
 
 const Device: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
-  const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
-    date: "",
-    time: "",
-  });
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<DeviceRegistry[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -55,22 +51,6 @@ const Device: React.FC = () => {
     { value: "TV", label: "📺 TV", icon: Tv },
     { value: "Other", label: "🔧 Altro", icon: HardDrive },
   ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const date = now.toLocaleDateString("it-IT", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-      const time = now.toLocaleTimeString("it-IT");
-      setDateTime({ date, time });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   const toggleMenu = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
   };
@@ -268,15 +248,7 @@ const Device: React.FC = () => {
                 }}
               >
                 <span className="plus-icon">+</span>
-              </div>
-
-              <div className="date-box">
-                <CalendarDays className="calendar-icon" />
-                <div className="date-text-inline">
-                  <span>{dateTime.date}</span>
-                  <span>{dateTime.time}</span>
-                </div>
-              </div>
+              </div>              
             </div>
 
             <div className="search-wrapper">

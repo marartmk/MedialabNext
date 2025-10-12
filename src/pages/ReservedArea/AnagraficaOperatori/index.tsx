@@ -99,6 +99,18 @@ const Operators: React.FC = () => {
   });
   const [isSavingAccount, setIsSavingAccount] = useState(false);
 
+  // Dati aziendali per la stampa
+  const companyName =
+    (typeof window !== "undefined" && sessionStorage.getItem("fullName")) ||
+    "CLINICA iPHONE STORE";  
+  const userName =
+    (typeof window !== "undefined" &&
+      (sessionStorage.getItem("userId") ||
+        sessionStorage.getItem("username") ||
+        "")) ||
+    "Utente";
+
+
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -218,6 +230,11 @@ const Operators: React.FC = () => {
       alert("Impossibile determinare la company dell'operatore.");
       return;
     }
+
+    if (accountForm.password.trim().length < 6 || accountForm.password.length > 256) {
+      alert("Password deve essere tra 6 e 256 caratteri");
+      return;
+    }   
 
     setIsSavingAccount(true);
     try {
@@ -612,14 +629,6 @@ const Operators: React.FC = () => {
               >
                 <Plus size={20} />
               </div>
-
-              <div className={styles.dateBox}>
-                <CalendarDays className={styles.calendarIcon} />
-                <div className={styles.dateTextInline}>
-                  <span>{dateTime.date}</span>
-                  <span>{dateTime.time}</span>
-                </div>
-              </div>
             </div>
 
             <div className={styles.searchWrapper}>
@@ -633,11 +642,9 @@ const Operators: React.FC = () => {
             </div>
 
             <div className={styles.breadcrumb}>
-              <span className={styles.breadcrumbItem}>Home</span>
-              <span className={styles.breadcrumbSeparator}> &gt; </span>
-              <span className={styles.breadcrumbItem}>Anagrafica</span>
-              <span className={styles.breadcrumbSeparator}> &gt; </span>
-              <span className={styles.breadcrumbCurrent}>Operatori</span>
+              <span className={styles.breadcrumbItem}>{companyName}</span>
+              <span className={styles.breadcrumbSeparator}> • </span>
+              <span className={styles.breadcrumbItem}>{userName}</span>
             </div>
           </div>
 
@@ -782,7 +789,12 @@ const Operators: React.FC = () => {
             {/* Modal Form */}
             {/* --- Editor operatore sotto la lista (no modal) --- */}
             {showModal && (
-              <section ref={editorRef} className={`${styles.inlineEditorCard} ${flashPanel ? styles.panelFocusFlash : ""}`}>
+              <section
+                ref={editorRef}
+                className={`${styles.inlineEditorCard} ${
+                  flashPanel ? styles.panelFocusFlash : ""
+                }`}
+              >
                 <div className={styles.inlineEditorHeader}>
                   <h3>
                     {operatorId ? "Modifica operatore" : "Nuovo operatore"}

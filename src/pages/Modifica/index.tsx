@@ -104,6 +104,7 @@ interface Operator {
 
 interface RepairPartLine {
   tempId: string;
+  dbId?: number;
   warehouseItemId: number; // id numerico della riga di magazzino
   itemId: string; // GUID dell’articolo
   code: string;
@@ -160,6 +161,7 @@ const Modifica: React.FC = () => {
   const [partsResults, setPartsResults] = useState<PartSearchItem[]>([]);
   const [partsSearching, setPartsSearching] = useState(false);
   const [usedParts, setUsedParts] = useState<RepairPartLine[]>([]);
+  const [loadingParts, setLoadingParts] = useState(false);
 
   // Totale ricambi
   const partsTotal = usedParts.reduce((s, l) => s + l.lineTotal, 0);
@@ -412,6 +414,7 @@ const Modifica: React.FC = () => {
         await loadExistingDiagnostics(
           repairGuid || data.repairGuid || data.repairId
         );
+        await loadExistingRepairParts(data.repairId);
       } else {
         throw new Error(`Errore ${response.status}: ${response.statusText}`);
       }
@@ -422,6 +425,62 @@ const Modifica: React.FC = () => {
       );
     } finally {
       setLoadingRepairData(false);
+    }
+  };
+
+  /**
+   * Carica i ricambi già associati alla riparazione dal backend
+   */
+  const loadExistingRepairParts = async (repairId: string) => {
+    setLoadingParts(true);
+    try {
+      console.log("🔍 Caricamento ricambi per riparazione:", repairId);
+
+      const response = await fetch(
+        `https://localhost:7148/api/RepairParts/${repairId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const existingParts = await response.json();
+
+        if (existingParts && existingParts.length > 0) {
+          console.log("✅ Ricambi trovati:", existingParts.length);
+
+          // ⭐ MODIFICA: Salva anche l'ID del database
+          const partsForForm: RepairPartLine[] = existingParts.map(
+            (part: any) => ({
+              tempId: crypto.randomUUID(),
+              dbId: part.id, // ⭐ AGGIUNGI QUESTO
+              warehouseItemId: part.warehouseItemId,
+              itemId: part.itemId,
+              code: part.code,
+              name: part.name,
+              qty: part.quantity,
+              unitPrice: part.unitPrice,
+              lineTotal: part.lineTotal,
+              stock: part.availableStock,
+            })
+          );
+
+          setUsedParts(partsForForm);
+          console.log("✅ Ricambi caricati nel form:", partsForForm);
+        } else {
+          console.log("ℹ️ Nessun ricambio associato a questa riparazione");
+        }
+      } else if (response.status === 404) {
+        console.log("ℹ️ Nessun ricambio trovato (404)");
+      } else {
+        throw new Error(`Errore ${response.status}`);
+      }
+    } catch (error) {
+      console.error("⚠️ Errore caricamento ricambi esistenti:", error);
+    } finally {
+      setLoadingParts(false);
     }
   };
 
@@ -1029,13 +1088,21 @@ const Modifica: React.FC = () => {
             incomingDiagnosticItems
           );
           await upsertExitTest(repairData.repairId, exitDiagnosticItems);
+
+          // ⭐ AGGIUNGI QUESTO: Salva i ricambi se ce ne sono
+          if (usedParts.length > 0) {
+            console.log("💾 Salvataggio ricambi...");
+            await saveRepairPartsData(repairData.repairId);
+          }
+
           alert("✅ Riparazione aggiornata con successo!");
           await updateStatusRepair(repairData.repairId);
         } catch (e: unknown) {
           console.error(e);
           const message = e instanceof Error ? e.message : String(e);
           alert(
-            "⚠️ Riparazione aggiornata ma diagnostica NON salvata.\n" + message
+            "⚠️ Riparazione aggiornata ma diagnostica/ricambi NON salvati.\n" +
+              message
           );
         }
       } else {
@@ -1048,6 +1115,105 @@ const Modifica: React.FC = () => {
       alert("❌ Errore durante l'aggiornamento della riparazione. Riprova.");
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  /**
+   * Salva/Aggiorna i ricambi associati alla riparazione
+   * - Se il ricambio ha dbId → UPDATE
+   * - Se il ricambio NON ha dbId → INSERT
+   * - I ricambi rimossi dalla form vengono gestiti dal backend
+   */
+  const saveRepairPartsData = async (repairId: string) => {
+    try {
+      console.log("💾 Salvataggio ricambi per riparazione:", repairId);
+      console.log("📦 Ricambi attuali nella form:", usedParts);
+
+      // Separa ricambi da aggiornare e ricambi nuovi
+      const ricambiDaAggiornare = usedParts.filter((p) => p.dbId !== undefined);
+      const ricambiNuovi = usedParts.filter((p) => p.dbId === undefined);
+
+      console.log("🔄 Ricambi da AGGIORNARE:", ricambiDaAggiornare.length);
+      console.log("➕ Ricambi NUOVI da inserire:", ricambiNuovi.length);
+
+      // 1. AGGIORNA i ricambi esistenti
+      for (const part of ricambiDaAggiornare) {
+        console.log(`🔄 Aggiornamento ricambio ID ${part.dbId}...`);
+
+        const updatePayload = {
+          quantity: part.qty,
+          unitPrice: part.unitPrice,
+          notes: undefined,
+        };
+
+        const updateResponse = await fetch(
+          `https://localhost:7148/api/RepairParts/${repairId}/parts/${part.dbId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            },
+            body: JSON.stringify(updatePayload),
+          }
+        );
+
+        if (!updateResponse.ok) {
+          const error = await updateResponse.text();
+          throw new Error(
+            `Errore aggiornamento ricambio ${part.code}: ${error}`
+          );
+        }
+
+        console.log(`✅ Ricambio ${part.code} aggiornato`);
+      }
+
+      // 2. INSERISCI i ricambi nuovi
+      if (ricambiNuovi.length > 0) {
+        console.log("➕ Inserimento nuovi ricambi...");
+
+        const partsToInsert = ricambiNuovi.map((part) => ({
+          warehouseItemId: part.warehouseItemId,
+          quantity: part.qty,
+          notes: undefined,
+        }));
+
+        const insertPayload = {
+          parts: partsToInsert,
+        };
+
+        const insertResponse = await fetch(
+          `https://localhost:7148/api/RepairParts/${repairId}/batch`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            },
+            body: JSON.stringify(insertPayload),
+          }
+        );
+
+        if (!insertResponse.ok) {
+          const error = await insertResponse.text();
+          throw new Error(`Errore inserimento nuovi ricambi: ${error}`);
+        }
+
+        const insertedParts = await insertResponse.json();
+        console.log("✅ Nuovi ricambi inseriti:", insertedParts);
+      }
+
+      console.log("✅ Tutti i ricambi salvati/aggiornati con successo!");
+
+      // 3. Ricarica i ricambi per aggiornare gli ID
+      await loadExistingRepairParts(repairId);
+    } catch (error) {
+      console.error("❌ Errore salvataggio ricambi:", error);
+      throw new Error(
+        `Impossibile salvare i ricambi: ${
+          error instanceof Error ? error.message : "Errore sconosciuto"
+        }`
+      );
     }
   };
 
@@ -1136,6 +1302,8 @@ const Modifica: React.FC = () => {
       };
       return [...prev, line];
     });
+    setPartsQuery(""); // Azzera il campo di ricerca
+    setPartsResults([]); // Svuota i risultati della ricerca
   };
 
   // Aggiorna quantità
@@ -1151,7 +1319,53 @@ const Modifica: React.FC = () => {
   };
 
   // Rimuove riga
-  const removeLine = (tempId: string) => {
+  // Rimuove riga
+  const removeLine = async (tempId: string) => {
+    const partToRemove = usedParts.find((p) => p.tempId === tempId);
+
+    if (!partToRemove) return;
+
+    // Se il ricambio era già salvato nel DB, eliminalo anche lì
+    if (partToRemove.dbId && repairData) {
+      const confirmDelete = window.confirm(
+        `Vuoi eliminare il ricambio "${partToRemove.name}" dalla scheda di lavorazione?\n\nSe clicchi OK, verrà eliminato immediatamente.`
+      );
+
+      if (confirmDelete) {
+        try {
+          console.log(`🗑️ Eliminazione ricambio ID ${partToRemove.dbId}...`);
+
+          const response = await fetch(
+            `https://localhost:7148/api/RepairParts/${repairData.repairId}/parts/${partToRemove.dbId}`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Errore ${response.status}`);
+          }
+
+          console.log("✅ Ricambio eliminato dal database");
+        } catch (error) {
+          console.error("❌ Errore eliminazione ricambio:", error);
+          alert(
+            `⚠️ Impossibile eliminare il ricambio dal database:\n${
+              error instanceof Error ? error.message : "Errore sconosciuto"
+            }`
+          );
+          return; // Non rimuoverlo dalla lista se l'eliminazione fallisce
+        }
+      } else {
+        // L'utente ha annullato, non fare nulla
+        return;
+      }
+    }
+
+    // Rimuovi dalla lista locale
     setUsedParts((prev) => prev.filter((l) => l.tempId !== tempId));
   };
 
@@ -1179,15 +1393,63 @@ const Modifica: React.FC = () => {
   // };
 
   const handleConsumeFromWarehouse = async () => {
-    if (usedParts.length === 0) return;
+    if (!repairData) {
+      alert("❌ Nessuna riparazione selezionata");
+      return;
+    }
+
+    if (usedParts.length === 0) {
+      alert("❌ Nessun ricambio da scaricare");
+      return;
+    }
+
+    // Conferma dall'utente
+    const confirm = window.confirm(
+      `Vuoi scaricare ${usedParts.length} ricambi dal magazzino?\n\nQuesta operazione ridurrà le giacenze disponibili.`
+    );
+
+    if (!confirm) return;
+
     try {
-      await consumeWarehouseLines(
-        usedParts.map((l) => ({ id: l.warehouseItemId, qty: l.qty }))
+      console.log("💾 Salvataggio ricambi prima dello scarico...");
+      await saveRepairPartsData(repairData.repairId);
+
+      console.log("📦 Scarico ricambi dal magazzino...");
+      const response = await fetch(
+        `https://localhost:7148/api/RepairParts/${repairData.repairId}/consume`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
       );
-      alert("Ricambi scaricati dal magazzino ✅");
-    } catch (e) {
-      console.error(e);
-      alert("Errore nello scarico dal magazzino ❌");
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Errore scarico magazzino");
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(
+          `✅ ${result.message}\n\n${result.consumedItems} ricambi scaricati dal magazzino.`
+        );
+      } else {
+        alert(
+          `⚠️ Scarico parziale:\n\n${
+            result.message
+          }\n\nErrori:\n${result.errors?.join("\n")}`
+        );
+      }
+    } catch (error) {
+      console.error("❌ Errore scarico magazzino:", error);
+      alert(
+        `❌ Errore nello scarico dal magazzino:\n\n${
+          error instanceof Error ? error.message : "Errore sconosciuto"
+        }`
+      );
     }
   };
 

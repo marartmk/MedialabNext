@@ -123,7 +123,7 @@ const Accettazione: React.FC = () => {
 
   // Dati aziendali per la stampa
   const companyName =
-    (typeof window !== "undefined" && sessionStorage.getItem("companyName")) ||
+    (typeof window !== "undefined" && sessionStorage.getItem("fullName")) ||
     "CLINICA iPHONE STORE";
   const companyAddr =
     (typeof window !== "undefined" &&
@@ -135,6 +135,12 @@ const Accettazione: React.FC = () => {
   const companyPhone =
     (typeof window !== "undefined" && sessionStorage.getItem("companyPhone")) ||
     "0832 123456";
+  const userName =
+    (typeof window !== "undefined" &&
+      (sessionStorage.getItem("userId") ||
+        sessionStorage.getItem("username") ||
+        "")) ||
+    "Utente";
 
   // Refs per gestire i dropdown
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -1594,19 +1600,12 @@ const Accettazione: React.FC = () => {
             <div className={styles.roundBtn}>
               <span className={styles.plusIcon}>+</span>
             </div>
-            <div className={styles.dateBox}>
-              <CalendarDays className={styles.calendarIcon} />
-              <div className={styles.dateTextInline}>
-                <span>{dateTime.date}</span>
-                <span>{dateTime.time}</span>
-              </div>
-            </div>
           </div>
 
           <div className={styles.breadcrumb}>
-            <span className={styles.breadcrumbItem}>Roma - Next srl</span>
-            <span className={styles.breadcrumbSeparator}> &gt; </span>
-            <span className={styles.breadcrumbCurrent}>Crea Riparazione</span>
+            <span className={styles.breadcrumbItem}>{companyName}</span>
+            <span className={styles.breadcrumbSeparator}> • </span>
+            <span className={styles.breadcrumbItem}>{userName}</span>
           </div>
         </div>
 
