@@ -23,6 +23,8 @@ const Dashboard: React.FC = () => {
   const [isAiTyping, setIsAiTyping] = useState<boolean>(false);
   const [aiError, setAiError] = useState<string>("");
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // Simula il caricamento delle notizie
   useEffect(() => {
     const loadNews = () => {
@@ -212,9 +214,7 @@ const Dashboard: React.FC = () => {
       );
     }
 
-    try {
-      // MODIFICA QUESTO URL CON IL TUO ENDPOINT API
-      const API_URL = "https://localhost:7148"; // 👈 CAMBIA QUESTO!
+    try { 
 
       const response = await fetch(`${API_URL}/api/OpenAi/get-key`, {
         method: "GET",

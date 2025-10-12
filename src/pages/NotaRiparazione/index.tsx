@@ -83,6 +83,8 @@ const NotaRiparazioneVeloce: React.FC = () => {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deviceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // Carica data/ora
   useEffect(() => {
     const interval = setInterval(() => {
@@ -159,7 +161,7 @@ const NotaRiparazioneVeloce: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://localhost:7148/api/customer/search?query=${encodeURIComponent(
+        `${API_URL}/api/customer/search?query=${encodeURIComponent(
           query
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {
@@ -212,7 +214,7 @@ const NotaRiparazioneVeloce: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://localhost:7148/api/device/search?query=${encodeURIComponent(
+        `${API_URL}/api/device/search?query=${encodeURIComponent(
           query
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {
@@ -374,7 +376,7 @@ const NotaRiparazioneVeloce: React.FC = () => {
 
     try {
       const response = await fetch(
-        "https://localhost:7148/api/repair/quick-note",
+        `${API_URL}/api/repair/quick-note`,
         {
           method: "POST",
           headers: {

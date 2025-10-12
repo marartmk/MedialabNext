@@ -78,6 +78,8 @@ const ConsegnaCliente: React.FC = () => {
     0
   );
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const navState = (location.state || {}) as {
     repairGuid?: string;
     id?: number;
@@ -132,7 +134,7 @@ const ConsegnaCliente: React.FC = () => {
     setLoadingError(null);
 
     try {
-      const response = await fetch(`https://localhost:7148/api/repair/${id}`, {
+      const response = await fetch(`${API_URL}/api/repair/${id}`, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
@@ -160,7 +162,7 @@ const ConsegnaCliente: React.FC = () => {
   const loadRepairParts = async (repairId: string) => {
     try {
       const res = await fetch(
-        `https://localhost:7148/api/RepairParts/${repairId}`,
+        `${API_URL}/api/RepairParts/${repairId}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -250,7 +252,7 @@ const ConsegnaCliente: React.FC = () => {
       console.log("Payload consegna:", payload);
 
       const response = await fetch(
-        `https://localhost:7148/api/repair/${repairData.repairId}/delivery`,
+        `${API_URL}/api/repair/${repairData.repairId}/delivery`,
         {
           method: "POST",
           headers: {

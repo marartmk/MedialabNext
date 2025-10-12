@@ -244,7 +244,7 @@ const CompanyMaster: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://localhost:7148/api/customer/search?query=${encodeURIComponent(
+        `${API_URL}/api/customer/search?query=${encodeURIComponent(
           searchQuery
         )}`,
         {
@@ -686,8 +686,8 @@ const CompanyMaster: React.FC = () => {
 
     try {
       const url = customerId
-        ? `https://localhost:7148/api/customer/${customerId}`
-        : `https://localhost:7148/api/customer`;
+        ? `${API_URL}/api/customer/${customerId}`
+        : `${API_URL}/api/customer`;
 
       const method = customerId ? "PUT" : "POST";
 

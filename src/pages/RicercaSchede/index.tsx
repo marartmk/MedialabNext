@@ -234,6 +234,8 @@ const RicercaSchede: React.FC = () => {
   } | null>(null);
   const [globalFilter, setGlobalFilter] = useState("");
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // Stati per i filtri
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [searchInput, setSearchInput] = useState("");
@@ -681,7 +683,7 @@ const RicercaSchede: React.FC = () => {
       });
 
       const response = await fetch(
-        "https://localhost:7148/api/repair/search/light",
+        `${API_URL}/api/repair/search/light`,
         {
           method: "POST",
           headers: {
@@ -768,7 +770,7 @@ const RicercaSchede: React.FC = () => {
     try {
       // Carica i dettagli della riparazione
       const response = await fetch(
-        `https://localhost:7148/api/repair/${repair.id}`,
+        `${API_URL}/api/repair/${repair.id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -1271,7 +1273,7 @@ const RicercaSchede: React.FC = () => {
       });
 
       const response = await fetch(
-        "https://localhost:7148/api/repair/search/light",
+        `${API_URL}/api/repair/search/light`,
         {
           method: "POST",
           headers: {
@@ -1324,7 +1326,7 @@ const RicercaSchede: React.FC = () => {
     setIncomingTestLoading(true);
     try {
       const incomingResponse = await fetch(
-        `https://localhost:7148/api/repair/${repairId}/incoming-test`,
+        `${API_URL}/api/repair/${repairId}/incoming-test`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -1348,7 +1350,7 @@ const RicercaSchede: React.FC = () => {
     setExitTestLoading(true);
     try {
       const exitResponse = await fetch(
-        `https://localhost:7148/api/repair/${repairId}/exit-test`,
+        `${API_URL}/api/repair/${repairId}/exit-test`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

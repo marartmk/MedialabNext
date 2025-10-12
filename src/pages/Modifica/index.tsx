@@ -124,6 +124,8 @@ const Modifica: React.FC = () => {
   const location = useLocation();
   const [search] = useSearchParams();
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const navState = (location.state || {}) as {
     repairGuid?: string; // GUID
     id?: number; // id numerico tabella DeviceRepairs
@@ -329,7 +331,7 @@ const Modifica: React.FC = () => {
     // Incoming
     try {
       const rIn = await fetch(
-        `https://localhost:7148/api/repair/${repairGuid}/incoming-test`,
+        `${API_URL}/api/repair/${repairGuid}/incoming-test`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -349,7 +351,7 @@ const Modifica: React.FC = () => {
     // Exit
     try {
       const rEx = await fetch(
-        `https://localhost:7148/api/repair/${repairGuid}/exit-test`,
+        `${API_URL}/api/repair/${repairGuid}/exit-test`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -413,7 +415,7 @@ const Modifica: React.FC = () => {
     setLoadingError(null);
 
     try {
-      const response = await fetch(`https://localhost:7148/api/repair/${id}`, {
+      const response = await fetch(`${API_URL}/api/repair/${id}`, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
@@ -452,7 +454,7 @@ const Modifica: React.FC = () => {
       console.log("loadingParts stato prima fetch:", loadingParts);
 
       const response = await fetch(
-        `https://localhost:7148/api/RepairParts/${repairId}`,
+        `${API_URL}/api/RepairParts/${repairId}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -502,7 +504,7 @@ const Modifica: React.FC = () => {
   // const loadExistingDiagnostics = async (repairGuid: string) => {
   //   try {
   //     const response = await fetch(
-  //       `https://localhost:7148/api/repair/${repairGuid}/incoming-test`,
+  //       `${API_URL}/api/repair/${repairGuid}/incoming-test`,
   //       {
   //         headers: {
   //           Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -960,7 +962,7 @@ const Modifica: React.FC = () => {
     const dto = buildIncomingTestDto(items);
     console.log("DTO diagnostica ingresso:", dto);
     const res = await fetch(
-      `https://localhost:7148/api/repair/${repairGuid}/incoming-test`,
+      `${API_URL}/api/repair/${repairGuid}/incoming-test`,
       {
         method: "PUT",
         headers: {
@@ -982,7 +984,7 @@ const Modifica: React.FC = () => {
   ) => {
     const dto = buildExitTestDto(items);
     const res = await fetch(
-      `https://localhost:7148/api/repair/${repairGuid}/exit-test`,
+      `${API_URL}/api/repair/${repairGuid}/exit-test`,
       {
         method: "PUT",
         headers: {
@@ -1008,7 +1010,7 @@ const Modifica: React.FC = () => {
         ) || null,
     };
     const res = await fetch(
-      `https://localhost:7148/api/repair/${repairGuid}/status`,
+      `${API_URL}/api/repair/${repairGuid}/status`,
       {
         method: "PUT",
         headers: {
@@ -1085,7 +1087,7 @@ const Modifica: React.FC = () => {
       console.log("Payload aggiornamento:", JSON.stringify(payload, null, 2));
 
       const response = await fetch(
-        `https://localhost:7148/api/repair/${repairData.repairId}`,
+        `${API_URL}/api/repair/${repairData.repairId}`,
         {
           method: "PUT",
           headers: {
@@ -1162,7 +1164,7 @@ const Modifica: React.FC = () => {
         };
 
         const updateResponse = await fetch(
-          `https://localhost:7148/api/RepairParts/${repairId}/parts/${part.dbId}`,
+          `${API_URL}/api/RepairParts/${repairId}/parts/${part.dbId}`,
           {
             method: "PUT",
             headers: {
@@ -1198,7 +1200,7 @@ const Modifica: React.FC = () => {
         };
 
         const insertResponse = await fetch(
-          `https://localhost:7148/api/RepairParts/${repairId}/batch`,
+          `${API_URL}/api/RepairParts/${repairId}/batch`,
           {
             method: "POST",
             headers: {
@@ -1246,7 +1248,7 @@ const Modifica: React.FC = () => {
   //   setPartsSearching(true);
   //   try {
   //     const resp = await fetch(
-  //       `https://localhost:7148/api/warehouse/search?q=${encodeURIComponent(
+  //       `${API_URL}/api/warehouse/search?q=${encodeURIComponent(
   //         q
   //       )}`,
   //       {
@@ -1351,7 +1353,7 @@ const Modifica: React.FC = () => {
           console.log(`🗑️ Eliminazione ricambio ID ${partToRemove.dbId}...`);
 
           const response = await fetch(
-            `https://localhost:7148/api/RepairParts/${repairData.repairId}/parts/${partToRemove.dbId}`,
+            `${API_URL}/api/RepairParts/${repairData.repairId}/parts/${partToRemove.dbId}`,
             {
               method: "DELETE",
               headers: {
@@ -1392,7 +1394,7 @@ const Modifica: React.FC = () => {
   //       repairGuid: repairData.repairGuid || repairData.repairId,
   //       lines: usedParts.map((l) => ({ itemId: l.itemId, qty: l.qty })),
   //     };
-  //     const resp = await fetch(`https://localhost:7148/api/warehouse/consume`, {
+  //     const resp = await fetch(`${API_URL}/api/warehouse/consume`, {
   //       method: "POST",
   //       headers: {
   //         "Content-Type": "application/json",
@@ -1431,7 +1433,7 @@ const Modifica: React.FC = () => {
 
       console.log("📦 Scarico ricambi dal magazzino...");
       const response = await fetch(
-        `https://localhost:7148/api/RepairParts/${repairData.repairId}/consume`,
+        `${API_URL}/api/RepairParts/${repairData.repairId}/consume`,
         {
           method: "POST",
           headers: {

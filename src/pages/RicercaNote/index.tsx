@@ -89,6 +89,8 @@ const RicercaNote: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // Stati filtri
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [globalFilter, setGlobalFilter] = useState("");
@@ -388,7 +390,7 @@ const RicercaNote: React.FC = () => {
       });
 
       const response = await fetch(
-        "https://localhost:7148/api/Repair/quick-note/search",
+        `${API_URL}/api/Repair/quick-note/search`,
         {
           method: "POST",
           headers: {
@@ -568,7 +570,7 @@ const RicercaNote: React.FC = () => {
       const token = sessionStorage.getItem("token");
 
       const response = await fetch(
-        `https://localhost:7148/api/Repair/quick-note/${noteId}`,
+        `${API_URL}/api/Repair/quick-note/${noteId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -702,7 +704,7 @@ const RicercaNote: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://localhost:7148/api/Repair/quick-note/${editNote.noteId}`,
+        `${API_URL}/api/Repair/quick-note/${editNote.noteId}`,
         {
           method: "PUT",
           headers: {
@@ -899,7 +901,7 @@ const RicercaNote: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://localhost:7148/api/customer/search?query=${encodeURIComponent(
+        `${API_URL}/api/customer/search?query=${encodeURIComponent(
           query
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {
@@ -963,7 +965,7 @@ const RicercaNote: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://localhost:7148/api/device/search?query=${encodeURIComponent(
+        `${API_URL}/api/device/search?query=${encodeURIComponent(
           query
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {

@@ -31,6 +31,8 @@ const Device: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const brandInputRef = useRef<HTMLInputElement>(null);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [formData, setFormData] = useState({
     deviceId: "",
     customerId: "",
@@ -72,7 +74,7 @@ const Device: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://localhost:7148/api/device/search?query=${encodeURIComponent(
+        `${API_URL}/api/device/search?query=${encodeURIComponent(
           searchQuery
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {
@@ -155,8 +157,8 @@ const Device: React.FC = () => {
 
     try {
       const url = deviceId
-        ? `https://localhost:7148/api/device/${deviceId}`
-        : `https://localhost:7148/api/device`;
+        ? `${API_URL}/api/device/${deviceId}`
+        : `${API_URL}/api/device`;
 
       const method = deviceId ? "PUT" : "POST";
 

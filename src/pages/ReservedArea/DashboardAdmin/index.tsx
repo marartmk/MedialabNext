@@ -60,6 +60,8 @@ const DashboardAdmin: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [globalFilter, setGlobalFilter] = useState("");
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(
     null
@@ -212,7 +214,7 @@ const DashboardAdmin: React.FC = () => {
         console.log("Token presente:", !!token);        
 
         const response = await fetch(
-          `https://localhost:7148/api/Customer/customeraffiliated?multitenantId=${multitenantId}`,
+          `${API_URL}/api/Customer/customeraffiliated?multitenantId=${multitenantId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

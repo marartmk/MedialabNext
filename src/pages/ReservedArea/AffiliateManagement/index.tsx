@@ -184,6 +184,8 @@ const AffiliateManagement: React.FC = () => {
   const markersRef = useRef<any[]>([]);
   const fullscreenMarkersRef = useRef<any[]>([]);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // Stati per i dati
   const [rowData, setRowData] = useState<CustomerData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -736,7 +738,7 @@ const AffiliateManagement: React.FC = () => {
 
         // USA LO STESSO ENDPOINT DEL REFRESH PER COERENZA
         const response = await fetch(
-          `https://localhost:7148/api/Customer/customeraffiliated/with-geolocation?multitenantId=${multitenantId}`,
+          `${API_URL}/api/Customer/customeraffiliated/with-geolocation?multitenantId=${multitenantId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -882,7 +884,7 @@ const AffiliateManagement: React.FC = () => {
       }
 
       const response = await fetch(
-        `https://localhost:7148/api/Customer/customeraffiliated/with-geolocation?multitenantId=${multitenantId}`,
+        `${API_URL}/api/Customer/customeraffiliated/with-geolocation?multitenantId=${multitenantId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

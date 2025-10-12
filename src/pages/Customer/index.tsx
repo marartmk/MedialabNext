@@ -17,6 +17,8 @@ const Customer: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const cognomeInputRef = useRef<HTMLInputElement>(null);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [formData, setFormData] = useState({
     tipo: "Privato",
     cliente: true,
@@ -66,7 +68,7 @@ const Customer: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://localhost:7148/api/customer/search?query=${encodeURIComponent(
+        `${API_URL}/api/customer/search?query=${encodeURIComponent(
           searchQuery
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {
@@ -200,8 +202,8 @@ const Customer: React.FC = () => {
 
     try {
       const url = customerId
-        ? `https://localhost:7148/api/customer/${customerId}`
-        : `https://localhost:7148/api/customer`;
+        ? `${API_URL}/api/customer/${customerId}`
+        : `${API_URL}/api/customer`;
 
       const method = customerId ? "PUT" : "POST";
 
