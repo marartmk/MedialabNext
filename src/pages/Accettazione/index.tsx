@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import styles from "./styles.module.css";
-import { CalendarDays } from "lucide-react";
 import BottomBar from "../../components/BottomBar";
 import logoUrl from "../../assets/logo-black-white.jpg";
 import { useSearchParams } from "react-router-dom";
@@ -87,6 +86,8 @@ const Accettazione: React.FC = () => {
   const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<DeviceData | null>(null);
+
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Tipo per i dati della riparazione (per la stampa)
   interface RepairData {
@@ -354,7 +355,7 @@ const Accettazione: React.FC = () => {
       console.log("🔍 Chiamata API per nota:", noteGuid);
 
       const response = await fetch(
-        `https://localhost:7148/api/Repair/quick-note/guid/${noteGuid}`,
+        `${API_URL}/api/Repair/quick-note/guid/${noteGuid}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -455,7 +456,7 @@ const Accettazione: React.FC = () => {
       const token = sessionStorage.getItem("token");
 
       const response = await fetch(
-        `https://localhost:7148/api/customer/${customerId}`,
+        `${API_URL}/api/customer/${customerId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -482,7 +483,7 @@ const Accettazione: React.FC = () => {
       //const multitenantId = sessionStorage.getItem("IdCompany");
 
       const response = await fetch(
-        `https://localhost:7148/api/device/deviceid/${deviceId}`,
+        `${API_URL}/api/device/deviceid/${deviceId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -543,7 +544,7 @@ const Accettazione: React.FC = () => {
       // console.log("Operatori fake caricati:", fakeOperators);
 
       // Questo sarà il codice vero quando avremo l'API:
-      const response = await fetch("https://localhost:7148/api/operator", {
+      const response = await fetch(`${API_URL}/api/operator`, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
@@ -649,7 +650,7 @@ const Accettazione: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://localhost:7148/api/customer/search?query=${encodeURIComponent(
+        `${API_URL}/api/customer/search?query=${encodeURIComponent(
           query
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {
@@ -684,7 +685,7 @@ const Accettazione: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://localhost:7148/api/device/search?query=${encodeURIComponent(
+        `${API_URL}/api/device/search?query=${encodeURIComponent(
           query
         )}&multitenantId=${encodeURIComponent(multitenantId || "")}`,
         {
@@ -950,7 +951,7 @@ const Accettazione: React.FC = () => {
   ) => {
     const dto = buildIncomingTestDtoDBOnly(items);
     const res = await fetch(
-      `https://localhost:7148/api/repair/${repairGuid}/incoming-test`,
+      `${API_URL}/api/repair/${repairGuid}/incoming-test`,
       {
         method: "PUT",
         headers: {
@@ -1072,7 +1073,7 @@ const Accettazione: React.FC = () => {
       console.log("Payload riparazione:", payload);
 
       // Chiama l'API per creare la riparazione
-      const response = await fetch("https://localhost:7148/api/repair", {
+      const response = await fetch(`${API_URL}/api/repair`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1236,7 +1237,7 @@ const Accettazione: React.FC = () => {
     setSavingNewClient(true);
 
     try {
-      const response = await fetch("https://localhost:7148/api/customer", {
+      const response = await fetch(`${API_URL}/api/customer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1323,7 +1324,7 @@ const Accettazione: React.FC = () => {
     setSavingNewDevice(true);
 
     try {
-      const response = await fetch("https://localhost:7148/api/device", {
+      const response = await fetch(`${API_URL}/api/device`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1405,7 +1406,7 @@ const Accettazione: React.FC = () => {
       console.log("Payload aggiornamento:", payload);
 
       const response = await fetch(
-        `https://localhost:7148/api/repair/${repairGuid}`, // 🔧 FIX: Usa il GUID
+        `${API_URL}/api/repair/${repairGuid}`, // 🔧 FIX: Usa il GUID
         {
           method: "PUT",
           headers: {

@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import BottomBar from "../../components/BottomBar";
-import { CalendarDays, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import "./modifica-styles.css";
 
 import {
   searchPartsQuick,
-  consumeWarehouseLines,
   type PartSearchItem,
 } from "@/services/warehouseService";
 // Tipi per i dati
@@ -118,10 +117,6 @@ interface RepairPartLine {
 const Modifica: React.FC = () => {
   const navigate = useNavigate();
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
-  const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
-    date: "",
-    time: "",
-  });
 
   const [companyName, setCompanyName] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
@@ -164,7 +159,13 @@ const Modifica: React.FC = () => {
   const [loadingParts, setLoadingParts] = useState(false);
 
   // Totale ricambi
-  const partsTotal = usedParts.reduce((s, l) => s + l.lineTotal, 0);
+  const partsTotal = useMemo(
+    () =>
+      usedParts.reduce((s, l) => s + (l.lineTotal ?? l.qty * l.unitPrice), 0),
+    [usedParts]
+  );
+
+  const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
   // Stati per i dati della riparazione
   const [repairData, setRepairData] = useState<RepairData | null>(null);
@@ -265,21 +266,25 @@ const Modifica: React.FC = () => {
     { value: "Other", label: "🔧 Altro" },
   ];
 
-  // Effetti
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const date = now.toLocaleDateString("it-IT", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-      const time = now.toLocaleTimeString("it-IT");
-      setDateTime({ date, time });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // Manodopera
+  const [laborAmount, setLaborAmount] = useState<number>(0);
+
+  // Subtotale ricambi + manodopera
+  const subTotal = useMemo(
+    () => partsTotal + laborAmount,
+    [partsTotal, laborAmount]
+  );
+  // IVA 22% su (ricambi + manodopera)
+  const vatAmount = useMemo(
+    () => Math.round((subTotal * 0.22 + Number.EPSILON) * 100) / 100,
+    [subTotal]
+  );
+
+  // Totale IVA inclusa
+  // const finalTotal = useMemo(
+  //   () => Math.round((subTotal + vatAmount + Number.EPSILON) * 100) / 100,
+  //   [subTotal, vatAmount]
+  // );
 
   useEffect(() => {
     if (numericId > 0) {
@@ -294,6 +299,15 @@ const Modifica: React.FC = () => {
     setCompanyName(company);
     setUserName(user);
   }, []);
+
+  useEffect(() => {
+    const F = repairFormData.estimatedPrice ?? 0; // Prezzo IVA inclusa (editabile)
+    const base = F / 1.22;
+    const newLabor = round2(base - partsTotal); // L = F/1.22 - P
+    if (!Number.isNaN(newLabor) && newLabor !== laborAmount) {
+      setLaborAmount(newLabor);
+    }
+  }, [partsTotal, repairFormData.estimatedPrice]);
 
   const toggleDiagnosticItem = (id: string) => {
     if (diagnosticMode === "incoming") {
@@ -435,6 +449,7 @@ const Modifica: React.FC = () => {
     setLoadingParts(true);
     try {
       console.log("🔍 Caricamento ricambi per riparazione:", repairId);
+      console.log("loadingParts stato prima fetch:", loadingParts);
 
       const response = await fetch(
         `https://localhost:7148/api/RepairParts/${repairId}`,
@@ -2177,6 +2192,61 @@ const Modifica: React.FC = () => {
                 <div className="form-section">
                   <h3>Prezzo</h3>
 
+                  {/* Importo Ricambi (solo lettura) */}
+                  <div className="form-group">
+                    <label>Importo Ricambi</label>
+                    <div className="price-input-container">
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={partsTotal.toFixed(2)}
+                        readOnly
+                      />
+                      <span className="currency-label">€</span>
+                    </div>
+                  </div>
+
+                  {/* Manodopera (editabile) */}
+                  <div className="form-group">
+                    <label>Manodopera</label>
+                    <div className="price-input-container">
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="form-control"
+                        value={laborAmount}
+                        onChange={(e) => {
+                          const v =
+                            parseFloat(e.target.value.replace(",", ".")) || 0;
+                          setLaborAmount(v);
+                          // Aggiorna il PREZZO in avanti: F = 1.22 * (P + L)
+                          const newFinal = round2(1.22 * (partsTotal + v));
+                          setRepairFormData((prev) => ({
+                            ...prev,
+                            estimatedPrice: newFinal,
+                          }));
+                        }}
+                        placeholder="0.00"
+                      />
+                      <span className="currency-label">€</span>
+                    </div>
+                  </div>
+
+                  {/* IVA 22% (solo lettura) */}
+                  <div className="form-group">
+                    <label>IVA (22% su Ricambi + Manodopera)</label>
+                    <div className="price-input-container">
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={vatAmount.toFixed(2)}
+                        readOnly
+                      />
+                      <span className="currency-label">€</span>
+                    </div>
+                  </div>
+
+                  {/* Totale IVA inclusa (solo lettura, ma rimane nel tuo estimatedPrice) */}
                   <div className="form-group">
                     <label>Prezzo Preventivo IVA inclusa *</label>
                     <div className="price-input-container">
@@ -2192,16 +2262,27 @@ const Modifica: React.FC = () => {
                             : ""
                         }`}
                         value={repairFormData.estimatedPrice}
-                        onChange={(e) =>
-                          setRepairFormData({
-                            ...repairFormData,
-                            estimatedPrice: parseFloat(e.target.value) || 0,
-                          })
-                        }
+                        onChange={(e) => {
+                          const newFinal =
+                            parseFloat(e.target.value.replace(",", ".")) || 0;
+                          // 1) aggiorna il prezzo nel form (continui a salvare come prima)
+                          setRepairFormData((prev) => ({
+                            ...prev,
+                            estimatedPrice: newFinal,
+                          }));
+                          // 2) ricalcola MANODOPERA a ritroso: L = F/1.22 - P
+                          const base = newFinal / 1.22;
+                          const newLabor = round2(base - partsTotal);
+                          setLaborAmount(newLabor); // può risultare anche < 0 (sconto)
+                        }}
                         placeholder="0.00"
                       />
                       <span className="currency-label">€</span>
                     </div>
+                    <small className="hint">
+                      IVA calcolata automaticamente (22%) su Ricambi +
+                      Manodopera.
+                    </small>
                   </div>
 
                   <div className="form-group">

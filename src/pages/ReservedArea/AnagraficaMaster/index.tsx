@@ -81,16 +81,16 @@ interface GeolocationRequest {
   geocodingSource: string;
 }
 
-interface GeolocationResponse {
-  id: number;
-  affiliateId: string;
-  latitude?: number;
-  longitude?: number;
-  address: string;
-  geocodedDate: string;
-  quality: string;
-  hasValidCoordinates: boolean;
-}
+// interface GeolocationResponse {
+//   id: number;
+//   affiliateId: string;
+//   latitude?: number;
+//   longitude?: number;
+//   address: string;
+//   geocodedDate: string;
+//   quality: string;
+//   hasValidCoordinates: boolean;
+// }
 
 const CompanyMaster: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");

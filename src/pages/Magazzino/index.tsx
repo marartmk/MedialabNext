@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import BottomBar from "../../components/BottomBar";
@@ -24,10 +24,6 @@ import "./magazzino-styles.css";
 
 const Magazzino: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
-  const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
-    date: "",
-    time: "",
-  });
 
   // Stati per i dati
   const [warehouseItems, setWarehouseItems] = useState<WarehouseItem[]>([]);
@@ -80,23 +76,7 @@ const Magazzino: React.FC = () => {
     unitPrice: 0,
     location: "",
     notes: "",
-  });
-
-  // Effetti
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const date = now.toLocaleDateString("it-IT", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-      const time = now.toLocaleTimeString("it-IT");
-      setDateTime({ date, time });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  });  
 
   useEffect(() => {
     loadInitialData();

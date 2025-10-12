@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../../../components/sidebar";
 import Topbar from "../../../components/topbar";
 import styles from "./styles.module.css";
-import { CalendarDays, Edit, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 interface Operator {
   id: string;
@@ -34,11 +34,7 @@ interface Operator {
 }
 
 const Operators: React.FC = () => {
-  const [menuState, setMenuState] = useState<"open" | "closed">("open");
-  const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
-    date: "",
-    time: "",
-  });
+  const [menuState, setMenuState] = useState<"open" | "closed">("open");  
   const [searchQuery, setSearchQuery] = useState("");
   const [operators, setOperators] = useState<Operator[]>([]);
   const [filteredOperators, setFilteredOperators] = useState<Operator[]>([]);
@@ -108,23 +104,7 @@ const Operators: React.FC = () => {
       (sessionStorage.getItem("userId") ||
         sessionStorage.getItem("username") ||
         "")) ||
-    "Utente";
-
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const date = now.toLocaleDateString("it-IT", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-      const time = now.toLocaleTimeString("it-IT");
-      setDateTime({ date, time });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    "Utente";  
 
   useEffect(() => {
     loadOperators();
@@ -146,6 +126,7 @@ const Operators: React.FC = () => {
         setOperatorUsers([]);
         setSelectedOpUserId(null);
         setAccountForm((p) => ({ ...p, username: "", email: "" }));
+        console.log("Operator",operatorUsers)
         return;
       }
 
@@ -594,17 +575,19 @@ const Operators: React.FC = () => {
   );
   const totalPages = Math.ceil(filteredOperators.length / itemsPerPage);
 
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-  };
+  console.log(currentItems, totalPages);
 
-  const goToPreviousPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
+  // const goToPage = (page: number) => {
+  //   setCurrentPage(page);
+  // };
 
-  const goToNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
+  // const goToPreviousPage = () => {
+  //   if (currentPage > 1) setCurrentPage(currentPage - 1);
+  // };
+
+  // const goToNextPage = () => {
+  //   if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  // };
 
   return (
     <>

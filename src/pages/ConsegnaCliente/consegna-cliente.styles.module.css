@@ -290,9 +290,9 @@
 .detailLabel {
   font-size: 0.75rem;
   color: #666;
-  font-weight: 600;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.3px;  
 }
 
 .detailValue {

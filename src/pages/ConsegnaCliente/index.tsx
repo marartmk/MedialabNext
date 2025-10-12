@@ -3,7 +3,7 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import BottomBar from "../../components/BottomBar";
-import { CalendarDays, ArrowLeft, FileText, Receipt } from "lucide-react";
+import { ArrowLeft, FileText, Receipt } from "lucide-react";
 import styles from "./consegna-cliente.styles.module.css";
 
 interface CustomerData {
@@ -53,13 +53,18 @@ interface RepairData {
   customer?: CustomerData;
 }
 
+interface RepairPartLine {
+  dbId?: number;
+  code: string;
+  name: string;
+  qty: number;
+  unitPrice: number;
+  lineTotal?: number;
+}
+
 const ConsegnaCliente: React.FC = () => {
   const navigate = useNavigate();
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
-  const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
-    date: "",
-    time: "",
-  });
 
   const location = useLocation();
   const [search] = useSearchParams();
@@ -67,13 +72,19 @@ const ConsegnaCliente: React.FC = () => {
   const [companyName, setCompanyName] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
 
+  const [repairParts, setRepairParts] = useState<RepairPartLine[]>([]);
+  const partsTotal = repairParts.reduce(
+    (s, l) => s + (l.lineTotal ?? l.qty * l.unitPrice),
+    0
+  );
+
   const navState = (location.state || {}) as {
     repairGuid?: string;
     id?: number;
     repairCode?: string;
   };
 
-  const repairGuid = navState.repairGuid || search.get("rid") || "";
+  //const repairGuid = navState.repairGuid || search.get("rid") || "";
   const numericId = navState.id ?? Number(search.get("id") || 0);
 
   // Stati per i dati
@@ -92,28 +103,15 @@ const ConsegnaCliente: React.FC = () => {
   const [notes, setNotes] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [laborAmount, setLaborAmount] = useState(0);
+
+  const vatAmount = Math.max(0, finalAmount - (partsTotal + laborAmount));
 
   // Aggiorna il resto da pagare
   useEffect(() => {
     const remaining = Math.max(0, finalAmount - depositAmount);
     setRemainingAmount(remaining);
   }, [finalAmount, depositAmount]);
-
-  // Data e ora
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const date = now.toLocaleDateString("it-IT", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-      const time = now.toLocaleTimeString("it-IT");
-      setDateTime({ date, time });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Carica dati riparazione
   useEffect(() => {
@@ -145,6 +143,7 @@ const ConsegnaCliente: React.FC = () => {
         setRepairData(data);
         setFinalAmount(data.estimatedPrice || 0);
         setPaymentMethod(data.paymentType || "");
+        await loadRepairParts(data.repairId);
       } else {
         throw new Error(`Errore ${response.status}: ${response.statusText}`);
       }
@@ -155,6 +154,33 @@ const ConsegnaCliente: React.FC = () => {
       );
     } finally {
       setLoadingRepairData(false);
+    }
+  };
+
+  const loadRepairParts = async (repairId: string) => {
+    try {
+      const res = await fetch(
+        `https://localhost:7148/api/RepairParts/${repairId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (!res.ok) return;
+
+      const rows = await res.json();
+      const mapped: RepairPartLine[] = rows.map((p: any) => ({
+        dbId: p.id,
+        code: p.code,
+        name: p.name,
+        qty: p.quantity,
+        unitPrice: p.unitPrice ?? 0,
+        lineTotal: p.lineTotal ?? p.quantity * (p.unitPrice ?? 0),
+      }));
+      setRepairParts(mapped);
+    } catch (e) {
+      console.warn("Ricambi non disponibili:", e);
     }
   };
 
@@ -432,6 +458,60 @@ const ConsegnaCliente: React.FC = () => {
                           </span>
                         </div>
                       )}
+                      {/* Ricambi usati */}
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailLabel}>
+                          Ricambi utilizzati:
+                        </span>
+                        <div className={styles.detailValue}>
+                          {repairParts.length === 0 ? (
+                            <em>Nessun ricambio associato</em>
+                          ) : (
+                            <>
+                              <ul
+                                style={{
+                                  margin: 0,
+                                  paddingLeft: 0,
+                                  listStyle: "none",
+                                }}
+                              >
+                                {repairParts.map((p, i) => (
+                                  <li
+                                    key={(p.dbId ?? i) + p.code}
+                                    style={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      gap: 8,
+                                      borderTop: "1px dashed #e5e5e5",
+                                      padding: "6px 0",
+                                    }}
+                                  >
+                                    <span>
+                                      <strong
+                                        style={{ fontFamily: "monospace" }}
+                                      >
+                                        {p.code}
+                                      </strong>{" "}
+                                      – {p.name} × {p.qty}
+                                    </span>
+                                    <span>
+                                      €{" "}
+                                      {(
+                                        p.lineTotal ?? p.qty * p.unitPrice
+                                      ).toFixed(2)}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                              <div style={{ textAlign: "right", marginTop: 6 }}>
+                                <strong>
+                                  Totale ricambi: € {partsTotal.toFixed(2)}
+                                </strong>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -502,6 +582,22 @@ const ConsegnaCliente: React.FC = () => {
                         }
                       />
                       <span className={styles.currencyLabel}>€</span>
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Manodopera</label>
+                      <div className={styles.priceInputContainer}>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className={styles.formControl}
+                          value={laborAmount}
+                          onChange={(e) =>
+                            setLaborAmount(parseFloat(e.target.value) || 0)
+                          }
+                        />
+                        <span className={styles.currencyLabel}>€</span>
+                      </div>
                     </div>
                   </div>
 
@@ -583,6 +679,29 @@ const ConsegnaCliente: React.FC = () => {
                           : "Ricevuta Fiscale"}
                       </span>
                     </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>
+                        Importo Ricambi:
+                      </span>
+                      <span className={styles.summaryValue}>
+                        € {partsTotal.toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Manodopera:</span>
+                      <span className={styles.summaryValue}>
+                        € {laborAmount.toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>IVA:</span>
+                      <span className={styles.summaryValue}>
+                        € {vatAmount.toFixed(2)}
+                      </span>
+                    </div>
+
                     <div className={styles.summaryItem}>
                       <span className={styles.summaryLabel}>
                         Importo Totale:

@@ -8,7 +8,7 @@ import {
   flexRender,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import styles from "./styles.module.css";
 import Sidebar from "../../../components/sidebar-admin";
 import Topbar from "../../../components/topbar-admin";
@@ -30,6 +30,7 @@ interface CustomerData {
   lat?: number;
   lng?: number;
   geocoded?: boolean;
+  fromCache?: boolean;
 }
 
 // Mapping delle province italiane con nomi completi
@@ -142,28 +143,28 @@ const PROVINCE_NAMES: { [key: string]: string } = {
   VT: "Viterbo",
 };
 
-const CANONICAL_REGIONS = [
-  "ABRUZZO",
-  "BASILICATA",
-  "CALABRIA",
-  "CAMPANIA",
-  "EMILIA-ROMAGNA",
-  "FRIULI VENEZIA GIULIA",
-  "LAZIO",
-  "LIGURIA",
-  "LOMBARDIA",
-  "MARCHE",
-  "MOLISE",
-  "PIEMONTE",
-  "PUGLIA",
-  "SARDEGNA",
-  "SICILIA",
-  "TOSCANA",
-  "TRENTINO-ALTO ADIGE",
-  "UMBRIA",
-  "VALLE D'AOSTA",
-  "VENETO",
-] as const;
+// const CANONICAL_REGIONS = [
+//   "ABRUZZO",
+//   "BASILICATA",
+//   "CALABRIA",
+//   "CAMPANIA",
+//   "EMILIA-ROMAGNA",
+//   "FRIULI VENEZIA GIULIA",
+//   "LAZIO",
+//   "LIGURIA",
+//   "LOMBARDIA",
+//   "MARCHE",
+//   "MOLISE",
+//   "PIEMONTE",
+//   "PUGLIA",
+//   "SARDEGNA",
+//   "SICILIA",
+//   "TOSCANA",
+//   "TRENTINO-ALTO ADIGE",
+//   "UMBRIA",
+//   "VALLE D'AOSTA",
+//   "VENETO",
+// ] as const;
 
 // Estendi l'interfaccia Window per Google Maps
 declare global {
@@ -173,8 +174,7 @@ declare global {
   }
 }
 
-const AffiliateManagement: React.FC = () => {
-  const [searchParams] = useSearchParams();
+const AffiliateManagement: React.FC = () => {  
   const navigate = useNavigate();
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
   const mapRef = useRef<HTMLDivElement>(null);
@@ -761,6 +761,7 @@ const AffiliateManagement: React.FC = () => {
         const processedData = processCustomerData(data);
         setRowData(processedData);
         setIsFirstLoad(false);
+        console.log("isFirstLoad", isFirstLoad);
       } catch (error: unknown) {
         console.error("Errore nel caricamento dei clienti:", error);
         if (error instanceof Error) {
@@ -823,12 +824,13 @@ const AffiliateManagement: React.FC = () => {
   // Aggiungi questa funzione per ottenere le regioni uniche dai dati
   const getUniqueRegions = () => {
     const regions = rowData
-      .map((d) => d.regione)
-      .filter(Boolean) // Rimuove valori null/undefined
-      .filter((region) => region.trim() !== "") // Rimuove stringhe vuote
-      .map((region) => region.toUpperCase()); // Normalizza in maiuscolo
+      .map((d) => d.regione?.trim()) // string | undefined
+      .filter((region): region is string => !!region) // <-- type guard: ora è string
+      .map((region) => region.toLocaleUpperCase("it-IT")); // normalizza
 
-    const uniqueRegions = [...new Set(regions)].sort();
+    const uniqueRegions = Array.from(new Set(regions)).sort((a, b) =>
+      a.localeCompare(b, "it-IT", { sensitivity: "base" })
+    );
     return uniqueRegions;
   };
 
@@ -912,9 +914,9 @@ const AffiliateManagement: React.FC = () => {
   };
 
   // Funzione per navigare alla modifica di un affiliato
-  const handleEditAffiliate = (affiliateId: string) => {
-    navigate(`/master-company/${affiliateId}`);
-  };
+  // const handleEditAffiliate = (affiliateId: string) => {
+  //   navigate(`/master-company/${affiliateId}`);
+  // };
 
   // Funzioni per gestire il fullscreen della mappa
   const toggleMapFullscreen = () => {

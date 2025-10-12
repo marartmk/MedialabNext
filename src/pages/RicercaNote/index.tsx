@@ -459,9 +459,9 @@ const RicercaNote: React.FC = () => {
     setFilteredData(filtered);
   };
 
-  const applyLocalFilters = () => {
-    applyFilters();
-  };
+  // const applyLocalFilters = () => {
+  //   applyFilters();
+  // };
 
   const calculateDateRange = (filterType: string) => {
     const now = new Date();
@@ -853,6 +853,8 @@ const RicercaNote: React.FC = () => {
           minute: "2-digit",
         })
       : "—";
+
+  console.log("fmt", fmt("2024-06-25T14:30:00Z"));
 
   const statusClass = (s?: string) => {
     if (!s) return styles.statusDefault;
