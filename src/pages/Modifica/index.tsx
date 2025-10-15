@@ -135,6 +135,18 @@ const Modifica: React.FC = () => {
   const repairGuid = navState.repairGuid || search.get("rid") || "";
   const numericId = navState.id ?? Number(search.get("id") || 0);
 
+  // Dati pagamento
+  const [paymentData, setPaymentData] = useState<{
+    id?: number;
+    partsAmount: number;
+    laborAmount: number;
+    vatAmount: number;
+    totalAmount: number;
+    notes: string;
+  } | null>(null);
+
+  const [paymentLoading, setPaymentLoading] = useState(false);
+
   // Modalità diagnostica corrente
   const [diagnosticMode, setDiagnosticMode] = useState<"incoming" | "exit">(
     "incoming"
@@ -303,13 +315,18 @@ const Modifica: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    // 🔥 MODIFICA: Non ricalcolare se stiamo caricando i dati
+    if (paymentLoading) return;
+
     const F = repairFormData.estimatedPrice ?? 0; // Prezzo IVA inclusa (editabile)
     const base = F / 1.22;
     const newLabor = round2(base - partsTotal); // L = F/1.22 - P
-    if (!Number.isNaN(newLabor) && newLabor !== laborAmount) {
+
+    // 🔥 MODIFICA: Aggiorna solo se c'è una differenza significativa
+    if (!Number.isNaN(newLabor) && Math.abs(newLabor - laborAmount) > 0.01) {
       setLaborAmount(newLabor);
     }
-  }, [partsTotal, repairFormData.estimatedPrice]);
+  }, [partsTotal, repairFormData.estimatedPrice, paymentLoading]);
 
   const toggleDiagnosticItem = (id: string) => {
     if (diagnosticMode === "incoming") {
@@ -350,14 +367,11 @@ const Modifica: React.FC = () => {
 
     // Exit
     try {
-      const rEx = await fetch(
-        `${API_URL}/api/repair/${repairGuid}/exit-test`,
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-        }
-      );
+      const rEx = await fetch(`${API_URL}/api/repair/${repairGuid}/exit-test`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+      });
       if (rEx.ok) {
         const exData = await rEx.json();
         setExitDiagnosticItems((prev) => mapApiToDiagnosticItems(prev, exData));
@@ -426,11 +440,16 @@ const Modifica: React.FC = () => {
         setRepairData(data);
         populateFormWithRepairData(data);
 
-        // Carica anche la diagnostica esistente
+        // Carica diagnostica esistente
         await loadExistingDiagnostics(
           repairGuid || data.repairGuid || data.repairId
         );
+
+        // 🔥 PRIMA carica i ricambi
         await loadExistingRepairParts(data.repairId);
+
+        // 🔥 POI carica il pagamento (che dipende dai ricambi)
+        await loadExistingPayment(data.repairId);
       } else {
         throw new Error(`Errore ${response.status}: ${response.statusText}`);
       }
@@ -445,6 +464,156 @@ const Modifica: React.FC = () => {
   };
 
   /**
+   * Carica il pagamento associato alla riparazione (se esiste)
+   */
+  const loadExistingPayment = async (repairId: string) => {
+    setPaymentLoading(true);
+    try {
+      console.log("💰 Caricamento pagamento per riparazione:", repairId);
+
+      const response = await fetch(
+        `${API_URL}/api/RepairPayments/repair/${repairId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const payment = await response.json();
+
+        if (payment && payment.id) {
+          console.log("✅ Pagamento trovato:", payment);
+
+          setPaymentData({
+            id: payment.id,
+            partsAmount: payment.partsAmount,
+            laborAmount: payment.laborAmount,
+            vatAmount: payment.vatAmount,
+            totalAmount: payment.totalAmount,
+            notes: payment.notes || "",
+          });
+
+          // 🔥 IMPORTANTE: Aggiorna gli importi nella form
+          // Usa setTimeout per assicurarti che il partsTotal sia già stato caricato
+          setTimeout(() => {
+            setLaborAmount(payment.laborAmount);
+            setRepairFormData((prev) => ({
+              ...prev,
+              estimatedPrice: payment.totalAmount,
+              billingInfo: payment.notes || prev.billingInfo,
+            }));
+          }, 100);
+
+          console.log("✅ Dati pagamento caricati nella form");
+        } else {
+          console.log("ℹ️ Nessun pagamento associato a questa riparazione");
+        }
+      } else if (response.status === 404) {
+        console.log(
+          "ℹ️ Nessun pagamento trovato (404) - normale per riparazioni senza pagamento"
+        );
+      } else {
+        console.warn(`⚠️ Errore ${response.status} nel caricamento pagamento`);
+      }
+    } catch (error) {
+      console.error("❌ Errore caricamento pagamento:", error);
+      // Non bloccare il flusso se il pagamento non esiste
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  /**
+   * Salva o aggiorna il pagamento associato alla riparazione
+   */
+  const saveOrUpdatePayment = async (repairId: string) => {
+    try {
+      console.log("💾 Salvataggio pagamento...");
+
+      const multitenantId = sessionStorage.getItem("IdCompany");
+
+      const payload = {
+        repairId: repairId,
+        multitenantId: multitenantId || "",
+        partsAmount: partsTotal,
+        laborAmount: laborAmount,
+        notes: repairFormData.billingInfo || null,
+      };
+
+      console.log("📦 Payload pagamento:", payload);
+
+      // Se esiste già un pagamento, aggiorna (PUT)
+      if (paymentData?.id) {
+        console.log(
+          `🔄 Aggiornamento pagamento esistente ID ${paymentData.id}`
+        );
+
+        const updateResponse = await fetch(
+          `${API_URL}/api/RepairPayments/${paymentData.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+
+        if (!updateResponse.ok) {
+          const error = await updateResponse.text();
+          throw new Error(`Errore aggiornamento pagamento: ${error}`);
+        }
+
+        console.log("✅ Pagamento aggiornato con successo");
+      }
+      // Altrimenti crea nuovo pagamento (POST)
+      else {
+        console.log("➕ Creazione nuovo pagamento");
+        console.log("Payload pagamento:", JSON.stringify(payload, null, 2));
+
+        const createResponse = await fetch(`${API_URL}/api/RepairPayments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!createResponse.ok) {
+          const error = await createResponse.text();
+          throw new Error(`Errore creazione pagamento: ${error}`);
+        }
+
+        const createdPayment = await createResponse.json();
+        console.log("✅ Pagamento creato:", createdPayment);
+
+        // Aggiorna lo state con il nuovo ID
+        setPaymentData({
+          id: createdPayment.id,
+          partsAmount: createdPayment.partsAmount,
+          laborAmount: createdPayment.laborAmount,
+          vatAmount: createdPayment.vatAmount,
+          totalAmount: createdPayment.totalAmount,
+          notes: createdPayment.notes || "",
+        });
+      }
+
+      console.log("✅ Operazione pagamento completata");
+    } catch (error) {
+      console.error("❌ Errore salvataggio pagamento:", error);
+      throw new Error(
+        `Impossibile salvare il pagamento: ${
+          error instanceof Error ? error.message : "Errore sconosciuto"
+        }`
+      );
+    }
+  };
+
+  /**
    * Carica i ricambi già associati alla riparazione dal backend
    */
   const loadExistingRepairParts = async (repairId: string) => {
@@ -453,14 +622,11 @@ const Modifica: React.FC = () => {
       console.log("🔍 Caricamento ricambi per riparazione:", repairId);
       console.log("loadingParts stato prima fetch:", loadingParts);
 
-      const response = await fetch(
-        `${API_URL}/api/RepairParts/${repairId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_URL}/api/RepairParts/${repairId}`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+      });
 
       if (response.ok) {
         const existingParts = await response.json();
@@ -983,17 +1149,14 @@ const Modifica: React.FC = () => {
     items: { id: string; active: boolean }[]
   ) => {
     const dto = buildExitTestDto(items);
-    const res = await fetch(
-      `${API_URL}/api/repair/${repairGuid}/exit-test`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(dto),
-      }
-    );
+    const res = await fetch(`${API_URL}/api/repair/${repairGuid}/exit-test`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(dto),
+    });
     if (!res.ok) {
       const t = await res.text().catch(() => "");
       throw new Error(`Salvataggio exit-test fallito (${res.status}) ${t}`);
@@ -1009,17 +1172,14 @@ const Modifica: React.FC = () => {
           ""
         ) || null,
     };
-    const res = await fetch(
-      `${API_URL}/api/repair/${repairGuid}/status`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(payload),
-      }
-    );
+    const res = await fetch(`${API_URL}/api/repair/${repairGuid}/status`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(payload),
+    });
     if (!res.ok) {
       const t = await res.text().catch(() => "");
       throw new Error(`Salvataggio exit-test fallito (${res.status}) ${t}`);
@@ -1106,11 +1266,15 @@ const Modifica: React.FC = () => {
           );
           await upsertExitTest(repairData.repairId, exitDiagnosticItems);
 
-          // ⭐ AGGIUNGI QUESTO: Salva i ricambi se ce ne sono
+          // Salva i ricambi se ce ne sono
           if (usedParts.length > 0) {
             console.log("💾 Salvataggio ricambi...");
             await saveRepairPartsData(repairData.repairId);
           }
+
+          // 🆕 AGGIUNGI: Salva/Aggiorna il pagamento
+          console.log("💰 Salvataggio dati pagamento...");
+          await saveOrUpdatePayment(repairData.repairId);
 
           alert("✅ Riparazione aggiornata con successo!");
           await updateStatusRepair(repairData.repairId);
@@ -1118,8 +1282,7 @@ const Modifica: React.FC = () => {
           console.error(e);
           const message = e instanceof Error ? e.message : String(e);
           alert(
-            "⚠️ Riparazione aggiornata ma diagnostica/ricambi NON salvati.\n" +
-              message
+            "⚠️ Riparazione aggiornata ma alcuni dati NON salvati.\n" + message
           );
         }
       } else {
@@ -2193,6 +2356,23 @@ const Modifica: React.FC = () => {
                 {/* Sezione Prezzo */}
                 <div className="form-section">
                   <h3>Prezzo</h3>
+
+                  {/* 🆕 AGGIUNGI: Indicatore caricamento pagamento */}
+                  {paymentLoading && (
+                    <div className="payment-loading-indicator">
+                      <small>⏳ Caricamento dati pagamento...</small>
+                    </div>
+                  )}
+
+                  {/* 🆕 AGGIUNGI: Info pagamento esistente */}
+                  {paymentData?.id && (
+                    <div className="payment-info-badge">
+                      <small>
+                        💰 Pagamento #{paymentData.id} | Totale: €
+                        {paymentData.totalAmount.toFixed(2)}
+                      </small>
+                    </div>
+                  )}
 
                   {/* Importo Ricambi (solo lettura) */}
                   <div className="form-group">

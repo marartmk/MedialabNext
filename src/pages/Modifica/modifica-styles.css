@@ -1038,5 +1038,34 @@
   color: #999;
   font-weight: 400;
 }
+/* Indicatore caricamento pagamento */
+.payment-loading-indicator {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.payment-loading-indicator small {
+  color: #856404;
+  font-weight: 500;
+}
+
+/* Badge info pagamento esistente */
+.payment-info-badge {
+  background: #d4edda;
+  border: 1px solid #28a745;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.payment-info-badge small {
+  color: #155724;
+  font-weight: 500;
+}
 
 
