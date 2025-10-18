@@ -21,6 +21,7 @@ import Operators from "./pages/ReservedArea/AnagraficaOperatori";
 import ConsegnaCliente from "./pages/ConsegnaCliente";
 import NotaRiparazione from "./pages/NotaRiparazione";
 import RicercaNote from "./pages/RicercaNote";
+import MagazzinoApparati from "./pages/MagazzinoApparati";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -203,6 +204,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <RicercaNote />
+          </ProtectedRoute>
+        }
+      />
+
+       <Route
+        path="/magazzino-apparati"
+        element={
+          <ProtectedRoute>
+            <MagazzinoApparati />
           </ProtectedRoute>
         }
       />

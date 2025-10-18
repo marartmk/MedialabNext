@@ -8,14 +8,14 @@ import {
   Truck,
   FlaskConical,
   Warehouse,
-  ShoppingCart,
-  FileText,
+  ShoppingCart,  
   Users,
   BarChart,
   Settings,
   Lock,
   MonitorSmartphone,
   Store,
+  Boxes,
 } from "lucide-react";
 
 import "./Sidebar.css";
@@ -72,41 +72,6 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         </button>
         <button
           className="list-group-item"
-          onClick={() => navigate("/gestione-logistica")}
-        >
-          <Truck className="icon" />
-          <span className="item-text">Gestione Logistica</span>
-        </button>
-        <button
-          className="list-group-item"
-          onClick={() => navigate("/laboratorio")}
-        >
-          <FlaskConical className="icon" />
-          <span className="item-text">Laboratorio</span>
-        </button>
-        <button
-          className="list-group-item"
-          onClick={() => navigate("/magazzino-ricambi")}
-        >
-          <Warehouse className="icon" />
-          <span className="item-text">Magazzino Ricambi</span>
-        </button>
-        <button
-          className="list-group-item"
-          onClick={() => navigate("/ordini-ricambi")}
-        >
-          <ShoppingCart className="icon" />
-          <span className="item-text">Ordini Ricambi</span>
-        </button>
-        <button
-          className="list-group-item"
-          onClick={() => window.open("https://whrtest.dea40.it", "_blank")}
-        >
-          <Settings className="icon" />
-          <span className="item-text">Amministrazione</span>
-        </button>
-        <button
-          className="list-group-item"
           onClick={() => navigate("/anagrafica-clienti")}
         >
           <Users className="icon" />
@@ -121,28 +86,51 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         </button>
         <button
           className="list-group-item"
-          onClick={() => navigate("/documenti-trasporto")}
+          onClick={() => navigate("/gestione-logistica")}
         >
-          <FileText className="icon" />
-          <span className="item-text">Documenti Trasporto</span>
+          <Truck className="icon" />
+          <span className="item-text">Gestione Logistica</span>
         </button>
         <button
           className="list-group-item"
-          onClick={() => navigate("/vendite")}
+          //onClick={() => navigate("/laboratorio")}
+        >
+          <FlaskConical className="icon" />
+          <span className="item-text">Laboratorio</span>
+        </button>
+        <button
+          className="list-group-item"
+          onClick={() => navigate("/magazzino-ricambi")}
+        >
+          <Warehouse className="icon" />
+          <span className="item-text">Magazzino Ricambi</span>
+        </button>
+        <button
+          className="list-group-item"
+          onClick={() => navigate("/magazzino-apparati")}
+        >
+          <Boxes className="icon" />
+          <span className="item-text">Magazzino Apparati</span>
+        </button>
+        <button
+          className="list-group-item"
+          //onClick={() => navigate("/ordini-ricambi")}
+        >
+          <ShoppingCart className="icon" />
+          <span className="item-text">Ordini Ricambi</span>
+        </button>
+        <button
+          className="list-group-item"
+          //onClick={() => navigate("/vendite")}
         >
           <Store className="icon" />
           <span className="item-text">Vendite</span>
         </button>
         <button
           className="list-group-item"
-          onClick={() => navigate("/estensioni")}
-        >
-          <Lock className="icon" />
-          <span className="item-text">Estensioni</span>
-        </button>
-        <button
-          className="list-group-item"
-          onClick={() => window.open("https://vendolo.dea40.it/ProductShop.aspx", "_blank")}
+          onClick={() =>
+            window.open("https://clinica-iphone-shop.it", "_blank")
+          }
         >
           <ShoppingCart className="icon" />
           <span className="item-text">Shop</span>
@@ -157,18 +145,37 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
           }
         >
           <MonitorSmartphone className="icon" />
-          <span className="item-text">Smart Tv</span>
-        </button>
-        <button className="list-group-item" onClick={() => navigate("/report")}>
-          <BarChart className="icon" />
-          <span className="item-text">Report</span>
+          <span className="item-text">Vendolo My Channel</span>
         </button>
         <button
           className="list-group-item"
-          onClick={() => navigate("/lavorazioni-esterne")}
+          onClick={() => window.open("https://whrtest.dea40.it", "_blank")}
         >
-          <Truck className="icon" />
-          <span className="item-text">Lavorazioni Esterne</span>
+          <Settings className="icon" />
+          <span className="item-text">Amministrazione</span>
+        </button>
+        {/* <button
+          className="list-group-item"
+          onClick={() => navigate("/gestione-logistica")}
+        >
+          <FileText className="icon" />
+          <span className="item-text">Documenti Trasporto</span>
+        </button> */}
+        {/* <button
+          className="list-group-item"
+          onClick={() =>
+            window.open("https://vendolo.dea40.it/ProductShop.aspx", "_blank")
+          }
+        >
+          <ShoppingCart className="icon" />
+          <span className="item-text">Vendolo My Channel</span>
+        </button> */}
+        <button
+          className="list-group-item"
+          //onClick={() => navigate("/report")}
+        >
+          <BarChart className="icon" />
+          <span className="item-text">Report</span>
         </button>
         <button
           className="list-group-item"
