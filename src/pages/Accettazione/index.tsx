@@ -54,6 +54,27 @@ interface DeviceData {
   isDeleted: boolean;
 }
 
+interface DeviceInventoryItem {
+  id: number;
+  code: string;
+  deviceType: "smartphone" | "tablet";
+  brand: string;
+  model: string;
+  imei: string;
+  esn?: string;
+  color: string;
+  deviceCondition: "new" | "used" | "refurbished";
+  isCourtesyDevice: boolean;
+  deviceStatus: "available" | "loaned" | "sold" | "unavailable";
+  supplierId: string;
+  purchasePrice: number;
+  sellingPrice: number;
+  location?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 const Accettazione: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
   const [dateTime, setDateTime] = useState<{ date: string; time: string }>({
@@ -86,6 +107,29 @@ const Accettazione: React.FC = () => {
   const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<DeviceData | null>(null);
+
+  // Stati per la ricerca telefono di cortesia
+  const [courtesyPhoneSearchQuery, setCourtesyPhoneSearchQuery] = useState("");
+  const [courtesyPhoneSearchResults, setCourtesyPhoneSearchResults] = useState<
+    DeviceInventoryItem[]
+  >([]);
+  const [showCourtesyPhoneDropdown, setShowCourtesyPhoneDropdown] =
+    useState(false);
+  const [courtesyPhoneLoading, setCourtesyPhoneLoading] = useState(false);
+  const [selectedCourtesyPhone, setSelectedCourtesyPhone] =
+    useState<DeviceInventoryItem | null>(null);
+  const courtesyPhoneSearchInputRef = useRef<HTMLInputElement>(null);
+  const courtesyPhoneDropdownRef = useRef<HTMLDivElement>(null);
+  const courtesyPhoneDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  // 🆕 Stato per il modal telefoni di cortesia
+  const [showCourtesyPhoneModal, setShowCourtesyPhoneModal] = useState(false);
+  const [courtesyPhonesList, setCourtesyPhonesList] = useState<
+    DeviceInventoryItem[]
+  >([]);
+  const [loadingCourtesyList, setLoadingCourtesyList] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -331,6 +375,16 @@ const Accettazione: React.FC = () => {
       ) {
         setShowDeviceDropdown(false);
       }
+
+      // 🆕 Dropdown telefono di cortesia
+      if (
+        courtesyPhoneDropdownRef.current &&
+        !courtesyPhoneDropdownRef.current.contains(event.target as Node) &&
+        courtesyPhoneSearchInputRef.current &&
+        !courtesyPhoneSearchInputRef.current.contains(event.target as Node)
+      ) {
+        setShowCourtesyPhoneDropdown(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -344,6 +398,199 @@ const Accettazione: React.FC = () => {
       loadNoteDataForRepair(noteIdFromQuery);
     }
   }, [noteIdFromQuery]);
+
+  // Funzione per la ricerca telefono di cortesia con debouncing
+  const handleCourtesyPhoneSearchChange = (value: string) => {
+    setCourtesyPhoneSearchQuery(value);
+
+    if (courtesyPhoneDebounceRef.current) {
+      clearTimeout(courtesyPhoneDebounceRef.current);
+    }
+
+    if (!value.trim()) {
+      setShowCourtesyPhoneDropdown(false);
+      setCourtesyPhoneSearchResults([]);
+      return;
+    }
+
+    courtesyPhoneDebounceRef.current = setTimeout(() => {
+      performCourtesyPhoneSearch(value);
+    }, 300);
+  };
+
+  // 🆕 Funzione per eseguire la ricerca telefono di cortesia (con filtro lato client)
+  const performCourtesyPhoneSearch = async (query: string) => {
+    if (!query.trim()) return;
+
+    setCourtesyPhoneLoading(true);
+    const multitenantId = sessionStorage.getItem("IdCompany");
+
+    try {
+      // 🎯 Usiamo lo stesso endpoint dedicato
+      const url = new URL(`${API_URL}/api/DeviceInventory/courtesy-available`);
+
+      if (multitenantId) {
+        url.searchParams.append("multitenantId", multitenantId);
+      }
+
+      console.log("🔍 Ricerca telefono cortesia:", query);
+
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const devices: DeviceInventoryItem[] = Array.isArray(data) ? data : [];
+
+        // 🔎 Filtro lato client per la ricerca testuale
+        const searchLower = query.toLowerCase().trim();
+        const filteredDevices = devices.filter((phone) => {
+          const brandMatch = phone.brand?.toLowerCase().includes(searchLower);
+          const modelMatch = phone.model?.toLowerCase().includes(searchLower);
+          const imeiMatch = phone.imei?.toLowerCase().includes(searchLower);
+          const codeMatch = phone.code?.toLowerCase().includes(searchLower);
+          const colorMatch = phone.color?.toLowerCase().includes(searchLower);
+
+          return (
+            brandMatch || modelMatch || imeiMatch || codeMatch || colorMatch
+          );
+        });
+
+        console.log(
+          `✅ Trovati ${filteredDevices.length} risultati per "${query}"`
+        );
+
+        setCourtesyPhoneSearchResults(filteredDevices);
+        setShowCourtesyPhoneDropdown(filteredDevices.length > 0);
+      } else {
+        const errorText = await response.text();
+        console.error("❌ Errore ricerca:", response.status, errorText);
+        setCourtesyPhoneSearchResults([]);
+        setShowCourtesyPhoneDropdown(false);
+      }
+    } catch (error) {
+      console.error(
+        "❌ Errore durante la ricerca telefono di cortesia:",
+        error
+      );
+      setCourtesyPhoneSearchResults([]);
+      setShowCourtesyPhoneDropdown(false);
+    } finally {
+      setCourtesyPhoneLoading(false);
+    }
+  };
+
+  // 🆕 Funzione per caricare tutti i telefoni di cortesia disponibili
+  const loadCourtesyPhonesList = async () => {
+    setLoadingCourtesyList(true);
+    const multitenantId = sessionStorage.getItem("IdCompany");
+
+    try {
+      // 🎯 Costruiamo l'URL con il parametro multitenantId
+      const url = new URL(`${API_URL}/api/DeviceInventory/courtesy-available`);
+
+      if (multitenantId) {
+        url.searchParams.append("multitenantId", multitenantId);
+      }
+
+      console.log("📞 Chiamata API:", url.toString());
+
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("✅ Telefoni di cortesia caricati:", data);
+
+        // L'endpoint restituisce direttamente l'array
+        setCourtesyPhonesList(Array.isArray(data) ? data : []);
+
+        if (data.length === 0) {
+          console.warn("⚠️ Nessun telefono di cortesia disponibile");
+        }
+      } else {
+        const errorText = await response.text();
+        console.error("❌ Errore caricamento:", response.status, errorText);
+
+        // Mostra messaggio più specifico in base allo status
+        if (response.status === 401) {
+          alert("⚠️ Sessione scaduta. Effettua nuovamente il login.");
+        } else if (response.status === 403) {
+          alert(
+            "⚠️ Non hai i permessi per visualizzare i telefoni di cortesia."
+          );
+        } else {
+          alert(
+            `⚠️ Errore nel caricamento dei telefoni di cortesia (${response.status})`
+          );
+        }
+
+        setCourtesyPhonesList([]);
+      }
+    } catch (error) {
+      console.error(
+        "❌ Errore durante il caricamento telefoni di cortesia:",
+        error
+      );
+
+      // Messaggio di errore più user-friendly
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        alert(
+          "❌ Errore di connessione al server. Verifica la tua connessione internet."
+        );
+      } else {
+        alert(
+          "❌ Errore imprevisto durante il caricamento. Riprova più tardi."
+        );
+      }
+
+      setCourtesyPhonesList([]);
+    } finally {
+      setLoadingCourtesyList(false);
+    }
+  };
+
+  // 🆕 Carica la lista quando si apre il modal
+  useEffect(() => {
+    if (showCourtesyPhoneModal) {
+      loadCourtesyPhonesList();
+    }
+  }, [showCourtesyPhoneModal]);
+
+  // Funzione per selezionare un telefono di cortesia
+  const onSelectCourtesyPhone = (phone: DeviceInventoryItem) => {
+    setSelectedCourtesyPhone(phone);
+    setCourtesyPhoneSearchQuery(
+      `${phone.brand} ${phone.model} - ${phone.imei}`
+    );
+    setShowCourtesyPhoneDropdown(false);
+
+    // Aggiorna il campo courtesyPhone nei dati del dispositivo
+    setDispositivoData({
+      ...dispositivoData,
+      courtesyPhone: phone.code, // Salviamo il codice del dispositivo
+    });
+  };
+
+  // Funzione per cancellare la selezione telefono di cortesia
+  const clearCourtesyPhoneSelection = () => {
+    setSelectedCourtesyPhone(null);
+    setCourtesyPhoneSearchQuery("");
+    setDispositivoData({
+      ...dispositivoData,
+      courtesyPhone: "",
+    });
+  };
 
   // 🆕 Funzione per caricare i dati della nota tramite GUID
   const loadNoteDataForRepair = async (noteGuid: string) => {
@@ -455,14 +702,11 @@ const Accettazione: React.FC = () => {
     try {
       const token = sessionStorage.getItem("token");
 
-      const response = await fetch(
-        `${API_URL}/api/customer/${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_URL}/api/customer/${customerId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.ok) {
         const customerData = await response.json();
@@ -1028,13 +1272,15 @@ const Accettazione: React.FC = () => {
       paymentType: repairData.paymentType || null,
       billingInfo: repairData.billingInfo || null,
       unlockCode: dispositivoData.unlockCode || null,
-      courtesyPhone: dispositivoData.courtesyPhone || null,
+      courtesyPhone:
+        selectedCourtesyPhone?.code || dispositivoData.courtesyPhone || null, // 🆕 Aggiungi telefono cortesia
+      courtesyPhoneId: selectedCourtesyPhone?.id || null, // 🆕 ID per tracking
     };
 
     return {
       customerId: selectedCustomer?.id || null,
       newCustomer: customerPayload,
-      deviceId: selectedDevice?.id || null, // per create rimane l'id numerico del registro dispositivi
+      deviceId: selectedDevice?.id || null,
       newDevice: devicePayload,
       repairData: repairPayload,
       notes: repairData.billingInfo || null,
@@ -2075,20 +2321,135 @@ const Accettazione: React.FC = () => {
                         placeholder="Codice di sblocco"
                       />
                     </div>
+                    {/* Campo Telefono di Cortesia - CON ICONA PER MODAL */}
+                    {/* Campo Telefono di Cortesia - CON ICONA PER MODAL */}
                     <div className={styles.formGroup}>
                       <label>Telefono di cortesia</label>
-                      <input
-                        type="text"
-                        className={styles.formControl}
-                        value={dispositivoData.courtesyPhone}
-                        onChange={(e) =>
-                          setDispositivoData({
-                            ...dispositivoData,
-                            courtesyPhone: e.target.value,
-                          })
-                        }
-                        placeholder="Telefono di cortesia"
-                      />
+                      <div className={styles.searchContainer}>
+                        <input
+                          ref={courtesyPhoneSearchInputRef}
+                          type="text"
+                          className={`${styles.formControl} ${styles.searchInput}`}
+                          placeholder="Cerca o seleziona telefono di cortesia..."
+                          value={courtesyPhoneSearchQuery}
+                          onChange={(e) =>
+                            handleCourtesyPhoneSearchChange(e.target.value)
+                          }
+                          onFocus={() => {
+                            if (courtesyPhoneSearchResults.length > 0) {
+                              setShowCourtesyPhoneDropdown(true);
+                            }
+                          }}
+                          readOnly={selectedCourtesyPhone !== null}
+                        />
+
+                        {/* 🆕 ICONA PER APRIRE IL MODAL */}
+                        <button
+                          type="button"
+                          className={styles.addClientButton}
+                          onClick={() => setShowCourtesyPhoneModal(true)}
+                          title="Visualizza telefoni di cortesia disponibili"
+                        >
+                          📱
+                        </button>
+
+                        {selectedCourtesyPhone && (
+                          <button
+                            type="button"
+                            className={styles.clearButton}
+                            onClick={clearCourtesyPhoneSelection}
+                            title="Cancella selezione"
+                          >
+                            ×
+                          </button>
+                        )}
+
+                        {courtesyPhoneLoading && (
+                          <div className={styles.loadingIndicator}>
+                            <div className={styles.spinner}></div>
+                          </div>
+                        )}
+
+                        {/* 🆕🆕🆕 AGGIUNGI QUESTO DROPDOWN QUI 🆕🆕🆕 */}
+                        {showCourtesyPhoneDropdown &&
+                          courtesyPhoneSearchResults.length > 0 && (
+                            <div
+                              ref={courtesyPhoneDropdownRef}
+                              className={styles.dropdown}
+                            >
+                              {courtesyPhoneSearchResults.map((phone) => (
+                                <div
+                                  key={phone.id}
+                                  className={styles.dropdownItem}
+                                  onClick={() => onSelectCourtesyPhone(phone)}
+                                >
+                                  <div className={styles.customerInfo}>
+                                    <div className={styles.customerName}>
+                                      <strong>
+                                        {phone.deviceType === "smartphone"
+                                          ? "📱"
+                                          : "📋"}{" "}
+                                        {phone.brand} {phone.model}
+                                      </strong>
+                                    </div>
+                                    <div className={styles.customerDetails}>
+                                      <span>IMEI: {phone.imei}</span>
+                                      <span> • Codice: {phone.code}</span>
+                                    </div>
+                                    <div className={styles.customerAddress}>
+                                      <span
+                                        style={{
+                                          background:
+                                            phone.deviceCondition === "new"
+                                              ? "#d4edda"
+                                              : phone.deviceCondition ===
+                                                "refurbished"
+                                              ? "#d1ecf1"
+                                              : "#fff3cd",
+                                          padding: "2px 6px",
+                                          borderRadius: "3px",
+                                          fontSize: "0.8rem",
+                                          fontWeight: "600",
+                                          marginRight: "8px",
+                                        }}
+                                      >
+                                        {phone.deviceCondition === "new"
+                                          ? "Nuovo"
+                                          : phone.deviceCondition === "used"
+                                          ? "Usato"
+                                          : "Rigenerato"}
+                                      </span>
+                                      {phone.color} • 🤝 CORTESIA
+                                      {phone.location &&
+                                        ` • 📍 ${phone.location}`}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        {/* 🆕🆕🆕 FINE DROPDOWN 🆕🆕🆕 */}
+                      </div>
+
+                      {/* Info dispositivo selezionato */}
+                      {selectedCourtesyPhone && (
+                        <div
+                          style={{
+                            marginTop: "8px",
+                            padding: "8px",
+                            backgroundColor: "#e7f3ff",
+                            borderRadius: "4px",
+                            fontSize: "0.9em",
+                          }}
+                        >
+                          <strong>✓ Selezionato:</strong>{" "}
+                          {selectedCourtesyPhone.brand}{" "}
+                          {selectedCourtesyPhone.model}
+                          <span style={{ marginLeft: "8px", color: "#666" }}>
+                            (Codice: {selectedCourtesyPhone.code})
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -3255,6 +3616,289 @@ const Accettazione: React.FC = () => {
                 onClick={handlePrintRepairDocument}
               >
                 🖨️ Stampa Documento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🆕 MODAL TELEFONI DI CORTESIA */}
+      {showCourtesyPhoneModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowCourtesyPhoneModal(false);
+            }
+          }}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "900px" }}
+          >
+            <div className={styles.modalHeader}>
+              <h4>📱 Seleziona Telefono di Cortesia</h4>
+              <button
+                type="button"
+                className={styles.modalCloseButton}
+                onClick={() => setShowCourtesyPhoneModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              {loadingCourtesyList ? (
+                <div style={{ textAlign: "center", padding: "40px" }}>
+                  <div
+                    className={styles.spinner}
+                    style={{ margin: "0 auto 16px" }}
+                  ></div>
+                  <p>Caricamento telefoni di cortesia...</p>
+                </div>
+              ) : courtesyPhonesList.length === 0 ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "40px",
+                    color: "#666",
+                  }}
+                >
+                  <p style={{ fontSize: "1.2rem", marginBottom: "8px" }}>
+                    📵 Nessun telefono di cortesia disponibile
+                  </p>
+                  <p style={{ fontSize: "0.9rem" }}>
+                    Aggiungi dispositivi di cortesia nel magazzino apparati
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Header informativo */}
+                  <div
+                    style={{
+                      padding: "12px 16px",
+                      background: "#e7f3ff",
+                      borderRadius: "6px",
+                      marginBottom: "16px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                    }}
+                  >
+                    <span style={{ fontSize: "1.5rem" }}>🤝</span>
+                    <div>
+                      <strong style={{ display: "block", marginBottom: "4px" }}>
+                        {courtesyPhonesList.length} dispositivi di cortesia
+                        disponibili
+                      </strong>
+                      <span style={{ fontSize: "0.85rem", color: "#666" }}>
+                        Clicca su un dispositivo per selezionarlo
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Griglia dispositivi */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fill, minmax(280px, 1fr))",
+                      gap: "16px",
+                      maxHeight: "60vh",
+                      overflowY: "auto",
+                      padding: "4px",
+                    }}
+                  >
+                    {courtesyPhonesList.map((phone) => (
+                      <div
+                        key={phone.id}
+                        onClick={() => {
+                          onSelectCourtesyPhone(phone);
+                          setShowCourtesyPhoneModal(false);
+                        }}
+                        style={{
+                          border: "2px solid #ddd",
+                          borderRadius: "10px",
+                          padding: "16px",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          background:
+                            selectedCourtesyPhone?.id === phone.id
+                              ? "#e7f3ff"
+                              : "white",
+                          borderColor:
+                            selectedCourtesyPhone?.id === phone.id
+                              ? "#17a2b8"
+                              : "#ddd",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = "#17a2b8";
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 12px rgba(23, 162, 184, 0.2)";
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedCourtesyPhone?.id !== phone.id) {
+                            e.currentTarget.style.borderColor = "#ddd";
+                          }
+                          e.currentTarget.style.boxShadow = "none";
+                          e.currentTarget.style.transform = "translateY(0)";
+                        }}
+                      >
+                        {/* Header card */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            marginBottom: "12px",
+                            paddingBottom: "12px",
+                            borderBottom: "1px solid #eee",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "2rem",
+                              background: "#f8f9fa",
+                              width: "50px",
+                              height: "50px",
+                              borderRadius: "8px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {phone.deviceType === "smartphone" ? "📱" : "📋"}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div
+                              style={{
+                                fontWeight: "bold",
+                                fontSize: "1rem",
+                                color: "#333",
+                                marginBottom: "4px",
+                              }}
+                            >
+                              {phone.brand} {phone.model}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "#17a2b8",
+                                fontWeight: "600",
+                                background: "#e7f3ff",
+                                padding: "2px 8px",
+                                borderRadius: "4px",
+                                display: "inline-block",
+                              }}
+                            >
+                              🤝 CORTESIA
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dettagli */}
+                        <div style={{ fontSize: "0.85rem", lineHeight: "1.6" }}>
+                          <div style={{ marginBottom: "6px" }}>
+                            <span style={{ color: "#666", fontWeight: "500" }}>
+                              Codice:
+                            </span>{" "}
+                            <span style={{ color: "#333", fontWeight: "600" }}>
+                              {phone.code}
+                            </span>
+                          </div>
+                          <div style={{ marginBottom: "6px" }}>
+                            <span style={{ color: "#666", fontWeight: "500" }}>
+                              IMEI:
+                            </span>{" "}
+                            <span
+                              style={{
+                                color: "#333",
+                                fontFamily: "monospace",
+                                fontSize: "0.8rem",
+                              }}
+                            >
+                              {phone.imei}
+                            </span>
+                          </div>
+                          <div style={{ marginBottom: "6px" }}>
+                            <span style={{ color: "#666", fontWeight: "500" }}>
+                              Colore:
+                            </span>{" "}
+                            <span style={{ color: "#333" }}>{phone.color}</span>
+                          </div>
+                          <div style={{ marginBottom: "6px" }}>
+                            <span style={{ color: "#666", fontWeight: "500" }}>
+                              Condizione:
+                            </span>{" "}
+                            <span
+                              style={{
+                                color: "#333",
+                                background:
+                                  phone.deviceCondition === "new"
+                                    ? "#d4edda"
+                                    : phone.deviceCondition === "refurbished"
+                                    ? "#d1ecf1"
+                                    : "#fff3cd",
+                                padding: "2px 6px",
+                                borderRadius: "3px",
+                                fontSize: "0.8rem",
+                                fontWeight: "600",
+                              }}
+                            >
+                              {phone.deviceCondition === "new"
+                                ? "Nuovo"
+                                : phone.deviceCondition === "used"
+                                ? "Usato"
+                                : "Rigenerato"}
+                            </span>
+                          </div>
+                          {phone.location && (
+                            <div>
+                              <span
+                                style={{ color: "#666", fontWeight: "500" }}
+                              >
+                                Ubicazione:
+                              </span>{" "}
+                              <span style={{ color: "#333" }}>
+                                {phone.location}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Indicatore selezione */}
+                        {selectedCourtesyPhone?.id === phone.id && (
+                          <div
+                            style={{
+                              marginTop: "12px",
+                              padding: "8px",
+                              background: "#28a745",
+                              color: "white",
+                              borderRadius: "6px",
+                              textAlign: "center",
+                              fontWeight: "600",
+                              fontSize: "0.85rem",
+                            }}
+                          >
+                            ✓ Selezionato
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => setShowCourtesyPhoneModal(false)}
+              >
+                Chiudi
               </button>
             </div>
           </div>
