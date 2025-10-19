@@ -299,33 +299,151 @@ const Accettazione: React.FC = () => {
   ];
 
   // Stato per gli elementi diagnostici
+  // Stati per la diagnostica - LISTA COMPLETA 1:1 CON IL BACKEND
   const [diagnosticItems, setDiagnosticItems] = useState<DiagnosticItem[]>([
+    // 1. Telefono Spento
     {
-      id: "device-info",
-      icon: "📱",
-      label: "Info sul dispositivo",
+      id: "telefono-spento",
+      icon: "📴",
+      label: "Telefono spento",
       active: true,
     },
-    { id: "apple-pay", icon: "💳", label: "Apple Pay", active: true },
-    { id: "battery", icon: "🔋", label: "Condizione batteria", active: true },
-    { id: "bluetooth", icon: "🔵", label: "Bluetooth", active: true },
-    { id: "camera", icon: "📷", label: "Fotocamera", active: true },
-    { id: "cellular", icon: "📡", label: "Rete dati cellulare", active: true },
-    { id: "clock", icon: "⏰", label: "Orologio", active: true },
-    { id: "sim", icon: "🔐", label: "SIM", active: true },
-    { id: "face-id", icon: "😊", label: "Face ID", active: true },
-    { id: "scanner", icon: "🔍", label: "Scanner UDID", active: true },
-    { id: "magsafe", icon: "🔐", label: "MagSafe", active: true },
-    { id: "sensors", icon: "📊", label: "Sensori", active: true },
-    { id: "services", icon: "☁️", label: "Servizi", active: true },
-    { id: "software", icon: "⚙️", label: "Software", active: true },
-    { id: "system", icon: "📻", label: "Sistema", active: true },
-    { id: "wifi", icon: "📶", label: "Wi-Fi", active: true },
-    { id: "rf-cellular", icon: "🎵", label: "RF cellulare", active: true },
+
+    // 2. Vetro Rotto
+    { id: "vetro-rotto", icon: "🔨", label: "Vetro rotto", active: true },
+
+    // 3. Touchscreen
+    { id: "touchscreen", icon: "👆", label: "Touchscreen", active: true },
+
+    // 4. LCD
+    { id: "lcd", icon: "📺", label: "LCD", active: true },
+
+    // 5. Frame Scollato
     {
-      id: "wireless-problem",
-      icon: "⚡",
-      label: "Problema wireless",
+      id: "frame-scollato",
+      icon: "📲",
+      label: "Frame scollato",
+      active: true,
+    },
+
+    // 6. Batteria
+    { id: "batteria", icon: "🔋", label: "Batteria", active: true },
+
+    // 7. Dock di Ricarica
+    {
+      id: "dock-ricarica",
+      icon: "🔌",
+      label: "Dock di ricarica",
+      active: true,
+    },
+
+    // 8. Back Cover
+    { id: "back-cover", icon: "📱", label: "Back cover", active: true },
+
+    // 9. Telaio
+    { id: "telaio", icon: "🔧", label: "Telaio", active: true },
+
+    // 10. Tasti Volume/Muto
+    {
+      id: "tasti-volume-muto",
+      icon: "🔊",
+      label: "Tasti volume/muto",
+      active: true,
+    },
+
+    // 11. Tasto Standby/Power
+    {
+      id: "tasto-standby-power",
+      icon: "⻏",
+      label: "Tasto standby/power",
+      active: true,
+    },
+
+    // 12. Sensore di Prossimità
+    {
+      id: "sensore-prossimita",
+      icon: "📡",
+      label: "Sensore di prossimità",
+      active: true,
+    },
+
+    // 13. Microfono Chiamate
+    {
+      id: "microfono-chiamate",
+      icon: "🎤",
+      label: "Microfono chiamate",
+      active: true,
+    },
+
+    // 14. Microfono Ambientale
+    {
+      id: "microfono-ambientale",
+      icon: "🎙️",
+      label: "Microfono ambientale",
+      active: true,
+    },
+
+    // 15. Altoparlante Chiamata
+    {
+      id: "altoparlante-chiamata",
+      icon: "🔉",
+      label: "Altoparlante chiamata",
+      active: true,
+    },
+
+    // 16. Speaker/Buzzer
+    { id: "speaker-buzzer", icon: "🔔", label: "Speaker/buzzer", active: true },
+
+    // 17. Vetro Fotocamera Posteriore
+    {
+      id: "vetro-fotocamera-posteriore",
+      icon: "📸",
+      label: "Vetro fotocamera posteriore",
+      active: true,
+    },
+
+    // 18. Fotocamera Posteriore
+    {
+      id: "fotocamera-posteriore",
+      icon: "📷",
+      label: "Fotocamera posteriore",
+      active: true,
+    },
+
+    // 19. Fotocamera Anteriore
+    {
+      id: "fotocamera-anteriore",
+      icon: "🤳",
+      label: "Fotocamera anteriore",
+      active: true,
+    },
+
+    // 20. Tasto Home
+    { id: "tasto-home", icon: "🏠", label: "Tasto home", active: true },
+
+    // 21. Touch ID
+    { id: "touch-id", icon: "👆", label: "Touch ID", active: true },
+
+    // 22. Face ID
+    { id: "face-id", icon: "😊", label: "Face ID", active: true },
+
+    // 23. Wi-Fi
+    { id: "wifi", icon: "📶", label: "Wi-Fi", active: true },
+
+    // 24. Rete
+    { id: "rete", icon: "📡", label: "Rete cellulare", active: true },
+
+    // 25. Chiamata
+    { id: "chiamata", icon: "📞", label: "Chiamata", active: true },
+
+    // 26. Scheda Madre
+    { id: "scheda-madre", icon: "💻", label: "Scheda madre", active: true },
+
+    // 27. Vetro Posteriore
+    {
+      id: "vetro-posteriore",
+      icon: "📳",
+      label: "Vetro posteriore",
       active: true,
     },
   ]);
@@ -1147,45 +1265,38 @@ const Accettazione: React.FC = () => {
   };
 
   // Costruisce SOLO i campi che finiscono in dbo.IncomingTests (camelCase del DTO)
-  const buildIncomingTestDtoDBOnly = (
-    items: { id: string; active: boolean }[]
-  ) => {
+  // Costruisce il DTO per IncomingTest mappato 1:1 con il backend
+  const buildIncomingTestDto = (items: { id: string; active: boolean }[]) => {
     const on = (id: string) => items.find((x) => x.id === id)?.active ?? false;
 
     return {
-      // Se non hai un toggle dedicato, imposta false o aggiungi uno switch in UI (es. "device-off")
-      telefonoSpento: false,
-
-      // Campi che hai già in UI (mappati ai nomi DB via DTO camelCase)
-      batteria: on("battery"),
-      wiFi: on("wifi"),
+      telefonoSpento: on("telefono-spento"),
+      vetroRotto: on("vetro-rotto"),
+      touchscreen: on("touchscreen"),
+      lcd: on("lcd"),
+      frameScollato: on("frame-scollato"),
+      batteria: on("batteria"),
+      dockDiRicarica: on("dock-ricarica"),
+      backCover: on("back-cover"),
+      telaio: on("telaio"),
+      tastiVolumeMuto: on("tasti-volume-muto"),
+      tastoStandbyPower: on("tasto-standby-power"),
+      sensoreDiProssimita: on("sensore-prossimita"),
+      microfonoChiamate: on("microfono-chiamate"),
+      microfonoAmbientale: on("microfono-ambientale"),
+      altoparlanteChiamata: on("altoparlante-chiamata"),
+      speakerBuzzer: on("speaker-buzzer"),
+      vetroFotocameraPosteriore: on("vetro-fotocamera-posteriore"),
+      fotocameraPosteriore: on("fotocamera-posteriore"),
+      fotocameraAnteriore: on("fotocamera-anteriore"),
+      tastoHome: on("tasto-home"),
+      touchId: on("touch-id"),
       faceId: on("face-id"),
-      touchId: on("scanner"), // alias: “scanner” → touch_id
-      sensoreDiProssimita: on("sensors"),
-      schedaMadre: on("system"),
-      rete: on("cellular") || on("rf-cellular"),
-      chiamata: on("cellular"), // se hai un toggle specifico “call” usa quello
-      // Fotocamere: se hai un solo toggle “camera” lo riutilizzi per entrambe:
-      fotocameraPosteriore: on("camera"),
-      fotocameraAnteriore: on("camera"),
-
-      // Questi campi non li hai (ancora) a UI → li lasci a false (o omettili)
-      vetroRotto: false,
-      touchscreen: false,
-      lcd: false,
-      frameScollato: false,
-      dockDiRicarica: false,
-      backCover: false,
-      telaio: false,
-      tastiVolumeMuto: false,
-      tastoStandbyPower: false,
-      microfonoChiamate: false,
-      microfonoAmbientale: false,
-      altoparlantteChiamata: false, // ⚠️ nel DTO è scritto con doppia “tt”
-      speakerBuzzer: false,
-      vetroFotocameraPosteriore: false,
-      tastoHome: false,
-      vetroPosteriore: false,
+      wiFi: on("wifi"),
+      rete: on("rete"),
+      chiamata: on("chiamata"),
+      schedaMadre: on("scheda-madre"),
+      vetroPosteriore: on("vetro-posteriore"),
     };
   };
 
@@ -1193,7 +1304,9 @@ const Accettazione: React.FC = () => {
     repairGuid: string,
     items: { id: string; active: boolean }[]
   ) => {
-    const dto = buildIncomingTestDtoDBOnly(items);
+    const dto = buildIncomingTestDto(items);
+    console.log("DTO diagnostica ingresso:", dto);
+
     const res = await fetch(
       `${API_URL}/api/repair/${repairGuid}/incoming-test`,
       {
@@ -1205,6 +1318,7 @@ const Accettazione: React.FC = () => {
         body: JSON.stringify(dto),
       }
     );
+
     if (!res.ok) {
       const t = await res.text().catch(() => "");
       throw new Error(`Salvataggio diagnostica fallito (${res.status}) ${t}`);

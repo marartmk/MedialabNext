@@ -1,4 +1,7 @@
-/* Stili esistenti convertiti in CSS Modules */
+/* ===== ACCETTAZIONE RIPARAZIONE - CSS MODULES ===== */
+/* Versione pulita e ottimizzata - Identica a Modifica */
+
+/* ========== LAYOUT PRINCIPALE ========== */
 .mainLayout {
   display: flex;
   height: 100vh;
@@ -16,8 +19,10 @@
   padding: 24px;
   overflow-y: auto;
   min-height: 0;
+  background-color: #f8f9fa;
 }
 
+/* ========== HEADER SCHEDA ========== */
 .schedaHeader {
   display: flex;
   justify-content: space-between;
@@ -25,6 +30,7 @@
   padding: 16px 0;
   border-bottom: 1px solid #ccc;
   margin: 0 24px;
+  background: white;
 }
 
 .leftBlock {
@@ -46,6 +52,13 @@
   min-width: 55px;
   min-height: 55px;
   flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.roundBtn:hover {
+  background-color: #333 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
 }
 
 .plusIcon {
@@ -93,10 +106,11 @@
 }
 
 .breadcrumb {
-  font-size: 0.85rem;
-  color: #666;
+  font-size: 0.9rem;
+  color: #333;
   display: flex;
   align-items: center;
+  font-weight: 600;
 }
 
 .breadcrumbItem {
@@ -108,12 +122,14 @@
 }
 
 .breadcrumbSeparator {
-  margin: 0 5px;
+  margin: 0 8px;
+  color: #999;
+  font-weight: 400;
 }
 
-/* Stili per il form */
+/* ========== CONTAINER FORM ========== */
 .repairFormContainer {
- background: white;
+  background: white;
   border-radius: 10px;
   padding: 20px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
@@ -123,22 +139,25 @@
 .pageTitle {
   text-align: left;
   margin-bottom: 24px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #f0f0f0;
   padding-bottom: 16px;
 }
 
 .pageTitle h1 {
   font-size: 2rem;
   margin: 0;
-  color: #333;
+  color: #1a1a1a;
+  font-weight: 700;
 }
 
 .pageTitle p {
-  margin: 4px 0 0 0;
+  margin: 6px 0 0 0;
   color: #666;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
+/* ========== LAYOUT COLONNE ========== */
 .pageContainer {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -163,21 +182,33 @@
   margin-bottom: 16px;
 }
 
+/* ========== SEZIONI FORM ========== */
 .formSection {
-  border: 2px solid #333;
-  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
   padding: 16px;
   background: #fafafa;
-  margin-top: 15px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.formSection:hover {
+  border-color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .formSection h3 {
   margin: 0 0 16px 0;
   font-size: 1.1rem;
-  font-weight: bold;
-  color: #333;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
+/* ========== FORM CONTROLS ========== */
 .formGroup {
   margin-bottom: 12px;
 }
@@ -185,39 +216,47 @@
 .formGroup label {
   display: block;
   margin-bottom: 4px;
-  font-size: 0.9rem;
-  color: #333;
-  font-weight: 500;
+  font-size: 0.85rem;
+  color: #1a1a1a;
+  font-weight: 600;
+  letter-spacing: 0.1px;
 }
 
 .formControl {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  font-size: 0.85rem;
   background: white;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  color: #333;
+  transition: all 0.3s ease;
+  font-family: inherit;
 }
 
 .formControl:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+  border-color: #333;
+  box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.1);
+  background-color: #ffffff;
+}
+
+.formControl:hover {
+  border-color: #999;
 }
 
 .formControl[readonly] {
   background-color: #f8f9fa;
   color: #666;
+  cursor: not-allowed;
 }
 
-/* Stili per i campi con errore */
 .formControl.error {
   border-color: #dc3545;
-  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.15);
 }
 
-/* Stili per la ricerca cliente */
+/* ========== RICERCA CON DROPDOWN ========== */
 .searchContainer {
   position: relative;
   display: flex;
@@ -225,7 +264,7 @@
 }
 
 .searchInput {
-  padding-right: 80px; /* Spazio per il pulsante add, clear e loading */
+  padding-right: 80px;
 }
 
 .addClientButton {
@@ -247,6 +286,7 @@
   justify-content: center;
   border-radius: 4px;
   z-index: 3;
+  transition: background 0.2s ease;
 }
 
 .addClientButton:hover {
@@ -270,6 +310,7 @@
   align-items: center;
   justify-content: center;
   z-index: 2;
+  transition: color 0.2s ease;
 }
 
 .clearButton:hover {
@@ -298,7 +339,7 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Dropdown per i risultati della ricerca */
+/* ========== DROPDOWN RISULTATI ========== */
 .dropdown {
   position: absolute;
   top: 100%;
@@ -350,18 +391,26 @@
   color: #999;
 }
 
-/* Sezione diagnostica */
+/* ========== DIAGNOSTICA - IDENTICA A MODIFICA ========== */
 .diagnosticaSection {
-  min-height: 300px;
-  grid-column: span 1;
+  min-height: 280px;
+  grid-column: span 2;
 }
 
 .diagnosticaGrid {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
-  grid-template-rows: repeat(2, 1fr);
   gap: 6px;
   justify-items: center;
+  align-items: start;
+}
+
+.diagnosticaItemWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: 70px;
 }
 
 .diagnosticaItem {
@@ -369,34 +418,44 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px;
+  padding: 6px 4px;
   border-radius: 8px;
   background: white;
-  border: 1px solid #ddd;
+  border: 1px solid #ccc;
   text-align: center;
-  font-size: 0.8rem;
-  width: 70px;
-  height: 70px;
+  width: 55px;
+  height: 55px;
   position: relative;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.diagnosticaItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #333;
 }
 
 .diagnosticaIcon {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   filter: grayscale(100%);
-  opacity: 0.7;
-  margin-bottom: 4px;
+  opacity: 0.6;
+  margin-bottom: 2px;
+  transition: all 0.3s ease;
 }
 
+/* STATO ATTIVO - VERDE */
 .diagnosticaItem.active {
-  background: #e8f5e8;
+  background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
   border-color: #28a745;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
 }
 
 .diagnosticaItem.active .diagnosticaIcon {
   filter: grayscale(0%);
   opacity: 1;
+  transform: scale(1.05);
 }
 
 .diagnosticaItem.active::after {
@@ -405,16 +464,40 @@
   top: 4px;
   right: 4px;
   color: #28a745;
-  font-weight: bold;
+  font-weight: 900;
   font-size: 0.8rem;
+  background: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.diagnosticaItemWrapper {
+.diagnosticaItem.inactive::after {
+  content: "✕";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: #dc3545;
+  font-weight: 900;
+  font-size: 0.9rem;
+  background: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  max-width: 90px;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* STATO INATTIVO - GRIGIO */
+.diagnosticaItem.inactive {
+  background: #fef2f2;
+  border-color: #f10e0e;
 }
 
 .diagnosticaLabel {
@@ -422,25 +505,44 @@
   text-align: center;
   line-height: 1.1;
   color: #333;
-  margin-top: 4px;
-  font-weight: 500;
+  font-weight: 600;
+  margin-top: 2px;
 }
 
-.inactive {
-  background: white;
-  border-color: #ddd;
-}
-
-/* Info generazione automatica */
+/* ========== INFO GENERAZIONE AUTOMATICA ========== */
 .autoGenerationInfo {
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border: 1px solid #dee2e6;
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 16px;
   margin-bottom: 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Stili per errori di validazione */
+/* ========== PREZZO ========== */
+.priceInputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.priceInputContainer .formControl {
+  padding-right: 32px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.currencyLabel {
+  position: absolute;
+  right: 12px;
+  color: #666;
+  font-weight: 700;
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+
+/* ========== ERRORI VALIDAZIONE ========== */
 .errorText {
   color: #dc3545;
   font-size: 0.8rem;
@@ -450,67 +552,71 @@
 }
 
 .validationErrorsContainer {
-  background: #f8d7da;
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
   border: 1px solid #f5c6cb;
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 16px;
   margin: 16px 0;
   color: #721c24;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
 }
 
 .validationErrorsContainer h4 {
   margin: 0 0 12px 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #721c24;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .validationErrorsContainer ul {
   margin: 0;
   padding-left: 20px;
+  list-style-type: none;
 }
 
 .validationError {
-  margin-bottom: 4px;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-/* Stili per il container del prezzo */
-.priceInputContainer {
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  line-height: 1.3;
   position: relative;
-  display: flex;
-  align-items: center;
+  padding-left: 16px;
 }
 
-.priceInputContainer .formControl {
-  padding-right: 30px;
-}
-
-.currencyLabel {
+.validationError::before {
+  content: "⚠️";
   position: absolute;
-  right: 12px;
-  color: #666;
-  font-weight: 500;
-  pointer-events: none;
+  left: 0;
+  top: 0;
 }
 
-/* Bottoni azioni */
+/* ========== BOTTONI AZIONI ========== */
 .formActions {
   display: flex;
   justify-content: center;
   gap: 16px;
   padding-top: 24px;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 24px;
 }
 
 .btn {
   padding: 10px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: all 0.2s;
+  font-weight: 600;
+  transition: all 0.3s ease;
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .btn:disabled {
@@ -520,42 +626,61 @@
 }
 
 .btnSuccess {
-  background: #28a745;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
   color: white;
 }
 
 .btnSuccess:hover:not(:disabled) {
-  background: #218838;
+  background: linear-gradient(135deg, #218838 0%, #1ba87d 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(40, 167, 69, 0.3);
 }
 
 .btnSecondary {
-  background: #6c757d;
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
   color: white;
 }
 
 .btnSecondary:hover:not(:disabled) {
-  background: #5a6268;
+  background: linear-gradient(135deg, #5a6268 0%, #343a40 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(108, 117, 125, 0.3);
 }
 
 .btnDark {
-  background: #343a40;
+  background: linear-gradient(135deg, #343a40 0%, #23272b 100%);
   color: white;
 }
 
 .btnDark:hover:not(:disabled) {
-  background: #23272b;
+  background: linear-gradient(135deg, #23272b 0%, #1a1d20 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(52, 58, 64, 0.3);
 }
 
 .btnPrimary {
-  background: #007bff;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
   color: white;
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: #0056b3;
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.3);
 }
 
-/* Stili per il modal di nuovo cliente */
+.btnInfo {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  color: white;
+}
+
+.btnInfo:hover:not(:disabled) {
+  background: linear-gradient(135deg, #138496 0%, #0f6674 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(23, 162, 184, 0.3);
+}
+
+/* ========== MODALS ========== */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -607,6 +732,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: color 0.2s ease;
 }
 
 .modalCloseButton:hover {
@@ -625,7 +751,7 @@
   border-top: 1px solid #ddd;
 }
 
-/* Stili per la form del cliente nel modal */
+/* ========== CUSTOMER FORM (MODAL) ========== */
 .customerForm {
   display: flex;
   flex-direction: column;
@@ -680,15 +806,15 @@
   margin: 0;
 }
 
-/* Animazioni */
+/* ========== ANIMAZIONI ========== */
 @keyframes fadeIn {
   from { opacity: 0; }
-  to   { opacity: 1; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
   from { transform: translateY(40px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes slideInError {
@@ -702,131 +828,30 @@
   }
 }
 
-/* Indicatore di caricamento per i bottoni */
-.btn.loading {
-  color: transparent;
+/* ========== STATI DI CARICAMENTO ========== */
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  gap: 12px;
+  color: #666666;
+  background: #f8f8f8;
+  border-radius: 10px;
+  border: 1px dashed #cccccc;
+  flex-direction: column;
 }
 
-.btn.loading::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
+.loadingSpinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #e0e0e0;
+  border-top: 2px solid #333333;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  color: white;
 }
 
-/* Stili per il dropdown degli operatori */
-.formControl option {
-  padding: 8px;
-}
-
-/* Miglioramenti per i campi numerici */
-input[type="number"].formControl {
-  text-align: right;
-}
-
-/* Stili per il feedback di successo */
-.successMessage {
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
-  border-radius: 6px;
-  padding: 16px;
-  margin: 16px 0;
-  color: #155724;
-  font-size: 0.9rem;
-}
-
-.successMessage h4 {
-  margin: 0 0 8px 0;
-  font-size: 1rem;
-  color: #155724;
-}
-
-/* Stili per i campi di testo con contatore caratteri */
-.textareaContainer {
-  position: relative;
-}
-
-.characterCounter {
-  position: absolute;
-  bottom: 8px;
-  right: 12px;
-  font-size: 0.7rem;
-  color: #666;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 2px 4px;
-  border-radius: 3px;
-}
-
-/* Highlight per campi modificati */
-.formControl.modified {
-  border-left: 3px solid #007bff;
-  background-color: #f8f9ff;
-}
-
-/* Stili per il progresso di completamento form */
-.formProgress {
-  background: #e9ecef;
-  height: 4px;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-
-.formProgressBar {
-  height: 100%;
-  background: linear-gradient(90deg, #28a745, #20c997);
-  transition: width 0.3s ease;
-  border-radius: 2px;
-}
-
-/* Tooltip per i campi */
-.fieldTooltip {
-  position: relative;
-  display: inline-block;
-}
-
-.fieldTooltip .tooltipText {
-  visibility: hidden;
-  width: 200px;
-  background-color: #333;
-  color: white;
-  text-align: center;
-  padding: 8px;
-  border-radius: 6px;
-  position: absolute;
-  z-index: 1000;
-  bottom: 125%;
-  left: 50%;
-  margin-left: -100px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  font-size: 0.8rem;
-  line-height: 1.3;
-}
-
-.fieldTooltip:hover .tooltipText {
-  visibility: visible;
-  opacity: 1;
-}
-
-.btnInfo {
-  background-color: #17a2b8;
-  color: white;
-}
-
-.btnInfo:hover {
-  background-color: #138496;
-}
-
-/* ===== MODALE STAMPA A4 PROFESSIONALE - CLASSI GLOBALI ===== */
+/* ========== MODAL STAMPA A4 (CLASSI GLOBALI) ========== */
 :global(.accOverlay) {
   position: fixed;
   inset: 0;
@@ -884,31 +909,12 @@ input[type="number"].formControl {
   gap: 12px;
 }
 
-:global(.accLogoIcon) {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-}
-
-:global(.accLogoText) {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-:global(.accCompanyName) {
-  font-size: 28px;
-  font-weight: 900;
-  color: #2c3e50;
-  letter-spacing: -1px;
-  text-transform: uppercase;
+:global(.accLogoImage) {
+  height: 52px;
+  width: auto;
+  max-width: 240px;
+  object-fit: contain;
+  display: block;
 }
 
 :global(.accCompanyTagline) {
@@ -1289,27 +1295,22 @@ input[type="number"].formControl {
   background: linear-gradient(135deg, #7f8c8d, #95a5a6);
 }
 
-/* === STILI STAMPA OTTIMIZZATI E COMPATTI === */
+/* ========== STILI STAMPA OTTIMIZZATI ========== */
 @media print {
-  /* Reset generale per la stampa */
   * {
     -webkit-print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
 
-  /* Nasconde tutto tranne il contenuto da stampare */
   body * {
     visibility: hidden !important;
   }
 
-  /* Mostra solo il contenuto del documento */
   :global(.accSheet),
   :global(.accSheet) * {
     visibility: visible !important;
   }
 
-  /* === STILI COMPATTI OTTIMIZZATI === */
-  /* Riduzione generale più aggressiva */
   :global(.accSheet) {
     position: absolute !important;
     left: 0 !important;
@@ -1330,11 +1331,9 @@ input[type="number"].formControl {
     transform-origin: top left !important;
   }
 
-  /* Nasconde overlay e azioni */
   :global(.accOverlay) {
     position: static !important;
     background: none !important;
-    backdrop-filter: none !important;
   }
 
   :global(.accModal) {
@@ -1354,13 +1353,11 @@ input[type="number"].formControl {
     display: none !important;
   }
 
-  /* Configurazione pagina */
   @page {
     size: A4 portrait;
     margin: 5mm 3mm !important;
   }
 
-  /* Riorganizzazione header: dati azienda a sinistra, autorizzazione a destra */
   :global(.accHeaderPro) {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
@@ -1381,11 +1378,8 @@ input[type="number"].formControl {
     margin-top: 0 !important;
   }
 
-  /* Riduzione dimensioni header */
-  :global(.accCompanyName) {
-    font-size: 14pt !important;
-    margin-bottom: 1mm !important;
-    line-height: 1.1 !important;
+  :global(.accLogoImage) {
+    height: 40px !important;
   }
 
   :global(.accCompanyTagline) {
@@ -1398,12 +1392,6 @@ input[type="number"].formControl {
     margin-left: 0 !important;
     margin-top: 2mm !important;
     line-height: 1.1 !important;
-  }
-
-  :global(.accLogoIcon) {
-    width: 35px !important;
-    height: 35px !important;
-    font-size: 16px !important;
   }
 
   :global(.accDocTitle) {
@@ -1424,14 +1412,12 @@ input[type="number"].formControl {
     align-items: flex-end !important;
   }
 
-  /* Divider più sottile */
   :global(.accDivider) {
     margin: 4px 0 !important;
     height: 0.5px !important;
     background: #000 !important;
   }
 
-  /* Layout grid più compatto */
   :global(.accInfoGrid) {
     grid-template-columns: 1fr 1fr !important;
     gap: 6px !important;
@@ -1476,7 +1462,6 @@ input[type="number"].formControl {
     line-height: 1.1 !important;
   }
 
-  /* Sezione problema più compatta */
   :global(.accProblemSection) {
     background: #ffffcc !important;
     padding: 8px !important;
@@ -1497,7 +1482,6 @@ input[type="number"].formControl {
     line-height: 1.1 !important;
   }
 
-  /* Tabella più compatta */
   :global(.accTableSection) {
     margin-bottom: 8px !important;
   }
@@ -1522,7 +1506,6 @@ input[type="number"].formControl {
     border: 1px solid #ccc !important;
   }
 
-  /* Sezione privacy ultra compatta */
   :global(.accPrivacySection) {
     background: #f0f0f0 !important;
     border: 1px solid #000 !important;
@@ -1550,7 +1533,6 @@ input[type="number"].formControl {
     border-left: 2px solid #000 !important;
   }
 
-  /* Area firma più compatta */
   :global(.accConsentSection) {
     margin-top: 4px !important;
     padding-top: 4px !important;
@@ -1594,7 +1576,6 @@ input[type="number"].formControl {
     border: 1px solid #000 !important;
   }
 
-  /* Footer più piccolo */
   :global(.accFooter) {
     margin-top: 4px !important;
     padding-top: 2px !important;
@@ -1606,7 +1587,6 @@ input[type="number"].formControl {
     text-align: center !important;
   }
 
-  /* Forza tutto su una pagina con misure più aggressive */
   :global(.accSheet) * {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
@@ -1620,7 +1600,7 @@ input[type="number"].formControl {
   }
 }
 
-/* Responsive Design */
+/* ========== RESPONSIVE DESIGN ========== */
 @media (max-width: 1200px) {
   .pageContainer {
     grid-template-columns: 1fr;
@@ -1631,7 +1611,7 @@ input[type="number"].formControl {
   }
   
   .diagnosticaGrid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 
@@ -1655,27 +1635,38 @@ input[type="number"].formControl {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    width: 100%;
   }
   
   .dateBox {
     min-width: auto;
     width: 100%;
+    height: 40px;
+  }
+  
+  .pageTitle {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .pageTitle h1 {
+    font-size: 1.5rem;
   }
   
   .topRow {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
   
   .diagnosticaGrid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
   }
   
   .diagnosticaItem {
-    width: 60px;
-    height: 60px;
-    font-size: 0.7rem;
+    width: 50px;
+    height: 50px;
+    padding: 4px 3px;
   }
   
   .diagnosticaIcon {
@@ -1694,7 +1685,8 @@ input[type="number"].formControl {
   
   .btn {
     width: 100%;
-    max-width: 300px;
+    max-width: 280px;
+    justify-content: center;
   }
   
   .validationErrorsContainer {
@@ -1750,7 +1742,6 @@ input[type="number"].formControl {
     gap: 8px;
   }
 
-  /* Modal responsive */
   :global(.accModal) {
     width: 100%;
     height: 100vh;
@@ -1799,16 +1790,16 @@ input[type="number"].formControl {
   }
   
   .pageTitle h1 {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
   }
   
   .pageTitle p {
-    font-size: 1rem;
+    font-size: 0.85rem;
   }
   
   .formSection {
     padding: 12px;
-    margin-top: 12px;
+    margin-bottom: 12px;
   }
   
   .formSection h3 {
@@ -1816,7 +1807,21 @@ input[type="number"].formControl {
   }
   
   .diagnosticaGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .diagnosticaItem {
+    width: 45px;
+    height: 45px;
+    padding: 3px 2px;
+  }
+  
+  .diagnosticaIcon {
+    font-size: 1rem;
+  }
+  
+  .diagnosticaLabel {
+    font-size: 0.6rem;
   }
   
   .searchInput {
@@ -1838,22 +1843,35 @@ input[type="number"].formControl {
   }
 }
 
-/* Stili aggiuntivi per migliorare l'accessibilità */
+/* ========== ACCESSIBILITÀ ========== */
 .formControl:focus-visible {
   outline: 2px solid #007bff;
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
 .btn:focus-visible {
   outline: 2px solid #007bff;
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
-/* Stili per gli stati hover sui dispositivi touch */
+.diagnosticaItem:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 1px;
+}
+
+/* ========== HOVER EFFECTS (SOLO MOUSE) ========== */
 @media (hover: hover) {
   .diagnosticaItem:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  .formSection:hover {
+    transform: translateY(-1px);
+  }
+  
+  .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   }
   
   .dropdownItem:hover {
@@ -1861,23 +1879,26 @@ input[type="number"].formControl {
   }
 }
 
-/* Animazioni eleganti per il modal di stampa */
-:global(.accSheet) {
-  animation: slideIn 0.4s ease-out;
+/* ========== SCROLLBAR PERSONALIZZATA ========== */
+.pageBody::-webkit-scrollbar {
+  width: 6px;
 }
 
-@keyframes slideIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(30px) scale(0.95); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0) scale(1); 
-  }
+.pageBody::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
 }
 
-/* Miglioramento per la scrollbar dei modal */
+.pageBody::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.pageBody::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
 :global(.accModal)::-webkit-scrollbar {
   width: 8px;
 }
@@ -1897,18 +1918,20 @@ input[type="number"].formControl {
   background: #a1a1a1;
 }
 
-/* Logo dimensioni uniformi nel modal e in stampa */
-:global(.accLogoImage){
-  height: 52px;         /* regola qui l'altezza che vuoi (es. 40–60px) */
-  width: auto;
-  max-width: 240px;
-  object-fit: contain;
-  display: block;
+/* ========== ANIMAZIONE SLIDE IN (SHEET) ========== */
+:global(.accSheet) {
+  animation: slideIn 0.4s ease-out;
 }
 
-@media print {
-  :global(.accLogoImage){
-    height: 40px;       /* un po’ più piccolo in stampa */
+@keyframes slideIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px) scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
   }
 }
 
+/* ========== FINE STYLES.MODULE.CSS ========== */

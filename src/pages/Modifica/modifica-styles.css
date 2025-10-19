@@ -375,6 +375,24 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+.diagnostica-item.inactive::after {
+  content: "✕";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: #dc3545;
+  font-weight: 900;
+  font-size: 0.9rem;
+  background: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
 .diagnostica-item.inactive {
   background: #f8f9fa;
   border-color: #e0e0e0;
