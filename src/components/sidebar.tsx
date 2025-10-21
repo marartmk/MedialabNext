@@ -121,7 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         </button>
         <button
           className="list-group-item"
-          //onClick={() => navigate("/vendite")}
+          onClick={() => navigate("/vendite-apparati")}
         >
           <Store className="icon" />
           <span className="item-text">Vendite</span>
