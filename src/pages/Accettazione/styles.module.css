@@ -681,6 +681,7 @@
 }
 
 /* ========== MODALS ========== */
+/* ========== MODALS ========== */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -692,6 +693,21 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+/* 🆕 MODAL FIRMA - Z-INDEX PIÙ ALTO */
+.signatureModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000; /* 👈 Z-INDEX MOLTO PIÙ ALTO */
   animation: fadeIn 0.3s ease;
 }
 
@@ -1931,6 +1947,49 @@
   to { 
     opacity: 1; 
     transform: translateY(0) scale(1); 
+  }
+}
+.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  filter: grayscale(100%);
+  cursor: not-allowed;
+}
+
+/* ========== MODAL FIRMA DIGITALE ========== */
+.signatureCanvas {
+  border: 2px solid #333;
+  border-radius: 8px;
+  background: white;
+  cursor: crosshair;
+  touch-action: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.signatureCanvas:hover {
+  border-color: #007bff;
+}
+
+/* Stili per l'area firma cliccabile */
+:global(.accSignatureLine) {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+:global(.accSignatureLine):hover {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Stili stampa per la firma */
+@media print {
+  :global(.accSignatureLine) {
+    cursor: default !important;
+  }
+  
+  :global(.accSignatureLine):hover {
+    border-color: #2c3e50 !important;
+    box-shadow: none !important;
   }
 }
 

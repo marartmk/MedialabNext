@@ -250,7 +250,7 @@ const Modifica: React.FC = () => {
     { id: "touchscreen", icon: "👆", label: "Touchscreen", active: true },
 
     // 4. LCD
-    { id: "lcd", icon: "📺", label: "LCD", active: true },
+    { id: "lcd", icon: "📱", label: "LCD", active: true },
 
     // 5. Frame Scollato
     {
@@ -272,7 +272,7 @@ const Modifica: React.FC = () => {
     },
 
     // 8. Back Cover
-    { id: "back-cover", icon: "📱", label: "Back cover", active: true },
+    { id: "back-cover", icon: "📲", label: "Back cover", active: true },
 
     // 9. Telaio
     { id: "telaio", icon: "🔧", label: "Telaio", active: true },
@@ -392,6 +392,20 @@ const Modifica: React.FC = () => {
     DiagnosticItem[]
   >(diagnosticItems.map((i) => ({ ...i, active: false })));
 
+  // 🆕 Logica "Telefono Spento" per entrambe le modalità
+  const isPhoneOffIncoming = !(
+    incomingDiagnosticItems.find((x) => x.id === "telefono-spento")?.active ??
+    false
+  );
+
+  const isPhoneOffExit = !(
+    exitDiagnosticItems.find((x) => x.id === "telefono-spento")?.active ?? false
+  );
+
+  // Determina quale usare in base alla modalità corrente
+  const isPhoneOff =
+    diagnosticMode === "incoming" ? isPhoneOffIncoming : isPhoneOffExit;
+
   const deviceTypes = [
     { value: "Mobile", label: "📱 Mobile" },
     { value: "TV", label: "📺 TV" },
@@ -411,6 +425,31 @@ const Modifica: React.FC = () => {
     () => Math.round((subTotal * 0.22 + Number.EPSILON) * 100) / 100,
     [subTotal]
   );
+
+  // 🆕 Stati per il modal di modifica cliente
+  const [showEditCustomerModal, setShowEditCustomerModal] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState({
+    tipo: "Privato",
+    cliente: true,
+    fornitore: false,
+    tipoCliente: "",
+    ragioneSociale: "",
+    indirizzo: "",
+    cognome: "",
+    nome: "",
+    cap: "",
+    regione: "",
+    provincia: "",
+    citta: "",
+    telefono: "",
+    email: "",
+    codiceFiscale: "",
+    partitaIva: "",
+    emailPec: "",
+    codiceSdi: "",
+    iban: "",
+  });
+  const [savingCustomer, setSavingCustomer] = useState(false);
 
   // Totale IVA inclusa
   // const finalTotal = useMemo(
@@ -446,19 +485,198 @@ const Modifica: React.FC = () => {
     }
   }, [partsTotal, repairFormData.estimatedPrice, paymentLoading]);
 
+  // 🔄 SOSTITUISCI la funzione toggleDiagnosticItem esistente con questa:
   const toggleDiagnosticItem = (id: string) => {
     if (diagnosticMode === "incoming") {
-      setIncomingDiagnosticItems((prev) =>
-        prev.map((item) =>
+      setIncomingDiagnosticItems((prev) => {
+        // Se clicco "Telefono spento", imposto TUTTI allo stesso stato del nuovo valore
+        if (id === "telefono-spento") {
+          const current = prev.find((x) => x.id === id);
+          const nextValue = !(current?.active ?? false);
+          return prev.map((item) => ({ ...item, active: nextValue }));
+        }
+
+        // Per tutte le altre icone, toggle singolo (ma solo se il telefono NON è spento)
+        return prev.map((item) =>
           item.id === id ? { ...item, active: !item.active } : item
-        )
-      );
+        );
+      });
     } else {
-      setExitDiagnosticItems((prev) =>
-        prev.map((item) =>
+      // EXIT: stessa logica
+      setExitDiagnosticItems((prev) => {
+        if (id === "telefono-spento") {
+          const current = prev.find((x) => x.id === id);
+          const nextValue = !(current?.active ?? false);
+          return prev.map((item) => ({ ...item, active: nextValue }));
+        }
+
+        return prev.map((item) =>
           item.id === id ? { ...item, active: !item.active } : item
-        )
+        );
+      });
+    }
+  };
+
+  // 🆕 Funzione per aprire il modal di modifica cliente
+  const openEditCustomerModal = () => {
+    if (!selectedCustomer) {
+      alert("⚠️ Nessun cliente selezionato");
+      return;
+    }
+
+    // Pre-compila il form con i dati del cliente selezionato
+    const { nome, cognome } = splitFullName(selectedCustomer.name || "");
+
+    setEditingCustomer({
+      tipo: selectedCustomer.customerType === "Azienda" ? "Azienda" : "Privato",
+      cliente: true,
+      fornitore: false,
+      tipoCliente: "",
+      ragioneSociale: selectedCustomer.name || "",
+      indirizzo: selectedCustomer.address || "",
+      cognome: cognome,
+      nome: nome,
+      cap: selectedCustomer.postalCode || "",
+      regione: selectedCustomer.region || "",
+      provincia: selectedCustomer.province || "",
+      citta: selectedCustomer.city || "",
+      telefono: selectedCustomer.phone || "",
+      email: selectedCustomer.email || "",
+      codiceFiscale: selectedCustomer.fiscalCode || "",
+      partitaIva: selectedCustomer.vatNumber || "",
+      emailPec: "",
+      codiceSdi: "",
+      iban: "",
+    });
+
+    setShowEditCustomerModal(true);
+  };
+
+  // 🆕 Funzione helper per dividere nome completo (riutilizzabile)
+  const splitFullName = (fullName: string) => {
+    if (!fullName) return { nome: "", cognome: "" };
+    const parts = fullName.trim().split(" ");
+    if (parts.length === 1) {
+      return { nome: parts[0], cognome: "" };
+    } else if (parts.length === 2) {
+      return { nome: parts[0], cognome: parts[1] };
+    } else {
+      return {
+        nome: parts[0],
+        cognome: parts.slice(1).join(" "),
+      };
+    }
+  };
+
+  // 🆕 Funzione per salvare le modifiche al cliente
+  // 🆕 Funzione per salvare le modifiche al cliente
+  const handleSaveCustomerChanges = async () => {
+    if (!selectedCustomer?.id) {
+      alert("⚠️ Nessun cliente selezionato");
+      return;
+    }
+
+    // Validazioni
+    if (!editingCustomer.tipo) {
+      alert("⚠️ Selezionare un tipo di cliente");
+      return;
+    }
+
+    const isPrivato = editingCustomer.tipo === "Privato";
+    const tipologia = isPrivato ? "1" : "0";
+
+    const ragioneSociale = isPrivato
+      ? `${editingCustomer.cognome} ${editingCustomer.nome}`.trim()
+      : editingCustomer.ragioneSociale;
+
+    if (!isPrivato && ragioneSociale === "") {
+      alert("⚠️ Inserire una ragione sociale");
+      return;
+    }
+
+    if (!editingCustomer.indirizzo) {
+      alert("⚠️ Inserire un indirizzo");
+      return;
+    }
+
+    if (!editingCustomer.cap) {
+      alert("⚠️ Inserire un CAP");
+      return;
+    }
+
+    if (!editingCustomer.telefono) {
+      alert("⚠️ Inserire un numero di telefono");
+      return;
+    }
+
+    if (!editingCustomer.email) {
+      alert("⚠️ Inserire un'email");
+      return;
+    }
+
+    const payload = {
+      id: selectedCustomer.id,
+      tipologia: tipologia,
+      isCustomer: editingCustomer.cliente,
+      isSupplier: editingCustomer.fornitore,
+      tipoCliente: editingCustomer.tipoCliente,
+      ragioneSociale: ragioneSociale,
+      indirizzo: editingCustomer.indirizzo,
+      cognome: isPrivato ? editingCustomer.cognome : null,
+      nome: isPrivato ? editingCustomer.nome : null,
+      cap: editingCustomer.cap,
+      regione: editingCustomer.regione,
+      provincia: editingCustomer.provincia,
+      citta: editingCustomer.citta,
+      telefono: editingCustomer.telefono,
+      email: editingCustomer.email,
+      fiscalCode: editingCustomer.codiceFiscale,
+      pIva: editingCustomer.partitaIva,
+      emailPec: editingCustomer.emailPec,
+      codiceSdi: editingCustomer.codiceSdi,
+      iban: editingCustomer.iban,
+      multitenantId: sessionStorage.getItem("IdCompany") || "",
+    };
+
+    setSavingCustomer(true);
+
+    try {
+      console.log("💾 Aggiornamento cliente:", payload);
+
+      // 1️⃣ SALVA le modifiche (PUT - risposta 204)
+      const updateResponse = await fetch(
+        `${API_URL}/api/customer/${selectedCustomer.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(payload),
+        }
       );
+
+      if (!updateResponse.ok) {
+        const errText = await updateResponse.text();
+        throw new Error(errText || `Errore ${updateResponse.status}`);
+      }
+
+      console.log("✅ Cliente aggiornato con successo (204 No Content)");
+
+      // 2️⃣ RICARICA i dati aggiornati dal server usando la funzione helper
+      await reloadCustomerData(selectedCustomer.id);
+
+      alert("✅ Cliente aggiornato con successo!");
+      setShowEditCustomerModal(false);
+    } catch (error) {
+      console.error("❌ Errore durante il salvataggio:", error);
+      alert(
+        `❌ Errore durante il salvataggio del cliente:\n${
+          error instanceof Error ? error.message : "Errore sconosciuto"
+        }`
+      );
+    } finally {
+      setSavingCustomer(false);
     }
   };
 
@@ -1181,6 +1399,68 @@ const Modifica: React.FC = () => {
   //   );
   // };
 
+  // 🆕 Funzione helper per ricaricare i dati del cliente dal server
+  const reloadCustomerData = async (customerId: string) => {
+    try {
+      console.log("🔄 Ricaricamento dati cliente:", customerId);
+
+      const response = await fetch(`${API_URL}/api/customer/${customerId}`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Errore ${response.status} nel caricamento cliente`);
+      }
+
+      const reloadedCustomer: CustomerData = await response.json();
+      console.log("✅ Dati cliente ricaricati dal server:", reloadedCustomer);
+
+      // Mappa i dati nel formato CustomerData dell'interfaccia
+      const mappedCustomer: CustomerData = {
+        id: reloadedCustomer.id,
+        name:
+          reloadedCustomer.ragioneSociale ||
+          `${reloadedCustomer.cognome || ""} ${
+            reloadedCustomer.nome || ""
+          }`.trim(),
+        phone: reloadedCustomer.telefono || "",
+        email: reloadedCustomer.email || "",
+        address: reloadedCustomer.indirizzo || "",
+        city: reloadedCustomer.citta || "",
+        province: reloadedCustomer.provincia || "",
+        postalCode: reloadedCustomer.cap || "",
+        region: reloadedCustomer.regione || "",
+        fiscalCode: reloadedCustomer.fiscalCode || "",
+        vatNumber: reloadedCustomer.pIva || "",
+        customerType:
+          reloadedCustomer.tipologia === "1" ? "Privato" : "Azienda",
+      };
+
+      // Aggiorna lo stato del cliente selezionato
+      setSelectedCustomer(mappedCustomer);
+
+      // Separa nome e cognome per i campi della form
+      const { nome, cognome } = splitFullName(mappedCustomer.name);
+
+      // Aggiorna i dati del form cliente
+      setClienteData({
+        email: mappedCustomer.email,
+        nome: nome,
+        cognome: cognome,
+        telefono: mappedCustomer.phone,
+        cap: mappedCustomer.postalCode,
+      });
+
+      console.log("✅ Stati UI aggiornati con i dati ricaricati");
+      return mappedCustomer;
+    } catch (error) {
+      console.error("❌ Errore ricaricamento cliente:", error);
+      throw error;
+    }
+  };
+
   const validateForm = (): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
@@ -1894,7 +2174,24 @@ const Modifica: React.FC = () => {
                 <div className="top-row">
                   {/* Sezione Cliente */}
                   <div className="form-section">
-                    <h3>Cliente</h3>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      <h3 style={{ margin: 0 }}>Cliente</h3>
+                      <button
+                        type="button"
+                        className="btn-edit-customer"
+                        onClick={openEditCustomerModal}
+                        title="Modifica dati cliente"
+                      >
+                        ✏️ Modifica Cliente
+                      </button>
+                    </div>
 
                     <div className="form-group">
                       <label>Cliente Selezionato</label>
@@ -1915,90 +2212,46 @@ const Modifica: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>E-Mail *</label>
+                      <label>E-Mail</label>
                       <input
                         type="email"
-                        className={`form-control ${
-                          validationErrors.includes(
-                            "Inserire un'email valida per il cliente"
-                          )
-                            ? "error"
-                            : ""
-                        }`}
+                        className="form-control"
                         value={clienteData.email}
-                        onChange={(e) =>
-                          setClienteData({
-                            ...clienteData,
-                            email: e.target.value,
-                          })
-                        }
-                        placeholder="Email del cliente"
+                        readOnly
+                        style={{ backgroundColor: "#f8f9fa", color: "#666" }}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Nome *</label>
+                      <label>Nome</label>
                       <input
                         type="text"
-                        className={`form-control ${
-                          validationErrors.includes(
-                            "Inserire il nome del cliente"
-                          )
-                            ? "error"
-                            : ""
-                        }`}
+                        className="form-control"
                         value={clienteData.nome}
-                        onChange={(e) =>
-                          setClienteData({
-                            ...clienteData,
-                            nome: e.target.value,
-                          })
-                        }
-                        placeholder="Nome del cliente"
+                        readOnly
+                        style={{ backgroundColor: "#f8f9fa", color: "#666" }}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Cognome *</label>
+                      <label>Cognome</label>
                       <input
                         type="text"
-                        className={`form-control ${
-                          validationErrors.includes(
-                            "Inserire il cognome del cliente"
-                          )
-                            ? "error"
-                            : ""
-                        }`}
+                        className="form-control"
                         value={clienteData.cognome}
-                        onChange={(e) =>
-                          setClienteData({
-                            ...clienteData,
-                            cognome: e.target.value,
-                          })
-                        }
-                        placeholder="Cognome del cliente"
+                        readOnly
+                        style={{ backgroundColor: "#f8f9fa", color: "#666" }}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Telefono *</label>
+                      <label>Telefono</label>
                       <input
                         type="tel"
-                        className={`form-control ${
-                          validationErrors.includes(
-                            "Inserire il telefono del cliente"
-                          )
-                            ? "error"
-                            : ""
-                        }`}
+                        className="form-control"
                         value={clienteData.telefono}
-                        onChange={(e) =>
-                          setClienteData({
-                            ...clienteData,
-                            telefono: e.target.value,
-                          })
-                        }
-                        placeholder="Numero di telefono"
+                        readOnly
+                        style={{ backgroundColor: "#f8f9fa", color: "#666" }}
                       />
                     </div>
 
@@ -2008,20 +2261,15 @@ const Modifica: React.FC = () => {
                         type="text"
                         className="form-control"
                         value={clienteData.cap}
-                        onChange={(e) =>
-                          setClienteData({
-                            ...clienteData,
-                            cap: e.target.value,
-                          })
-                        }
-                        placeholder="CAP"
+                        readOnly
+                        style={{ backgroundColor: "#f8f9fa", color: "#666" }}
                       />
                     </div>
 
                     {/* Informazioni aggiuntive dal sistema */}
                     {selectedCustomer?.address && (
                       <div className="form-group">
-                        <label>Indirizzo (dal sistema)</label>
+                        <label>Indirizzo</label>
                         <input
                           type="text"
                           className="form-control"
@@ -2354,24 +2602,37 @@ const Modifica: React.FC = () => {
                     {(diagnosticMode === "incoming"
                       ? incomingDiagnosticItems
                       : exitDiagnosticItems
-                    ).map((item) => (
-                      <div key={item.id} className="diagnostica-item-wrapper">
-                        <div
-                          className={`diagnostica-item ${
-                            item.active ? "active" : "inactive"
-                          }`}
-                          onClick={() => toggleDiagnosticItem(item.id)}
-                          role="button"
-                          tabIndex={0}
-                        >
-                          <span className="diagnostica-icon">{item.icon}</span>
-                          <span className="diagnostica-status {item.active ? 'ok' : 'ko'}">
-                            {item.active ? "✓" : "–"}
-                          </span>
+                    ).map((item) => {
+                      const isDisabled =
+                        isPhoneOff && item.id !== "telefono-spento";
+                      return (
+                        <div key={item.id} className="diagnostica-item-wrapper">
+                          <div
+                            className={`diagnostica-item ${
+                              item.active ? "active" : "inactive"
+                            } ${isDisabled ? "disabled" : ""}`}
+                            onClick={() => {
+                              if (!isDisabled) toggleDiagnosticItem(item.id);
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            aria-disabled={isDisabled}
+                          >
+                            <span className="diagnostica-icon">
+                              {item.icon}
+                            </span>
+                            <span
+                              className={`diagnostica-status ${
+                                item.active ? "ok" : "ko"
+                              }`}
+                            >
+                              {item.active ? "✓" : "—"}
+                            </span>
+                          </div>
+                          <div className="diagnostica-label">{item.label}</div>
                         </div>
-                        <div className="diagnostica-label">{item.label}</div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="diagnostic-actions"></div>
@@ -2754,6 +3015,333 @@ const Modifica: React.FC = () => {
         </div>
         <BottomBar />
       </div>
+      {/* 🆕 MODAL MODIFICA CLIENTE */}
+      {showEditCustomerModal && (
+        <div
+          className="modal-overlay-customer"
+          onClick={() => setShowEditCustomerModal(false)}
+        >
+          <div
+            className="modal-content-customer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header-customer">
+              <h4>✏️ Modifica Dati Cliente</h4>
+              <button
+                type="button"
+                className="modal-close-button"
+                onClick={() => setShowEditCustomerModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body-customer">
+              <div className="customer-form-edit">
+                {/* Tipo e checkboxes */}
+                <div className="form-row-edit">
+                  <div className="form-col-3">
+                    <label>Tipo</label>
+                    <select
+                      className="form-control"
+                      value={editingCustomer.tipo}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          tipo: e.target.value,
+                        })
+                      }
+                    >
+                      <option>Privato</option>
+                      <option>Azienda</option>
+                    </select>
+                  </div>
+                  <div className="form-col-3 checkbox-group-edit">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={editingCustomer.cliente}
+                        onChange={(e) =>
+                          setEditingCustomer({
+                            ...editingCustomer,
+                            cliente: e.target.checked,
+                          })
+                        }
+                      />
+                      Cliente
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={editingCustomer.fornitore}
+                        onChange={(e) =>
+                          setEditingCustomer({
+                            ...editingCustomer,
+                            fornitore: e.target.checked,
+                          })
+                        }
+                      />
+                      Fornitore
+                    </label>
+                  </div>
+                </div>
+
+                {/* Ragione Sociale o Nome/Cognome */}
+                <div className="form-row-edit">
+                  {editingCustomer.tipo === "Azienda" ? (
+                    <>
+                      <div className="form-col-6">
+                        <label>Ragione Sociale *</label>
+                        <input
+                          className="form-control"
+                          value={editingCustomer.ragioneSociale}
+                          onChange={(e) =>
+                            setEditingCustomer({
+                              ...editingCustomer,
+                              ragioneSociale: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="form-col-6">
+                        <label>Indirizzo *</label>
+                        <input
+                          className="form-control"
+                          value={editingCustomer.indirizzo}
+                          onChange={(e) =>
+                            setEditingCustomer({
+                              ...editingCustomer,
+                              indirizzo: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="form-col-6 name-group-edit">
+                        <div className="form-col-6">
+                          <label>Cognome *</label>
+                          <input
+                            className="form-control"
+                            value={editingCustomer.cognome}
+                            onChange={(e) =>
+                              setEditingCustomer({
+                                ...editingCustomer,
+                                cognome: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="form-col-6">
+                          <label>Nome *</label>
+                          <input
+                            className="form-control"
+                            value={editingCustomer.nome}
+                            onChange={(e) =>
+                              setEditingCustomer({
+                                ...editingCustomer,
+                                nome: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="form-col-6">
+                        <label>Indirizzo *</label>
+                        <input
+                          className="form-control"
+                          value={editingCustomer.indirizzo}
+                          onChange={(e) =>
+                            setEditingCustomer({
+                              ...editingCustomer,
+                              indirizzo: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* CAP, Regione, Provincia, Città */}
+                <div className="form-row-edit">
+                  <div className="form-col-3">
+                    <label>CAP *</label>
+                    <input
+                      className="form-control"
+                      value={editingCustomer.cap}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          cap: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-col-3">
+                    <label>Regione</label>
+                    <input
+                      className="form-control"
+                      value={editingCustomer.regione}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          regione: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-col-3">
+                    <label>Provincia</label>
+                    <input
+                      className="form-control"
+                      value={editingCustomer.provincia}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          provincia: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-col-3">
+                    <label>Città</label>
+                    <input
+                      className="form-control"
+                      value={editingCustomer.citta}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          citta: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Telefono, Email, CF, P.IVA */}
+                <div className="form-row-edit">
+                  <div className="form-col-3">
+                    <label>Telefono *</label>
+                    <input
+                      className="form-control"
+                      value={editingCustomer.telefono}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          telefono: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-col-3">
+                    <label>Email *</label>
+                    <input
+                      className="form-control"
+                      value={editingCustomer.email}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          email: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-col-3">
+                    <label>Codice Fiscale</label>
+                    <input
+                      className="form-control"
+                      value={editingCustomer.codiceFiscale}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          codiceFiscale: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-col-3">
+                    <label>Partita IVA</label>
+                    <input
+                      className="form-control"
+                      value={editingCustomer.partitaIva}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          partitaIva: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Email PEC, SDI, IBAN */}
+                <div className="form-row-edit">
+                  <div className="form-col-3">
+                    <label>Email PEC</label>
+                    <input
+                      className="form-control"
+                      value={editingCustomer.emailPec}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          emailPec: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-col-3">
+                    <label>Codice SDI</label>
+                    <input
+                      className="form-control"
+                      value={editingCustomer.codiceSdi}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          codiceSdi: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-col-3">
+                    <label>IBAN</label>
+                    <input
+                      className="form-control"
+                      value={editingCustomer.iban}
+                      onChange={(e) =>
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          iban: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer-customer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowEditCustomerModal(false)}
+                disabled={savingCustomer}
+              >
+                Annulla
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSaveCustomerChanges}
+                disabled={savingCustomer}
+              >
+                {savingCustomer ? "Salvando..." : "💾 Salva Modifiche"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -131,6 +131,12 @@ const Accettazione: React.FC = () => {
   >([]);
   const [loadingCourtesyList, setLoadingCourtesyList] = useState(false);
 
+  // Stati per la firma digitale
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Tipo per i dati della riparazione (per la stampa)
@@ -316,12 +322,12 @@ const Accettazione: React.FC = () => {
     { id: "touchscreen", icon: "👆", label: "Touchscreen", active: true },
 
     // 4. LCD
-    { id: "lcd", icon: "📺", label: "LCD", active: true },
+    { id: "lcd", icon: "📱", label: "LCD", active: true },
 
     // 5. Frame Scollato
     {
       id: "frame-scollato",
-      icon: "📲",
+      icon: "🔲",
       label: "Frame scollato",
       active: true,
     },
@@ -338,7 +344,7 @@ const Accettazione: React.FC = () => {
     },
 
     // 8. Back Cover
-    { id: "back-cover", icon: "📱", label: "Back cover", active: true },
+    { id: "back-cover", icon: "📲", label: "Back cover", active: true },
 
     // 9. Telaio
     { id: "telaio", icon: "🔧", label: "Telaio", active: true },
@@ -448,6 +454,11 @@ const Accettazione: React.FC = () => {
     },
   ]);
 
+  // Sotto agli state, dentro il componente Accettazione:
+  const isPhoneOff = !(
+    diagnosticItems.find((x) => x.id === "telefono-spento")?.active ?? false
+  );
+
   const [isRepairCreated, setIsRepairCreated] = useState(false);
   const [repairGuid, setRepairGuid] = useState<string | null>(null); // 🆕 Usa GUID
 
@@ -516,6 +527,96 @@ const Accettazione: React.FC = () => {
       loadNoteDataForRepair(noteIdFromQuery);
     }
   }, [noteIdFromQuery]);
+
+  // Funzioni per la gestione della firma digitale
+  const startDrawing = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    setIsDrawing(true);
+
+    const x =
+      "touches" in e ? e.touches[0].clientX - rect.left : e.nativeEvent.offsetX;
+    const y =
+      "touches" in e ? e.touches[0].clientY - rect.top : e.nativeEvent.offsetY;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    if (!isDrawing) return;
+
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const x =
+      "touches" in e ? e.touches[0].clientX - rect.left : e.nativeEvent.offsetX;
+    const y =
+      "touches" in e ? e.touches[0].clientY - rect.top : e.nativeEvent.offsetY;
+
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = "#2c3e50";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const clearSignature = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const saveSignature = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    // Converti il canvas in base64
+    const dataUrl = canvas.toDataURL("image/png");
+    setSignatureData(dataUrl);
+    setShowSignatureModal(false);
+
+    alert("✅ Firma acquisita con successo!");
+  };
+
+  const openSignatureModal = () => {
+    setShowSignatureModal(true);
+
+    // Inizializza il canvas dopo che il modal è stato renderizzato
+    setTimeout(() => {
+      const canvas = signatureCanvasRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Imposta lo sfondo bianco
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }, 100);
+  };
 
   // Funzione per la ricerca telefono di cortesia con debouncing
   const handleCourtesyPhoneSearchChange = (value: string) => {
@@ -1136,12 +1237,21 @@ const Accettazione: React.FC = () => {
   };
 
   // Funzione per cambiare lo stato di un elemento diagnostico
+  // Master toggle su "Telefono spento"
   const toggleDiagnosticItem = (id: string) => {
-    setDiagnosticItems((prevItems) =>
-      prevItems.map((item) =>
+    setDiagnosticItems((prevItems) => {
+      // Se clicco "Telefono spento", imposto TUTTI allo stesso stato del nuovo valore di "Telefono spento"
+      if (id === "telefono-spento") {
+        const current = prevItems.find((x) => x.id === id);
+        const nextValue = !(current?.active ?? false); // valore dopo il toggle
+        return prevItems.map((item) => ({ ...item, active: nextValue }));
+      }
+
+      // Per tutte le altre icone, continua il comportamento normale (toggle singolo)
+      return prevItems.map((item) =>
         item.id === id ? { ...item, active: !item.active } : item
-      )
-    );
+      );
+    });
   };
 
   // Funzione per aprire il modal di nuovo cliente
@@ -2574,27 +2684,36 @@ const Accettazione: React.FC = () => {
                 >
                   <h3>Diagnostica di ricezione</h3>
                   <div className={styles.diagnosticaGrid}>
-                    {diagnosticItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={styles.diagnosticaItemWrapper}
-                      >
+                    {diagnosticItems.map((item) => {
+                      const isDisabled =
+                        isPhoneOff && item.id !== "telefono-spento";
+                      return (
                         <div
-                          className={`${styles.diagnosticaItem} ${
-                            item.active ? styles.active : styles.inactive
-                          }`}
-                          onClick={() => toggleDiagnosticItem(item.id)}
+                          key={item.id}
+                          className={styles.diagnosticaItemWrapper}
                         >
-                          <div className={styles.diagnosticaIcon}>
-                            {item.icon}
+                          <div
+                            className={`${styles.diagnosticaItem} ${
+                              item.active ? styles.active : styles.inactive
+                            } ${isDisabled ? styles.disabled : ""}`}
+                            onClick={() => {
+                              if (!isDisabled) toggleDiagnosticItem(item.id);
+                            }}
+                            aria-disabled={isDisabled}
+                            role="button"
+                          >
+                            <div className={styles.diagnosticaIcon}>
+                              {item.icon}
+                            </div>
+                          </div>
+                          <div className={styles.diagnosticaLabel}>
+                            {item.label}
                           </div>
                         </div>
-                        <div className={styles.diagnosticaLabel}>
-                          {item.label}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
+
                   {validationErrors.includes(
                     "Selezionare almeno un elemento nella diagnostica di ricezione"
                   ) && (
@@ -3694,7 +3813,42 @@ const Accettazione: React.FC = () => {
                       <div className="accSignatureLabel">
                         Firma per accettazione
                       </div>
-                      <div className="accSignatureLine"></div>
+                      <div
+                        className="accSignatureLine"
+                        onClick={openSignatureModal}
+                        style={{
+                          cursor: "pointer",
+                          position: "relative",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {signatureData ? (
+                          <img
+                            src={signatureData}
+                            alt="Firma"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "contain",
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              color: "#95a5a6",
+                              fontSize: "0.85rem",
+                              textAlign: "center",
+                              width: "100%",
+                            }}
+                          >
+                            ✍️ Clicca qui per firmare
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="accDateBox">
                       <div className="accDateLabel">
@@ -4013,6 +4167,123 @@ const Accettazione: React.FC = () => {
                 onClick={() => setShowCourtesyPhoneModal(false)}
               >
                 Chiudi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🆕 MODAL FIRMA DIGITALE */}
+      {showSignatureModal && (
+        <div
+          className={styles.signatureModalOverlay}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSignatureModal(false);
+            }
+          }}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "700px" }}
+          >
+            <div className={styles.modalHeader}>
+              <h4>✍️ Apponi la tua firma</h4>
+              <button
+                type="button"
+                className={styles.modalCloseButton}
+                onClick={() => setShowSignatureModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div
+                style={{
+                  padding: "12px 16px",
+                  background: "#e7f3ff",
+                  borderRadius: "6px",
+                  marginBottom: "16px",
+                  fontSize: "0.9rem",
+                  color: "#333",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <span style={{ fontSize: "1.2rem" }}>ℹ️</span>
+                <span>
+                  Firma nell'area sottostante utilizzando il mouse o il touch
+                  screen
+                </span>
+              </div>
+
+              <div
+                style={{
+                  border: "2px solid #333",
+                  borderRadius: "8px",
+                  background: "white",
+                  overflow: "hidden",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  position: "relative",
+                }}
+              >
+                <canvas
+                  ref={signatureCanvasRef}
+                  width={600}
+                  height={250}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    height: "auto",
+                    cursor: "crosshair",
+                    touchAction: "none",
+                  }}
+                />
+
+                {/* Watermark quando vuoto */}
+                {!isDrawing && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      color: "#ccc",
+                      fontSize: "1.2rem",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                    }}
+                  >
+                    Firma qui
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={clearSignature}
+              >
+                🗑️ Cancella
+              </button>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={saveSignature}
+              >
+                ✅ Salva Firma
               </button>
             </div>
           </div>
