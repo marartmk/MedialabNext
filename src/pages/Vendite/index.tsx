@@ -7,6 +7,11 @@ import { useSearchParams } from "react-router-dom";
 import deviceInventoryService, {
   type DeviceInventoryItem,
 } from "../../services/deviceInventoryService";
+import { saleService } from "../../services/saleService";
+import type { CreateSaleRequest } from "../../services/saleService";
+
+// Alias per DeviceInventoryItem
+type DeviceData = DeviceInventoryItem;
 
 // Definizione dei tipi per la diagnostica
 interface DiagnosticItem {
@@ -144,6 +149,11 @@ const Vendite: React.FC = () => {
 
   const [savingNewClient, setSavingNewClient] = useState(false);
   const [savingNewDevice, setSavingNewDevice] = useState(false);
+  
+  // Stati per il salvataggio della vendita
+  const [savingSale, setSavingSale] = useState(false);
+  const [saleError, setSaleError] = useState<string | null>(null);
+  const [saleSuccess, setSaleSuccess] = useState<string | null>(null);
 
   // Stato per i prezzi
   const [prezziData, setPrezziData] = useState({
@@ -603,28 +613,103 @@ const Vendite: React.FC = () => {
     // Pulisci errori di validazione precedenti
     setValidationErrors([]);
     setIsCreatingSale(true);
+    setSaleError(null);
+    setSaleSuccess(null);
 
     try {
-      // TODO: Implementare la chiamata API per creare la vendita
-      console.log("Creazione vendita:", {
-        cliente: clienteData,
-        dispositivo: dispositivoData,
-        prezzi: prezziData,
-        notePrivate: notePrivateData,
-        diagnostica: diagnosticItems.filter((item) => item.active),
-      });
+      // Recupera i dati dalla sessione
+      const companyId = sessionStorage.getItem("IdCompany") || "";
+      const multitenantId = sessionStorage.getItem("multitenantId") || "";
+      const userId = sessionStorage.getItem("userId") || "";
+      const username = sessionStorage.getItem("username") || "";
 
-      alert("✅ Vendita creata con successo!\n\n(Backend da implementare)");
+      // Calcola i valori finanziari
+      const prezzoAcquistoIva22 = parseFloat(prezziData.prezzoAcquistoIva22) || 0;
+      const prezzoIva22 = parseFloat(prezziData.prezzoIva22) || 0;
+      const prezzoTotale = parseFloat(prezziData.prezzoTotale) || 0;
+      
+      const originalPrice = prezzoAcquistoIva22;
+      const salePrice = prezzoIva22;
+      const discount = originalPrice > 0 ? originalPrice - salePrice : 0;
+      const vatRate = 22; // IVA al 22%
+      const totalAmount = prezzoTotale;
 
-      // TODO: Gestire azione post-creazione
+      // Determina lo stato di pagamento
+      const paymentStatus = totalAmount > 0 ? "Pending" : "Paid";
+      const paidAmount = 0;
+      const remainingAmount = totalAmount;
+
+      // Prepara i dati per la chiamata API
+      const saleData: CreateSaleRequest = {
+        saleType: "Device", // Vendita di dispositivo
+        deviceId: selectedDevice?.deviceId,
+        deviceRegistryId: selectedDevice?.id ? parseInt(selectedDevice.id) : undefined,
+        brand: dispositivoData.brand,
+        model: dispositivoData.model,
+        serialNumber: dispositivoData.serialNumber || undefined,
+        imei: selectedDevice?.imei || undefined,
+        customerId: selectedCustomer?.id || "",
+        companyId: companyId,
+        multitenantId: multitenantId,
+        salePrice: salePrice,
+        originalPrice: originalPrice > 0 ? originalPrice : undefined,
+        discount: discount > 0 ? discount : undefined,
+        vatRate: vatRate,
+        totalAmount: totalAmount,
+        paymentType: prezziData.tipoDiPagamento,
+        paymentStatus: paymentStatus,
+        paidAmount: paidAmount,
+        remainingAmount: remainingAmount,
+        saleStatus: "Completed",
+        saleStatusCode: "COMPLETED",
+        sellerCode: userId,
+        sellerName: username,
+        notes: prezziData.informazioniPerLaFatturazione || undefined,
+        includedAccessories: diagnosticItems
+          .filter((item) => item.active)
+          .map((item) => item.label)
+          .join(", ") || undefined,
+        hasWarranty: dispositivoData.durataGaranzia !== "0 Mesi",
+        warrantyMonths: dispositivoData.durataGaranzia !== "0 Mesi" 
+          ? parseInt(dispositivoData.durataGaranzia) 
+          : undefined,
+        saleDate: new Date().toISOString(),
+        createdBy: userId,
+      };
+
+      console.log("Dati vendita da inviare:\n" + JSON.stringify(saleData, null, 2));
+
+      // Chiamata API per creare la vendita
+      const response = await saleService.createSale(saleData);
+
+      console.log("Vendita creata con successo:", response);
+      
+      setSaleSuccess(`✅ Vendita creata con successo!\n\nCodice vendita: ${response.saleCode}\nTotale: €${response.totalAmount.toFixed(2)}`);
+      
+      alert(`✅ Vendita creata con successo!\n\nCodice vendita: ${response.saleCode}\nID: ${response.saleId}\nTotale: €${response.totalAmount.toFixed(2)}`);
+
+      // Gestire azione post-creazione
       if (actionType === "email") {
         console.log("Invio email...");
+        // TODO: Implementare invio email
       } else if (actionType === "print") {
         console.log("Stampa garanzia...");
+        // TODO: Implementare stampa garanzia
       }
-    } catch (error) {
-      console.error("Errore durante la creazione:", error);
-      alert("Errore durante la creazione della vendita. Riprova.");
+
+      // Opzionale: Reset del form dopo il successo
+      // resetForm();
+
+    } catch (error: any) {
+      console.error("Errore durante la creazione della vendita:", error);
+      
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.errors?.join(", ")
+        || error.message 
+        || "Errore sconosciuto durante la creazione della vendita";
+      
+      setSaleError(errorMessage);
+      alert(`❌ Errore durante la creazione della vendita:\n\n${errorMessage}`);
     } finally {
       setIsCreatingSale(false);
     }
@@ -777,6 +862,7 @@ const Vendite: React.FC = () => {
         return "📱";
     }
   };
+  
 
   const toggleMenu = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
@@ -1467,7 +1553,7 @@ const Vendite: React.FC = () => {
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label>Prezzo Art.38 Iva 0%</label>
+                    <label>Prezzo Art.36 Iva 0%</label>
                     <div className={styles.priceInputContainer}>
                       <input
                         type="number"
@@ -1585,6 +1671,35 @@ const Vendite: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Alert per successo/errore vendita */}
+            {saleSuccess && (
+              <div className={styles.alertSuccess} style={{
+                padding: '15px',
+                marginBottom: '20px',
+                backgroundColor: '#d4edda',
+                border: '1px solid #c3e6cb',
+                borderRadius: '4px',
+                color: '#155724'
+              }}>
+                <strong>✅ Successo!</strong>
+                <p style={{ margin: '5px 0 0 0', whiteSpace: 'pre-line' }}>{saleSuccess}</p>
+              </div>
+            )}
+            
+            {saleError && (
+              <div className={styles.alertError} style={{
+                padding: '15px',
+                marginBottom: '20px',
+                backgroundColor: '#f8d7da',
+                border: '1px solid #f5c6cb',
+                borderRadius: '4px',
+                color: '#721c24'
+              }}>
+                <strong>❌ Errore!</strong>
+                <p style={{ margin: '5px 0 0 0' }}>{saleError}</p>
+              </div>
+            )}
 
             {/* Bottoni azioni */}
             <div className={styles.formActions}>

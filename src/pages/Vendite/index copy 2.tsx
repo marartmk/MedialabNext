@@ -52,11 +52,15 @@ const Vendite: React.FC = () => {
   const [searchResults, setSearchResults] = useState<CustomerData[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(
+    null
+  );
 
   // Stati per la ricerca dispositivo
   const [deviceSearchQuery, setDeviceSearchQuery] = useState("");
-  const [deviceSearchResults, setDeviceSearchResults] = useState<DeviceData[]>([]);
+  const [deviceSearchResults, setDeviceSearchResults] = useState<DeviceData[]>(
+    []
+  );
   const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<DeviceData | null>(null);
@@ -126,7 +130,11 @@ const Vendite: React.FC = () => {
     color: "",
     deviceCondition: "new" as "new" | "used" | "refurbished",
     isCourtesyDevice: false,
-    deviceStatus: "available" as "available" | "loaned" | "sold" | "unavailable",
+    deviceStatus: "available" as
+      | "available"
+      | "loaned"
+      | "sold"
+      | "unavailable",
     supplierId: "",
     purchasePrice: 0,
     sellingPrice: 0,
@@ -186,18 +194,48 @@ const Vendite: React.FC = () => {
 
   // Opzioni per i dropdown
   const condizioniOptions = ["Nuovo", "Usato"];
-  const brandOptions = ["Apple", "Samsung", "Huawei", "Xiaomi", "OnePlus", "Google", "Altro"];
-  const memoriaOptions = ["64 GB", "128 GB", "256 GB", "512 GB", "1 TB", "2 TB"];
+  const brandOptions = [
+    "Apple",
+    "Samsung",
+    "Huawei",
+    "Xiaomi",
+    "OnePlus",
+    "Google",
+    "Altro",
+  ];
+  const memoriaOptions = [
+    "64 GB",
+    "128 GB",
+    "256 GB",
+    "512 GB",
+    "1 TB",
+    "2 TB",
+  ];
   const durataGaranziaOptions = ["3 Mesi", "6 Mesi", "12 Mesi", "24 Mesi"];
 
   // Stato per gli elementi diagnostici
   const [diagnosticItems, setDiagnosticItems] = useState<DiagnosticItem[]>([
-    { id: "informazioni-sul-dispositivo", icon: "🆔", label: "Informazioni sul dispositivo", active: true },
+    {
+      id: "informazioni-sul-dispositivo",
+      icon: "🆔",
+      label: "Informazioni sul dispositivo",
+      active: true,
+    },
     { id: "apple-pay", icon: "🍎", label: "Apple Pay", active: true },
-    { id: "condizione-della-batteria", icon: "🔋", label: "Condizione della batteria", active: true },
+    {
+      id: "condizione-della-batteria",
+      icon: "🔋",
+      label: "Condizione della batteria",
+      active: true,
+    },
     { id: "bluetooth", icon: "📶", label: "Bluetooth", active: true },
     { id: "fotocamera", icon: "📷", label: "Fotocamera", active: true },
-    { id: "banda-base-cellulare", icon: "📡", label: "Banda base cellulare", active: true },
+    {
+      id: "banda-base-cellulare",
+      icon: "📡",
+      label: "Banda base cellulare",
+      active: true,
+    },
     { id: "display", icon: "🖥️", label: "Display", active: true },
     { id: "esim", icon: "📱", label: "eSIM", active: true },
     { id: "face-id", icon: "😊", label: "Face ID", active: true },
@@ -209,7 +247,12 @@ const Vendite: React.FC = () => {
     { id: "sistema", icon: "🖥️", label: "Sistema", active: true },
     { id: "wi-fi", icon: "📶", label: "Wi-Fi", active: true },
     { id: "nfc-cellulare", icon: "📡", label: "NFC Cellulare", active: true },
-    { id: "ricarica-wireless", icon: "⚡", label: "Ricarica wireless", active: true },
+    {
+      id: "ricarica-wireless",
+      icon: "⚡",
+      label: "Ricarica wireless",
+      active: true,
+    },
   ]);
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -391,9 +434,7 @@ const Vendite: React.FC = () => {
   // Funzione per selezionare un dispositivo (Magazzino Apparati)
   const onSelectDevice = (device: DeviceInventoryItem) => {
     setSelectedDevice(device);
-    setDeviceSearchQuery(
-      `${device.brand} ${device.model} - ${device.imei}`
-    );
+    setDeviceSearchQuery(`${device.brand} ${device.model} - ${device.imei}`);
     setShowDeviceDropdown(false);
 
     setDispositivoData({
@@ -516,7 +557,9 @@ const Vendite: React.FC = () => {
 
     // Validazione Dispositivo
     if (!selectedDevice && !dispositivoData.serialNumber?.trim()) {
-      errors.push("Selezionare un dispositivo esistente o inserire i dati del nuovo dispositivo");
+      errors.push(
+        "Selezionare un dispositivo esistente o inserire i dati del nuovo dispositivo"
+      );
     }
 
     if (!selectedDevice) {
@@ -568,7 +611,7 @@ const Vendite: React.FC = () => {
         dispositivo: dispositivoData,
         prezzi: prezziData,
         notePrivate: notePrivateData,
-        diagnostica: diagnosticItems.filter(item => item.active),
+        diagnostica: diagnosticItems.filter((item) => item.active),
       });
 
       alert("✅ Vendita creata con successo!\n\n(Backend da implementare)");
@@ -711,75 +754,7 @@ const Vendite: React.FC = () => {
     } finally {
       setSavingNewClient(false);
     }
-  };
-
-  // Funzione per salvare il nuovo dispositivo (Magazzino Apparati)
-  const handleSaveNewDevice = async () => {
-    if (!newDeviceData.code.trim()) {
-      alert("Inserire il codice apparato");
-      return;
-    }
-
-    if (!newDeviceData.brand.trim()) {
-      alert("Inserire la marca");
-      return;
-    }
-
-    if (!newDeviceData.model.trim()) {
-      alert("Inserire il modello");
-      return;
-    }
-
-    if (!newDeviceData.imei.trim()) {
-      alert("Inserire l'IMEI");
-      return;
-    }
-
-    if (!newDeviceData.supplierId) {
-      alert("Selezionare un fornitore");
-      return;
-    }
-
-    const multitenantId = sessionStorage.getItem("IdCompany") || "";
-
-    const payload = {
-      code: newDeviceData.code.trim(),
-      deviceType: newDeviceData.deviceType,
-      brand: newDeviceData.brand.trim(),
-      model: newDeviceData.model.trim(),
-      imei: newDeviceData.imei.trim(),
-      esn: newDeviceData.esn.trim() || undefined,
-      color: newDeviceData.color.trim(),
-      deviceCondition: newDeviceData.deviceCondition,
-      isCourtesyDevice: newDeviceData.isCourtesyDevice,
-      deviceStatus: newDeviceData.deviceStatus,
-      supplierId: newDeviceData.supplierId,
-      purchasePrice: newDeviceData.purchasePrice,
-      sellingPrice: newDeviceData.sellingPrice,
-      location: newDeviceData.location.trim() || undefined,
-      notes: newDeviceData.notes.trim() || undefined,
-      multitenantId: multitenantId,
-    };
-
-    setSavingNewDevice(true);
-
-    try {
-      // Imposta multitenantId nel service
-      deviceInventoryService.setMultitenantId(multitenantId);
-
-      const newDevice = await deviceInventoryService.createItem(payload);
-      alert("Dispositivo aggiunto al magazzino con successo!");
-
-      // Seleziona il dispositivo appena creato
-      onSelectDevice(newDevice);
-      setShowNewDeviceModal(false);
-    } catch (error) {
-      console.error("Errore durante il salvataggio:", error);
-      alert("Errore durante il salvataggio del dispositivo");
-    } finally {
-      setSavingNewDevice(false);
-    }
-  };
+  }; 
 
   // Funzione per ottenere l'icona del dispositivo (Magazzino Apparati)
   const getDeviceIcon = (deviceType: string) => {
@@ -802,6 +777,7 @@ const Vendite: React.FC = () => {
         return "📱";
     }
   };
+  
 
   const toggleMenu = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
@@ -1072,16 +1048,7 @@ const Vendite: React.FC = () => {
                               setShowDeviceDropdown(true);
                             }
                           }}
-                        />
-
-                        <button
-                          type="button"
-                          className={styles.addClientButton}
-                          onClick={openNewDeviceModal}
-                          title="Aggiungi nuovo dispositivo"
-                        >
-                          +
-                        </button>
+                        />                       
 
                         {selectedDevice && (
                           <button
@@ -1577,7 +1544,9 @@ const Vendite: React.FC = () => {
                     >
                       <option value="Amex">💳 Amex</option>
                       <option value="Contanti">💵 Contanti</option>
-                      <option value="Carta di Credito">💳 Carta di Credito</option>
+                      <option value="Carta di Credito">
+                        💳 Carta di Credito
+                      </option>
                       <option value="Bancomat">💳 Bancomat</option>
                       <option value="Bonifico">🏦 Bonifico</option>
                       <option value="PayPal">💰 PayPal</option>
@@ -1962,197 +1931,6 @@ const Vendite: React.FC = () => {
                 disabled={savingNewClient}
               >
                 {savingNewClient ? "Salvando..." : "Salva Cliente"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal per inserimento nuovo dispositivo */}
-      {showNewDeviceModal && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setShowNewDeviceModal(false)}
-        >
-          <div
-            className={styles.modalContent}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <h4>📱 Aggiungi Nuovo Dispositivo</h4>
-              <button
-                type="button"
-                className={styles.modalCloseButton}
-                onClick={() => setShowNewDeviceModal(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className={styles.modalBody}>
-              <div className={styles.customerForm}>
-                <div className={styles.formRow}>
-                  <div className={styles.formCol6}>
-                    <label>Device ID</label>
-                    <input
-                      className={styles.formControl}
-                      value={newDeviceData.deviceId}
-                      onChange={(e) =>
-                        setNewDeviceData({
-                          ...newDeviceData,
-                          deviceId: e.target.value,
-                        })
-                      }
-                      placeholder="Generato automaticamente"
-                      readOnly
-                    />
-                  </div>
-                  <div className={styles.formCol6}>
-                    <label>Numero Seriale *</label>
-                    <input
-                      className={styles.formControl}
-                      value={newDeviceData.serialNumber}
-                      onChange={(e) =>
-                        setNewDeviceData({
-                          ...newDeviceData,
-                          serialNumber: e.target.value,
-                        })
-                      }
-                      placeholder="IMEI, ESN o altro codice seriale"
-                    />
-                  </div>
-                </div>
-
-                <div className={styles.formRow}>
-                  <div className={styles.formCol3}>
-                    <label>Marca *</label>
-                    <input
-                      className={styles.formControl}
-                      value={newDeviceData.brand}
-                      onChange={(e) =>
-                        setNewDeviceData({
-                          ...newDeviceData,
-                          brand: e.target.value,
-                        })
-                      }
-                      placeholder="es. Samsung, LG, Apple..."
-                    />
-                  </div>
-                  <div className={styles.formCol3}>
-                    <label>Modello *</label>
-                    <input
-                      className={styles.formControl}
-                      value={newDeviceData.model}
-                      onChange={(e) =>
-                        setNewDeviceData({
-                          ...newDeviceData,
-                          model: e.target.value,
-                        })
-                      }
-                      placeholder="es. Galaxy S21, iPhone 13..."
-                    />
-                  </div>
-                  <div className={styles.formCol3}>
-                    <label>Tipo Device *</label>
-                    <select
-                      className={styles.formControl}
-                      value={newDeviceData.deviceType}
-                      onChange={(e) =>
-                        setNewDeviceData({
-                          ...newDeviceData,
-                          deviceType: e.target.value,
-                        })
-                      }
-                    >
-                      {deviceTypes.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className={styles.formRow}>
-                  <div className={styles.formCol3}>
-                    <label>Data Acquisto</label>
-                    <input
-                      type="date"
-                      className={styles.formControl}
-                      value={newDeviceData.purchaseDate}
-                      onChange={(e) =>
-                        setNewDeviceData({
-                          ...newDeviceData,
-                          purchaseDate: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className={styles.formCol3}>
-                    <label>Numero Scontrino</label>
-                    <input
-                      className={styles.formControl}
-                      value={newDeviceData.receiptNumber}
-                      onChange={(e) =>
-                        setNewDeviceData({
-                          ...newDeviceData,
-                          receiptNumber: e.target.value,
-                        })
-                      }
-                      placeholder="Numero per la garanzia"
-                    />
-                  </div>
-                  <div className={styles.formCol3}>
-                    <label>Rivenditore</label>
-                    <input
-                      className={styles.formControl}
-                      value={newDeviceData.retailer}
-                      onChange={(e) =>
-                        setNewDeviceData({
-                          ...newDeviceData,
-                          retailer: e.target.value,
-                        })
-                      }
-                      placeholder="Nome del negozio"
-                    />
-                  </div>
-                </div>
-
-                <div className={styles.formRow}>
-                  <div className={styles.formCol6}>
-                    <label>Note</label>
-                    <textarea
-                      className={styles.formControl}
-                      value={newDeviceData.notes}
-                      onChange={(e) =>
-                        setNewDeviceData({
-                          ...newDeviceData,
-                          notes: e.target.value,
-                        })
-                      }
-                      placeholder="Note aggiuntive sul dispositivo..."
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.modalFooter}>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnSecondary}`}
-                onClick={() => setShowNewDeviceModal(false)}
-              >
-                Annulla
-              </button>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                onClick={handleSaveNewDevice}
-                disabled={savingNewDevice}
-              >
-                {savingNewDevice ? "Salvando..." : "Salva Dispositivo"}
               </button>
             </div>
           </div>
