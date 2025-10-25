@@ -23,6 +23,7 @@ import NotaRiparazione from "./pages/NotaRiparazione";
 import RicercaNote from "./pages/RicercaNote";
 import MagazzinoApparati from "./pages/MagazzinoApparati";
 import Vendite from "./pages/Vendite";
+import PagamentoVendite from "./pages/PagamentoVendite";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -227,7 +228,14 @@ const AppRoutes = () => {
         }
       />
 
-      
+       <Route
+        path="/pagamento-vendite"
+        element={
+          <ProtectedRoute>
+            <PagamentoVendite />
+          </ProtectedRoute>
+        }
+      /> 
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />

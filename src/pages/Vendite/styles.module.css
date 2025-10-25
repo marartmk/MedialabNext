@@ -589,6 +589,19 @@
   pointer-events: none;
 }
 
+/* Contenitore per i pulsanti affiancati */
+.cardActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.cardActions .btn {
+  flex: 1;
+}
+
 .btnSuccess {
   background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
   color: white;

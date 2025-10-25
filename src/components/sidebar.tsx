@@ -139,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
           className="list-group-item"
           onClick={() =>
             window.open(
-              "https://vendolo.dea40.it/smarttv3.aspx?code=KL-QTXEN",
+              "https://vendolotest.dea40.it/smarttv3.aspx?code=Ne-BRAJH",
               "_blank"
             )
           }

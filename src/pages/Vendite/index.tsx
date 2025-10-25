@@ -3,12 +3,13 @@ import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import styles from "./styles.module.css";
 import BottomBar from "../../components/BottomBar";
-import { useSearchParams } from "react-router-dom";
+//import { useSearchParams } from "react-router-dom";
 import deviceInventoryService, {
   type DeviceInventoryItem,
 } from "../../services/deviceInventoryService";
 import { saleService } from "../../services/saleService";
 import type { CreateSaleRequest } from "../../services/saleService";
+import { useNavigate } from "react-router-dom";
 
 // Alias per DeviceInventoryItem
 type DeviceData = DeviceInventoryItem;
@@ -49,7 +50,7 @@ const Vendite: React.FC = () => {
     time: "",
   });
 
-  const [searchParams] = useSearchParams();
+  //const [searchParams] = useSearchParams();
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Stati per la ricerca cliente
@@ -69,6 +70,11 @@ const Vendite: React.FC = () => {
   const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<DeviceData | null>(null);
+  const [lastSale, setLastSale] = useState<{
+    id?: number;
+    saleId?: string;
+    saleCode?: string;
+  } | null>(null);
 
   // Refs per gestire i dropdown
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -77,6 +83,9 @@ const Vendite: React.FC = () => {
   const deviceDropdownRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deviceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [regimeIva, setRegimeIva] = useState<"IVA22" | "ART17" | "ART36">(
+    "IVA22"
+  );
 
   // Stati per i campi del form cliente
   const [clienteData, setClienteData] = useState({
@@ -101,7 +110,6 @@ const Vendite: React.FC = () => {
 
   // Stati per i modal
   const [showNewClientModal, setShowNewClientModal] = useState(false);
-  const [showNewDeviceModal, setShowNewDeviceModal] = useState(false);
   const [newClientData, setNewClientData] = useState({
     tipo: "Privato",
     cliente: true,
@@ -124,46 +132,11 @@ const Vendite: React.FC = () => {
     iban: "",
   });
 
-  // Stati per il nuovo dispositivo (Magazzino Apparati)
-  const [newDeviceData, setNewDeviceData] = useState({
-    code: "",
-    deviceType: "smartphone" as "smartphone" | "tablet",
-    brand: "",
-    model: "",
-    imei: "",
-    esn: "",
-    color: "",
-    deviceCondition: "new" as "new" | "used" | "refurbished",
-    isCourtesyDevice: false,
-    deviceStatus: "available" as
-      | "available"
-      | "loaned"
-      | "sold"
-      | "unavailable",
-    supplierId: "",
-    purchasePrice: 0,
-    sellingPrice: 0,
-    location: "",
-    notes: "",
-  });
-
   const [savingNewClient, setSavingNewClient] = useState(false);
-  const [savingNewDevice, setSavingNewDevice] = useState(false);
-  
+
   // Stati per il salvataggio della vendita
-  const [savingSale, setSavingSale] = useState(false);
   const [saleError, setSaleError] = useState<string | null>(null);
   const [saleSuccess, setSaleSuccess] = useState<string | null>(null);
-
-  // Stato per i prezzi
-  const [prezziData, setPrezziData] = useState({
-    prezzoAcquistoIva0: "",
-    prezzoAcquistoIva22: "",
-    prezzoIva22: "",
-    prezzoTotale: "",
-    tipoDiPagamento: "Amex",
-    informazioniPerLaFatturazione: "",
-  });
 
   // Stato per le note private
   const [notePrivateData, setNotePrivateData] = useState({
@@ -171,27 +144,6 @@ const Vendite: React.FC = () => {
     valuteBatteria: "98%",
     grado: "A",
   });
-
-  // Dati aziendali per la stampa
-  const companyName =
-    (typeof window !== "undefined" && sessionStorage.getItem("fullName")) ||
-    "CLINICA iPHONE STORE";
-  const companyAddr =
-    (typeof window !== "undefined" &&
-      sessionStorage.getItem("companyAddress")) ||
-    "Via Prova 1 – 73100 Lecce (LE)";
-  const companyVat =
-    (typeof window !== "undefined" && sessionStorage.getItem("companyVat")) ||
-    "P.IVA 01234567890";
-  const companyPhone =
-    (typeof window !== "undefined" && sessionStorage.getItem("companyPhone")) ||
-    "0832 123456";
-  const userName =
-    (typeof window !== "undefined" &&
-      (sessionStorage.getItem("userId") ||
-        sessionStorage.getItem("username") ||
-        "")) ||
-    "Utente";
 
   // Tipi di dispositivo
   const deviceTypes = [
@@ -268,6 +220,78 @@ const Vendite: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isCreatingSale, setIsCreatingSale] = useState(false);
 
+  const navigate = useNavigate();
+
+  // Nome azienda e utente (prelevati dalla sessionStorage se presenti)
+  const companyName =
+    sessionStorage.getItem("companyName") ||
+    sessionStorage.getItem("CompanyName") ||
+    "";
+  const userName =
+    sessionStorage.getItem("username") ||
+    sessionStorage.getItem("userName") ||
+    "";
+
+  // Stato per i prezzi
+  const [prezziData, setPrezziData] = useState({
+    // manteniamo le chiavi esistenti per retrocompatibilità
+    prezzoAcquistoIva0: "", // lo useremo come Art.17
+    prezzoAcquistoIva22: "", // lo useremo come Art.36
+    prezzoIva22: "", // imponibile per IVA 22%
+    prezzoTotale: "",
+    tipoDiPagamento: "Amex",
+    informazioniPerLaFatturazione: "",
+
+    // chiavi “parlanti” (opzionali ma comode)
+    prezzoArt17: "",
+    prezzoArt36: "",
+    imponibileIva22: "",
+  });
+
+  useEffect(() => {
+    const toNum = (v: string) => parseFloat(String(v).replace(",", ".")) || 0;
+
+    if (regimeIva === "IVA22") {
+      const imponibile = toNum(
+        prezziData.imponibileIva22 || prezziData.prezzoIva22
+      );
+      const iva = Math.round(imponibile * 0.22 * 100) / 100;
+      const totale = Math.round((imponibile + iva) * 100) / 100;
+      setPrezziData((p) => ({
+        ...p,
+        prezzoIva22: imponibile.toFixed(2),
+        prezzoTotale: totale.toFixed(2),
+      }));
+    } else if (regimeIva === "ART17") {
+      const base = toNum(
+        prezziData.prezzoArt17 || prezziData.prezzoAcquistoIva0
+      );
+      setPrezziData((p) => ({
+        ...p,
+        prezzoAcquistoIva0: base.toFixed(2),
+        prezzoTotale: base.toFixed(2),
+      }));
+    } else {
+      // ART36
+      const base = toNum(
+        prezziData.prezzoArt36 || prezziData.prezzoAcquistoIva22
+      );
+      setPrezziData((p) => ({
+        ...p,
+        prezzoAcquistoIva22: base.toFixed(2),
+        prezzoTotale: base.toFixed(2),
+      }));
+    }
+  }, [
+    regimeIva,
+    prezziData.prezzoIva22,
+    prezziData.imponibileIva22,
+    prezziData.prezzoArt17,
+    prezziData.prezzoArt36,
+    prezziData.prezzoAcquistoIva0,
+    prezziData.prezzoAcquistoIva22,
+  ]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -279,6 +303,7 @@ const Vendite: React.FC = () => {
       });
       const time = now.toLocaleTimeString("it-IT");
       setDateTime({ date, time });
+      console.log("Aggiornamento data/ora",dateTime);
     }, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -308,18 +333,6 @@ const Vendite: React.FC = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Genera GUID
-  const generateGuid = (): string => {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-      /[xy]/g,
-      function (c) {
-        const r = (Math.random() * 16) | 0;
-        const v = c === "x" ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      }
-    );
-  };
 
   // Funzione per la ricerca cliente con debouncing
   const handleSearchChange = (value: string) => {
@@ -521,28 +534,6 @@ const Vendite: React.FC = () => {
     setShowNewClientModal(true);
   };
 
-  // Funzione per aprire il modal di nuovo dispositivo (Magazzino Apparati)
-  const openNewDeviceModal = () => {
-    setNewDeviceData({
-      code: "",
-      deviceType: "smartphone",
-      brand: "",
-      model: "",
-      imei: "",
-      esn: "",
-      color: "",
-      deviceCondition: "new",
-      isCourtesyDevice: false,
-      deviceStatus: "available",
-      supplierId: "",
-      purchasePrice: 0,
-      sellingPrice: 0,
-      location: "",
-      notes: "",
-    });
-    setShowNewDeviceModal(true);
-  };
-
   // Funzione di validazione completa
   const validateForm = (): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
@@ -623,16 +614,35 @@ const Vendite: React.FC = () => {
       const userId = sessionStorage.getItem("userId") || "";
       const username = sessionStorage.getItem("username") || "";
 
-      // Calcola i valori finanziari
-      const prezzoAcquistoIva22 = parseFloat(prezziData.prezzoAcquistoIva22) || 0;
-      const prezzoIva22 = parseFloat(prezziData.prezzoIva22) || 0;
-      const prezzoTotale = parseFloat(prezziData.prezzoTotale) || 0;
-      
-      const originalPrice = prezzoAcquistoIva22;
-      const salePrice = prezzoIva22;
-      const discount = originalPrice > 0 ? originalPrice - salePrice : 0;
-      const vatRate = 22; // IVA al 22%
-      const totalAmount = prezzoTotale;
+      // === Calcolo valori in base al regime IVA ===
+      const toNum = (v: string) => parseFloat(String(v).replace(",", ".")) || 0;
+
+      let salePrice = 0; // imponibile
+      let vatRate = 0; // percentuale (0 o 22)
+      let totalAmount = 0;
+
+      if (regimeIva === "IVA22") {
+        const imponibile = toNum(prezziData.prezzoIva22);
+        const iva = Math.round(imponibile * 0.22 * 100) / 100;
+        salePrice = imponibile;
+        vatRate = 22;
+        totalAmount = Math.round((imponibile + iva) * 100) / 100;
+      } else if (regimeIva === "ART17") {
+        const base = toNum(prezziData.prezzoAcquistoIva0);
+        salePrice = base;
+        vatRate = 0;
+        totalAmount = base;
+      } else {
+        // ART36
+        const base = toNum(prezziData.prezzoAcquistoIva22);
+        salePrice = base;
+        vatRate = 0;
+        totalAmount = base;
+      }
+
+      // opzionale: prezzo “di listino” e sconto
+      const originalPrice = salePrice; // oppure tieni la tua logica di listino
+      const discount = 0;
 
       // Determina lo stato di pagamento
       const paymentStatus = totalAmount > 0 ? "Pending" : "Paid";
@@ -643,7 +653,11 @@ const Vendite: React.FC = () => {
       const saleData: CreateSaleRequest = {
         saleType: "Device", // Vendita di dispositivo
         deviceId: selectedDevice?.deviceId,
-        deviceRegistryId: selectedDevice?.id ? parseInt(selectedDevice.id) : undefined,
+        deviceRegistryId: selectedDevice?.id
+          ? (typeof selectedDevice.id === "string"
+              ? parseInt(selectedDevice.id, 10)
+              : Number(selectedDevice.id))
+          : undefined,
         brand: dispositivoData.brand,
         model: dispositivoData.model,
         serialNumber: dispositivoData.serialNumber || undefined,
@@ -665,28 +679,53 @@ const Vendite: React.FC = () => {
         sellerCode: userId,
         sellerName: username,
         notes: prezziData.informazioniPerLaFatturazione || undefined,
-        includedAccessories: diagnosticItems
-          .filter((item) => item.active)
-          .map((item) => item.label)
-          .join(", ") || undefined,
+        includedAccessories:
+          diagnosticItems
+            .filter((item) => item.active)
+            .map((item) => item.label)
+            .join(", ") || undefined,
         hasWarranty: dispositivoData.durataGaranzia !== "0 Mesi",
-        warrantyMonths: dispositivoData.durataGaranzia !== "0 Mesi" 
-          ? parseInt(dispositivoData.durataGaranzia) 
-          : undefined,
+        warrantyMonths:
+          dispositivoData.durataGaranzia !== "0 Mesi"
+            ? parseInt(dispositivoData.durataGaranzia)
+            : undefined,
         saleDate: new Date().toISOString(),
         createdBy: userId,
       };
 
-      console.log("Dati vendita da inviare:\n" + JSON.stringify(saleData, null, 2));
+      console.log(
+        "Dati vendita da inviare:\n" + JSON.stringify(saleData, null, 2)
+      );
 
       // Chiamata API per creare la vendita
       const response = await saleService.createSale(saleData);
 
       console.log("Vendita creata con successo:", response);
-      
-      setSaleSuccess(`✅ Vendita creata con successo!\n\nCodice vendita: ${response.saleCode}\nTotale: €${response.totalAmount.toFixed(2)}`);
-      
-      alert(`✅ Vendita creata con successo!\n\nCodice vendita: ${response.saleCode}\nID: ${response.saleId}\nTotale: €${response.totalAmount.toFixed(2)}`);
+
+      // 🔹 memorizza per il bottone "Pagamento"
+      setLastSale({
+        id: response?.id,
+        saleId: response?.saleId ?? response?.saleId,
+        saleCode: response?.saleCode,
+      });
+      sessionStorage.setItem("lastSaleId", String(response?.id ?? ""));
+      sessionStorage.setItem(
+        "lastSaleGuid",
+        String(response?.saleId ?? response?.saleId ?? "")
+      );
+      sessionStorage.setItem("lastSaleCode", String(response?.saleCode ?? ""));
+
+      setSaleSuccess(
+        `✅ Vendita creata con successo!\n\nCodice vendita: ${
+          response.saleCode
+        }\nTotale: €${response.totalAmount.toFixed(2)}`
+      );
+
+      alert(
+        `✅ Vendita creata con successo!\n\nCodice vendita: ${
+          response.saleCode
+        }\nID: ${response.saleId}\nTotale: €${response.totalAmount.toFixed(2)}`
+      );
 
       // Gestire azione post-creazione
       if (actionType === "email") {
@@ -699,15 +738,15 @@ const Vendite: React.FC = () => {
 
       // Opzionale: Reset del form dopo il successo
       // resetForm();
-
     } catch (error: any) {
       console.error("Errore durante la creazione della vendita:", error);
-      
-      const errorMessage = error.response?.data?.message 
-        || error.response?.data?.errors?.join(", ")
-        || error.message 
-        || "Errore sconosciuto durante la creazione della vendita";
-      
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.errors?.join(", ") ||
+        error.message ||
+        "Errore sconosciuto durante la creazione della vendita";
+
       setSaleError(errorMessage);
       alert(`❌ Errore durante la creazione della vendita:\n\n${errorMessage}`);
     } finally {
@@ -839,7 +878,7 @@ const Vendite: React.FC = () => {
     } finally {
       setSavingNewClient(false);
     }
-  }; 
+  };
 
   // Funzione per ottenere l'icona del dispositivo (Magazzino Apparati)
   const getDeviceIcon = (deviceType: string) => {
@@ -862,7 +901,6 @@ const Vendite: React.FC = () => {
         return "📱";
     }
   };
-  
 
   const toggleMenu = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
@@ -1133,7 +1171,7 @@ const Vendite: React.FC = () => {
                               setShowDeviceDropdown(true);
                             }
                           }}
-                        />                       
+                        />
 
                         {selectedDevice && (
                           <button
@@ -1531,69 +1569,131 @@ const Vendite: React.FC = () => {
                 <div className={styles.formSection}>
                   <h3>Prezzo</h3>
 
+                  {/* Selettore regime IVA */}
                   <div className={styles.formGroup}>
-                    <label>Prezzo Art.17 Iva 0%</label>
-                    <div className={styles.priceInputContainer}>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className={styles.formControl}
-                        value={prezziData.prezzoAcquistoIva0}
-                        onChange={(e) =>
-                          setPrezziData({
-                            ...prezziData,
-                            prezzoAcquistoIva0: e.target.value,
-                          })
-                        }
-                        placeholder="0.00"
-                      />
-                      <span className={styles.currencyLabel}>€</span>
-                    </div>
+                    <label>Regime IVA</label>
+                    <select
+                      className={styles.formControl}
+                      value={regimeIva}
+                      onChange={(e) => setRegimeIva(e.target.value as any)}
+                    >
+                      <option value="ART17">Art.17 – IVA 0%</option>
+                      <option value="ART36">Art.36 – IVA 0%</option>
+                      <option value="IVA22">IVA 22%</option>
+                    </select>
                   </div>
 
-                  <div className={styles.formGroup}>
-                    <label>Prezzo Art.36 Iva 0%</label>
-                    <div className={styles.priceInputContainer}>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className={styles.formControl}
-                        value={prezziData.prezzoAcquistoIva22}
-                        onChange={(e) =>
-                          setPrezziData({
-                            ...prezziData,
-                            prezzoAcquistoIva22: e.target.value,
-                          })
-                        }
-                        placeholder="999.00"
-                      />
-                      <span className={styles.currencyLabel}>€</span>
+                  {/* ART.17 */}
+                  {regimeIva === "ART17" && (
+                    <div className={styles.formGroup}>
+                      <label>Prezzo Art.17 IVA 0%</label>
+                      <div className={styles.priceInputContainer}>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className={styles.formControl}
+                          value={
+                            prezziData.prezzoArt17 ||
+                            prezziData.prezzoAcquistoIva0
+                          }
+                          onChange={(e) =>
+                            setPrezziData((p) => ({
+                              ...p,
+                              prezzoArt17: e.target.value,
+                              prezzoAcquistoIva0: e.target.value,
+                            }))
+                          }
+                          placeholder="0.00"
+                        />
+                        <span className={styles.currencyLabel}>€</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className={styles.formGroup}>
-                    <label>Prezzo Iva 22%</label>
-                    <div className={styles.priceInputContainer}>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className={styles.formControl}
-                        value={prezziData.prezzoIva22}
-                        onChange={(e) =>
-                          setPrezziData({
-                            ...prezziData,
-                            prezzoIva22: e.target.value,
-                          })
-                        }
-                        placeholder="200.00"
-                      />
-                      <span className={styles.currencyLabel}>€</span>
+                  {/* ART.36 */}
+                  {regimeIva === "ART36" && (
+                    <div className={styles.formGroup}>
+                      <label>Prezzo Art.36 IVA 0%</label>
+                      <div className={styles.priceInputContainer}>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className={styles.formControl}
+                          value={
+                            prezziData.prezzoArt36 ||
+                            prezziData.prezzoAcquistoIva22
+                          }
+                          onChange={(e) =>
+                            setPrezziData((p) => ({
+                              ...p,
+                              prezzoArt36: e.target.value,
+                              prezzoAcquistoIva22: e.target.value,
+                            }))
+                          }
+                          placeholder="0.00"
+                        />
+                        <span className={styles.currencyLabel}>€</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
+                  {/* IVA 22% */}
+                  {regimeIva === "IVA22" && (
+                    <>
+                      <div className={styles.formGroup}>
+                        <label>Imponibile (IVA 22%)</label>
+                        <div className={styles.priceInputContainer}>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className={styles.formControl}
+                            value={
+                              prezziData.imponibileIva22 ||
+                              prezziData.prezzoIva22
+                            }
+                            onChange={(e) =>
+                              setPrezziData((p) => ({
+                                ...p,
+                                imponibileIva22: e.target.value,
+                                prezzoIva22: e.target.value,
+                              }))
+                            }
+                            placeholder="0.00"
+                          />
+                          <span className={styles.currencyLabel}>€</span>
+                        </div>
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label>IVA (22% su imponibile)</label>
+                        <div className={styles.priceInputContainer}>
+                          <input
+                            type="number"
+                            className={styles.formControl}
+                            readOnly
+                            value={(() => {
+                              const v =
+                                parseFloat(
+                                  (
+                                    prezziData.imponibileIva22 ||
+                                    prezziData.prezzoIva22 ||
+                                    "0"
+                                  ).replace(",", ".")
+                                ) || 0;
+                              return (Math.round(v * 0.22 * 100) / 100).toFixed(
+                                2
+                              );
+                            })()}
+                          />
+                          <span className={styles.currencyLabel}>€</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Totale sempre visibile */}
                   <div className={styles.formGroup}>
                     <label>Prezzo Totale</label>
                     <div className={styles.priceInputContainer}>
@@ -1604,12 +1704,12 @@ const Vendite: React.FC = () => {
                         className={styles.formControl}
                         value={prezziData.prezzoTotale}
                         onChange={(e) =>
-                          setPrezziData({
-                            ...prezziData,
+                          setPrezziData((p) => ({
+                            ...p,
                             prezzoTotale: e.target.value,
-                          })
+                          }))
                         }
-                        placeholder="1299.00"
+                        placeholder="0.00"
                       />
                       <span className={styles.currencyLabel}>€</span>
                     </div>
@@ -1621,10 +1721,10 @@ const Vendite: React.FC = () => {
                       className={styles.formControl}
                       value={prezziData.tipoDiPagamento}
                       onChange={(e) =>
-                        setPrezziData({
-                          ...prezziData,
+                        setPrezziData((p) => ({
+                          ...p,
                           tipoDiPagamento: e.target.value,
-                        })
+                        }))
                       }
                     >
                       <option value="Amex">💳 Amex</option>
@@ -1646,13 +1746,51 @@ const Vendite: React.FC = () => {
                       rows={3}
                       value={prezziData.informazioniPerLaFatturazione}
                       onChange={(e) =>
-                        setPrezziData({
-                          ...prezziData,
+                        setPrezziData((p) => ({
+                          ...p,
                           informazioniPerLaFatturazione: e.target.value,
-                        })
+                        }))
                       }
-                      placeholder="Note aggiuntive per la fatturazione..."
+                      placeholder="Note aggiuntive per la fatturazione."
                     />
+                  </div>
+                  <div className={styles.cardActions}>
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnSuccess}`}
+                      onClick={() => {
+                        // prova a leggere da state, altrimenti da sessionStorage
+                        const id =
+                          lastSale?.id ??
+                          Number(sessionStorage.getItem("lastSaleId"));
+                        const saleId =
+                          lastSale?.saleId ??
+                          sessionStorage.getItem("lastSaleGuid") ??
+                          undefined;
+                        const saleCode =
+                          lastSale?.saleCode ??
+                          sessionStorage.getItem("lastSaleCode") ??
+                          undefined;
+
+                        if (id || saleId) {
+                          navigate("/pagamento-vendite", {
+                            state: { id, saleId, saleCode },
+                          });
+                        } else {
+                          // nessuna vendita salvata: apri comunque la pagina senza parametri
+                          navigate("/pagamento-vendite");
+                        }
+                      }}
+                    >
+                      💳 Pagamento
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnSecondary}`}
+                    >
+                      📦 Consegna
+                    </button>
                   </div>
                 </div>
 
@@ -1674,30 +1812,38 @@ const Vendite: React.FC = () => {
 
             {/* Alert per successo/errore vendita */}
             {saleSuccess && (
-              <div className={styles.alertSuccess} style={{
-                padding: '15px',
-                marginBottom: '20px',
-                backgroundColor: '#d4edda',
-                border: '1px solid #c3e6cb',
-                borderRadius: '4px',
-                color: '#155724'
-              }}>
+              <div
+                className={styles.alertSuccess}
+                style={{
+                  padding: "15px",
+                  marginBottom: "20px",
+                  backgroundColor: "#d4edda",
+                  border: "1px solid #c3e6cb",
+                  borderRadius: "4px",
+                  color: "#155724",
+                }}
+              >
                 <strong>✅ Successo!</strong>
-                <p style={{ margin: '5px 0 0 0', whiteSpace: 'pre-line' }}>{saleSuccess}</p>
+                <p style={{ margin: "5px 0 0 0", whiteSpace: "pre-line" }}>
+                  {saleSuccess}
+                </p>
               </div>
             )}
-            
+
             {saleError && (
-              <div className={styles.alertError} style={{
-                padding: '15px',
-                marginBottom: '20px',
-                backgroundColor: '#f8d7da',
-                border: '1px solid #f5c6cb',
-                borderRadius: '4px',
-                color: '#721c24'
-              }}>
+              <div
+                className={styles.alertError}
+                style={{
+                  padding: "15px",
+                  marginBottom: "20px",
+                  backgroundColor: "#f8d7da",
+                  border: "1px solid #f5c6cb",
+                  borderRadius: "4px",
+                  color: "#721c24",
+                }}
+              >
                 <strong>❌ Errore!</strong>
-                <p style={{ margin: '5px 0 0 0' }}>{saleError}</p>
+                <p style={{ margin: "5px 0 0 0" }}>{saleError}</p>
               </div>
             )}
 
