@@ -1,0 +1,843 @@
+/* ✨ STILI PAGINA RICERCA VENDITE - BASATO SU MODIFICA SCHEDE */
+
+/* Layout principale */
+.mainLayout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.contentArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageBody {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  min-height: 0;
+  background-color: #f8f9fa;
+}
+
+/* Header della pagina */
+.schedaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #ccc;
+  margin: 0 20px;
+  background: white;
+}
+
+.leftBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.backBtn {
+  width: 45px !important;
+  height: 45px !important;
+  background-color: #444 !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  border: none;
+  min-width: 45px;
+  min-height: 45px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.backBtn:hover {
+  background-color: #333 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.backIcon {
+  color: white !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.repairInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.repairCode {
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  font-family: monospace;
+}
+
+.repairStatus {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.breadcrumb {
+  font-size: 0.9rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.breadcrumbItem {
+  color: #007bff;
+}
+
+.breadcrumbSeparator {
+  margin: 0 8px;
+  color: #999;
+  font-weight: 400;
+}
+
+/* Container principale del form */
+.repairFormContainer {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e5e5;
+}
+
+/* Titolo della pagina */
+.pageTitle {
+  text-align: left;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pageTitle h1 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: #1a1a1a;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pageTitle p {
+  margin: 6px 0 0 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Layout principale a due colonne */
+.pageContainer {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sezioni del form */
+.formSection {
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  padding: 16px;
+  background: #fafafa;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.formSection:hover {
+  border-color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.formSection h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Barra di ricerca */
+.searchBar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.searchBar input {
+  flex: 1;
+}
+
+.searchBar .btn {
+  min-width: 120px;
+}
+
+/* Pulsante link per toggle */
+.btnLink {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  padding: 8px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  transition: color 0.3s ease;
+}
+
+.btnLink:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* Filtri avanzati */
+.advancedFilters {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Form rows e columns */
+.formRowEdit {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.formCol3 {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.formCol3 label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  color: #1a1a1a;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+
+/* Controlli del form */
+.formControl {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+  color: #333;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.formControl:focus {
+  outline: none;
+  border-color: #333;
+  box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.1);
+  background-color: #ffffff;
+}
+
+.formControl:hover {
+  border-color: #999;
+}
+
+/* Azioni form */
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Pulsanti */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.btnPrimary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 123, 255, 0.4);
+}
+
+.btnSecondary {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.2);
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(108, 117, 125, 0.3);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btnAction {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+.btnAction:hover {
+  transform: scale(1.2);
+}
+
+/* Messaggi */
+.loadingMessage,
+.errorMessage,
+.noResults,
+.noData {
+  padding: 20px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #666;
+  border-radius: 8px;
+}
+
+.errorMessage {
+  background: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+}
+
+.loadingMessage {
+  background: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #bbdefb;
+}
+
+.noResults,
+.noData {
+  background: #f5f5f5;
+  color: #999;
+  border: 1px solid #e0e0e0;
+}
+
+/* Tabella vendite */
+.salesTableWrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.salesTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  font-size: 0.85rem;
+}
+
+.salesTable thead {
+  background: linear-gradient(135deg, #444 0%, #333 100%);
+  color: white;
+}
+
+.salesTable thead th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.75rem;
+}
+
+.salesTable tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
+}
+
+.salesTable tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.salesTable tbody td {
+  padding: 12px;
+  vertical-align: middle;
+}
+
+/* Badge stato */
+.saleStatusBadge,
+.paymentStatusBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.saleStatusBadge.pending,
+.paymentStatusBadge.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.saleStatusBadge.confirmed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.saleStatusBadge.delivered {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.saleStatusBadge.cancelled {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.saleStatusBadge.returned {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.paymentStatusBadge.partial {
+  background: #ffeaa7;
+  color: #d63031;
+}
+
+.paymentStatusBadge.paid {
+  background: #d4edda;
+  color: #155724;
+}
+
+.paymentStatusBadge.refunded {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+/* Sezione statistiche */
+.statsSection {
+  background: white;
+  border: 1px solid #e5e5e5;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.statCard {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e5e5e5;
+  transition: all 0.3s ease;
+  min-height: 120px;
+}
+
+.statCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  border-color: #007bff;
+}
+
+.statIcon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.statContent {
+  width: 100%;
+}
+
+.statValue {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* Varianti colorate per le card statistiche */
+.statCard.orange {
+  background: linear-gradient(135deg, #ff9f43 0%, #ee5a24 100%);
+  border-color: #ff9f43;
+  color: white;
+}
+
+.statCard.orange .statValue,
+.statCard.orange .statLabel {
+  color: white;
+}
+
+.statCard.teal {
+  background: linear-gradient(135deg, #0fb9b1 0%, #079992 100%);
+  border-color: #0fb9b1;
+  color: white;
+}
+
+.statCard.teal .statValue,
+.statCard.teal .statLabel {
+  color: white;
+}
+
+.statCard.green {
+  background: linear-gradient(135deg, #26de81 0%, #20bf6b 100%);
+  border-color: #26de81;
+  color: white;
+}
+
+.statCard.green .statValue,
+.statCard.green .statLabel {
+  color: white;
+}
+
+.statCard.red {
+  background: linear-gradient(135deg, #fc5c65 0%, #eb3b5a 100%);
+  border-color: #fc5c65;
+  color: white;
+}
+
+.statCard.red .statValue,
+.statCard.red .statLabel {
+  color: white;
+}
+
+/* Grafici */
+.chartContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chartBarWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chartLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #333;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.chartValue {
+  color: #666;
+  font-weight: 400;
+}
+
+.chartBarBg {
+  width: 100%;
+  height: 24px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.chartBar {
+  height: 100%;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  border-radius: 12px;
+  transition: width 0.5s ease;
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+}
+
+.chartBarPayment {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+}
+
+.chartBarType {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  box-shadow: 0 2px 6px rgba(108, 117, 125, 0.3);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1200px) {
+  .pageContainer {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageBody {
+    padding: 12px;
+  }
+
+  .repairFormContainer {
+    padding: 12px;
+  }
+
+  .schedaHeader {
+    margin: 0 12px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .leftBlock {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .pageTitle {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .pageTitle h1 {
+    font-size: 1.5rem;
+  }
+
+  .searchBar {
+    flex-direction: column;
+  }
+
+  .searchBar .btn {
+    width: 100%;
+  }
+
+  .formRowEdit {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .formCol3 {
+    min-width: 100%;
+  }
+
+  .formActions {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn {
+    width: 100%;
+    max-width: 280px;
+    justify-content: center;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .salesTableWrapper {
+    overflow-x: auto;
+  }
+
+  .salesTable {
+    font-size: 0.75rem;
+  }
+
+  .salesTable thead th,
+  .salesTable tbody td {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageBody {
+    padding: 8px;
+  }
+
+  .repairFormContainer {
+    padding: 10px;
+  }
+
+  .pageTitle h1 {
+    font-size: 1.3rem;
+  }
+
+  .pageTitle p {
+    font-size: 0.85rem;
+  }
+
+  .formSection {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .formSection h3 {
+    font-size: 1rem;
+  }
+
+  .backBtn {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .salesTable {
+    font-size: 0.7rem;
+  }
+
+  .salesTable thead th,
+  .salesTable tbody td {
+    padding: 6px;
+  }
+
+  .statValue {
+    font-size: 0.95rem;
+  }
+
+  .statLabel {
+    font-size: 0.7rem;
+  }
+}
+
+/* Miglioramenti per l'accessibilità */
+.formControl:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 1px;
+}
+
+.btn:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 1px;
+}
+
+/* Effetti hover sui dispositivi con mouse */
+@media (hover: hover) {
+  .formSection:hover {
+    transform: translateY(-1px);
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Animazioni per le transizioni */
+.formSection {
+  animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar personalizzata per webkit browsers */
+.pageBody::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pageBody::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.pageBody::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.pageBody::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+.salesTableWrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.salesTableWrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.salesTableWrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.salesTableWrapper::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}

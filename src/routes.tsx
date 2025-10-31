@@ -24,6 +24,8 @@ import RicercaNote from "./pages/RicercaNote";
 import MagazzinoApparati from "./pages/MagazzinoApparati";
 import Vendite from "./pages/Vendite";
 import PagamentoVendite from "./pages/PagamentoVendite";
+import RicercaVendite from "./pages/RicercaVendite";
+import ModificaVendite from "./pages/ModificaVendite";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -37,7 +39,6 @@ const AppRoutes = () => {
       {/* Rotta pubblica */}
       <Route path="/" element={<Login />} />
       <Route path="/admin" element={<LoginAdmin />} />
-
       {/* Rotte protette */}
       <Route
         path="/dashboard"
@@ -47,7 +48,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/accettazione-smart"
         element={
@@ -56,7 +56,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/accettazione"
         element={
@@ -65,7 +64,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/anagrafica-clienti"
         element={
@@ -74,7 +72,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/area-riservata"
         element={
@@ -83,7 +80,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/dashboard-admin"
         element={
@@ -92,7 +88,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/master-company/:id?"
         element={
@@ -101,7 +96,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/affiliate-management"
         element={
@@ -110,7 +104,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/login-local-admin"
         element={
@@ -119,7 +112,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/dashboard-local-admin"
         element={
@@ -128,7 +120,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/device-registry"
         element={
@@ -137,7 +128,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/ricerca-schede"
         element={
@@ -146,7 +136,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/modifica-schede"
         element={
@@ -155,7 +144,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/magazzino-ricambi"
         element={
@@ -164,7 +152,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/gestione-logistica"
         element={
@@ -173,7 +160,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/anagrafica-operatori"
         element={
@@ -182,7 +168,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/consegna-cliente"
         element={
@@ -191,7 +176,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/nota-riparazione"
         element={
@@ -200,7 +184,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/ricerca-note"
         element={
@@ -209,8 +192,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
-       <Route
+      <Route
         path="/magazzino-apparati"
         element={
           <ProtectedRoute>
@@ -218,8 +200,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
-       <Route
+      <Route
         path="/vendite-apparati"
         element={
           <ProtectedRoute>
@@ -227,16 +208,32 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
-       <Route
+      <Route
         path="/pagamento-vendite"
         element={
           <ProtectedRoute>
             <PagamentoVendite />
           </ProtectedRoute>
         }
-      /> 
+      />
+      <Route
+        path="/ricerca-vendite"
+        element={
+          <ProtectedRoute>
+            <RicercaVendite />
+          </ProtectedRoute>
+        }
+      />
 
+      <Route
+        path="/modifica-vendite"
+        element={
+          <ProtectedRoute>
+            <ModificaVendite />
+          </ProtectedRoute>
+        }
+      />
+      
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
