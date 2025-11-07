@@ -155,6 +155,12 @@ const RicercaVendite: React.FC = () => {
     salesByPaymentStatus: {},
   });
 
+  // Stati per il modal dettagli vendita
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedSale, setSelectedSale] = useState<SaleDetailDto | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [customerDetails, setCustomerDetails] = useState<any>(null);
+
   // Filtri disponibili
   const SALE_TYPES = [
     { value: "", label: "Tutti i tipi" },
@@ -372,6 +378,54 @@ const RicercaVendite: React.FC = () => {
   // Calcola percentuale per grafico
   const calculatePercentage = (value: number, total: number) => {
     return total > 0 ? (value / total) * 100 : 0;
+  };
+
+  // Funzione per caricare i dettagli completi di una vendita includendo il cliente
+  const loadSaleWithCustomer = async (sale: SaleDetailDto) => {
+    setLoadingDetails(true);
+    setCustomerDetails(null); // Reset dei dati cliente precedenti
+    try {
+      // Se c'è un customerId, carica i dettagli del cliente
+      if (sale.customerId) {
+        const token = getAuthToken();
+        const customerResponse = await fetch(
+          `${API_URL}/api/customer/${sale.customerId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (customerResponse.ok) {
+          const customer = await customerResponse.json();
+          // Salva i dati completi del cliente
+          setCustomerDetails(customer);
+          // Aggiorna la vendita con il nome completo del cliente
+          const updatedSale = {
+            ...sale,
+            customerName:
+              customer.tipologia === "Azienda"
+                ? customer.ragioneSociale
+                : `${customer.nome} ${customer.cognome}`,
+          };
+          setSelectedSale(updatedSale);
+        } else {
+          // Se non riesce a caricare il cliente, usa comunque la vendita
+          setSelectedSale(sale);
+        }
+      } else {
+        setSelectedSale(sale);
+      }
+      setShowDetailModal(true);
+    } catch (error) {
+      console.error("Errore nel caricamento dei dettagli:", error);
+      // In caso di errore, mostra comunque il modal con i dati disponibili
+      setSelectedSale(sale);
+      setShowDetailModal(true);
+    } finally {
+      setLoadingDetails(false);
+    }
   };
 
   return (
@@ -825,14 +879,7 @@ const RicercaVendite: React.FC = () => {
                                 <div className={styles.actionButtons}>
                                   <button
                                     className={styles.actionBtn}
-                                    onClick={() =>
-                                      navigate("/dettaglio-vendita", {
-                                        state: {
-                                          saleId: sale.saleId,
-                                          id: sale.id,
-                                        },
-                                      })
-                                    }
+                                    onClick={() => loadSaleWithCustomer(sale)}
                                     title="Visualizza dettagli"
                                   >
                                     <Eye className={styles.actionIcon} />
@@ -1048,6 +1095,511 @@ const RicercaVendite: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Modal Dettagli Vendita */}
+        {showDetailModal && selectedSale && (
+          <div
+            className={styles.modalOverlay}
+            onClick={() => setShowDetailModal(false)}
+          >
+            <div
+              className={styles.modalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header del Modal */}
+              <div className={styles.modalHeader}>
+                <div className={styles.modalTitle}>
+                  <ShoppingCart className={styles.modalTitleIcon} />
+                  <div>
+                    <h2>Dettagli Vendita</h2>
+                    <p className={styles.modalSubtitle}>
+                      Codice: {selectedSale.saleCode}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  className={styles.modalCloseBtn}
+                  onClick={() => setShowDetailModal(false)}
+                  title="Chiudi"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Body del Modal */}
+              <div className={styles.modalBody}>
+                {/* Sezione Informazioni Generali */}
+                <div className={styles.modalSection}>
+                  <h3 className={styles.modalSectionTitle}>
+                    📋 Informazioni Generali
+                  </h3>
+                  <div className={styles.modalGrid}>
+                    <div className={styles.modalField}>
+                      <label>Tipo Vendita</label>
+                      <span className={styles.modalValue}>
+                        {selectedSale.saleType === "Device"
+                          ? "📱 Dispositivo"
+                          : "🎧 Accessorio"}
+                      </span>
+                    </div>
+                    <div className={styles.modalField}>
+                      <label>Stato Vendita</label>
+                      <span
+                        className={`${styles.modalBadge} ${
+                          selectedSale.saleStatus === "PENDING"
+                            ? styles.badgePending
+                            : selectedSale.saleStatus === "CONFIRMED"
+                            ? styles.badgeConfirmed
+                            : selectedSale.saleStatus === "DELIVERED"
+                            ? styles.badgeDelivered
+                            : selectedSale.saleStatus === "CANCELLED"
+                            ? styles.badgeCancelled
+                            : styles.badgeReturned
+                        }`}
+                      >
+                        {getSaleStatusLabel(selectedSale.saleStatus)}
+                      </span>
+                    </div>
+                    <div className={styles.modalField}>
+                      <label>Stato Pagamento</label>
+                      <span
+                        className={`${styles.modalBadge} ${
+                          selectedSale.paymentStatus === "PENDING"
+                            ? styles.badgePending
+                            : selectedSale.paymentStatus === "PARTIAL"
+                            ? styles.badgePartial
+                            : selectedSale.paymentStatus === "PAID"
+                            ? styles.badgePaid
+                            : styles.badgeRefunded
+                        }`}
+                      >
+                        {getPaymentStatusLabel(selectedSale.paymentStatus)}
+                      </span>
+                    </div>
+                    <div className={styles.modalField}>
+                      <label>Data Vendita</label>
+                      <span className={styles.modalValue}>
+                        {selectedSale.saleDate
+                          ? formatDate(selectedSale.saleDate)
+                          : "-"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sezione Cliente */}
+                <div className={styles.modalSection}>
+                  <h3 className={styles.modalSectionTitle}>👤 Cliente</h3>
+                  {loadingDetails ? (
+                    <div className={styles.modalValue}>
+                      ⏳ Caricamento dati cliente...
+                    </div>
+                  ) : (
+                    <div className={styles.modalGrid}>
+                      <div className={styles.modalField}>
+                        <label>Nome Cliente</label>
+                        <span className={styles.modalValue}>
+                          {selectedSale.customerName || "Non disponibile"}
+                        </span>
+                      </div>
+                      {customerDetails?.email && (
+                        <div className={styles.modalField}>
+                          <label>📧 Email</label>
+                          <span className={styles.modalValue}>
+                            {customerDetails.email}
+                          </span>
+                        </div>
+                      )}
+                      {customerDetails?.telefono && (
+                        <div className={styles.modalField}>
+                          <label>📱 Telefono</label>
+                          <span className={styles.modalValue}>
+                            {customerDetails.telefono}
+                          </span>
+                        </div>
+                      )}
+                      {customerDetails?.indirizzo && (
+                        <div className={styles.modalField}>
+                          <label>📍 Indirizzo</label>
+                          <span className={styles.modalValue}>
+                            {customerDetails.indirizzo}
+                          </span>
+                        </div>
+                      )}
+                      {customerDetails?.citta && (
+                        <div className={styles.modalField}>
+                          <label>🏙️ Città</label>
+                          <span className={styles.modalValue}>
+                            {customerDetails.citta}
+                            {customerDetails.cap && ` - ${customerDetails.cap}`}
+                            {customerDetails.provincia &&
+                              ` (${customerDetails.provincia})`}
+                          </span>
+                        </div>
+                      )}
+                      {customerDetails?.fiscalCode && (
+                        <div className={styles.modalField}>
+                          <label>🆔 Codice Fiscale</label>
+                          <span className={styles.modalValue}>
+                            {customerDetails.fiscalCode}
+                          </span>
+                        </div>
+                      )}
+                      {customerDetails?.pIva && (
+                        <div className={styles.modalField}>
+                          <label>🏢 P.IVA</label>
+                          <span className={styles.modalValue}>
+                            {customerDetails.pIva}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Sezione Prodotto */}
+                {selectedSale.saleType === "Device" && (
+                  <div className={styles.modalSection}>
+                    <h3 className={styles.modalSectionTitle}>📱 Dispositivo</h3>
+                    <div className={styles.modalGrid}>
+                      <div className={styles.modalField}>
+                        <label>Marca</label>
+                        <span className={styles.modalValue}>
+                          {selectedSale.brand || "-"}
+                        </span>
+                      </div>
+                      <div className={styles.modalField}>
+                        <label>Modello</label>
+                        <span className={styles.modalValue}>
+                          {selectedSale.model || "-"}
+                        </span>
+                      </div>
+                      <div className={styles.modalField}>
+                        <label>IMEI</label>
+                        <span className={styles.modalValue}>
+                          {selectedSale.imei || "-"}
+                        </span>
+                      </div>
+                      <div className={styles.modalField}>
+                        <label>Serial Number</label>
+                        <span className={styles.modalValue}>
+                          {selectedSale.serialNumber || "-"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Sezione Prezzi */}
+                <div className={styles.modalSection}>
+                  <h3 className={styles.modalSectionTitle}>
+                    💰 Dettagli Finanziari
+                  </h3>
+                  <div className={styles.modalGrid}>
+                    <div className={styles.modalField}>
+                      <label>Prezzo di Vendita</label>
+                      <span className={styles.modalValue}>
+                        {formatCurrency(selectedSale.salePrice)}
+                      </span>
+                    </div>
+                    {selectedSale.originalPrice && (
+                      <div className={styles.modalField}>
+                        <label>Prezzo Originale</label>
+                        <span className={styles.modalValue}>
+                          {formatCurrency(selectedSale.originalPrice)}
+                        </span>
+                      </div>
+                    )}
+                    {selectedSale.discount && selectedSale.discount > 0 && (
+                      <div className={styles.modalField}>
+                        <label>Sconto</label>
+                        <span className={styles.modalValue}>
+                          {formatCurrency(selectedSale.discount)}
+                        </span>
+                      </div>
+                    )}
+                    <div className={styles.modalField}>
+                      <label>IVA</label>
+                      <span className={styles.modalValue}>
+                        {selectedSale.vatRate}%
+                      </span>
+                    </div>
+                    <div className={styles.modalField}>
+                      <label>Totale</label>
+                      <span
+                        className={`${styles.modalValue} ${styles.modalValueHighlight}`}
+                      >
+                        {formatCurrency(selectedSale.totalAmount)}
+                      </span>
+                    </div>
+                    <div className={styles.modalField}>
+                      <label>Importo Pagato</label>
+                      <span className={styles.modalValue}>
+                        {formatCurrency(selectedSale.paidAmount)}
+                      </span>
+                    </div>
+                    <div className={styles.modalField}>
+                      <label>Importo Residuo</label>
+                      <span
+                        className={`${styles.modalValue} ${
+                          selectedSale.remainingAmount > 0
+                            ? styles.modalValueDanger
+                            : ""
+                        }`}
+                      >
+                        {formatCurrency(selectedSale.remainingAmount)}
+                      </span>
+                    </div>
+                    {selectedSale.paymentType && (
+                      <div className={styles.modalField}>
+                        <label>Metodo Pagamento</label>
+                        <span className={styles.modalValue}>
+                          {selectedSale.paymentType === "Cash"
+                            ? "💵 Contanti"
+                            : selectedSale.paymentType === "Card"
+                            ? "💳 Carta"
+                            : selectedSale.paymentType === "BankTransfer"
+                            ? "🏦 Bonifico"
+                            : selectedSale.paymentType === "Installments"
+                            ? "📅 Rate"
+                            : "🔀 Misto"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sezione Rate (se presenti) */}
+                {selectedSale.installmentsCount &&
+                  selectedSale.installmentsCount > 0 && (
+                    <div className={styles.modalSection}>
+                      <h3 className={styles.modalSectionTitle}>
+                        📅 Piano Rate
+                      </h3>
+                      <div className={styles.modalGrid}>
+                        <div className={styles.modalField}>
+                          <label>Numero Rate</label>
+                          <span className={styles.modalValue}>
+                            {selectedSale.installmentsCount}
+                          </span>
+                        </div>
+                        <div className={styles.modalField}>
+                          <label>Importo per Rata</label>
+                          <span className={styles.modalValue}>
+                            {formatCurrency(
+                              selectedSale.installmentAmount || 0
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Sezione Garanzia */}
+                {selectedSale.hasWarranty && (
+                  <div className={styles.modalSection}>
+                    <h3 className={styles.modalSectionTitle}>🛡️ Garanzia</h3>
+                    <div className={styles.modalGrid}>
+                      <div className={styles.modalField}>
+                        <label>Durata Garanzia</label>
+                        <span className={styles.modalValue}>
+                          {selectedSale.warrantyMonths} mesi
+                        </span>
+                      </div>
+                      {selectedSale.warrantyExpiryDate && (
+                        <div className={styles.modalField}>
+                          <label>Scadenza Garanzia</label>
+                          <span className={styles.modalValue}>
+                            {formatDate(selectedSale.warrantyExpiryDate)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sezione Documenti */}
+                {(selectedSale.invoiceNumber || selectedSale.receiptNumber) && (
+                  <div className={styles.modalSection}>
+                    <h3 className={styles.modalSectionTitle}>📄 Documenti</h3>
+                    <div className={styles.modalGrid}>
+                      {selectedSale.invoiceNumber && (
+                        <>
+                          <div className={styles.modalField}>
+                            <label>Numero Fattura</label>
+                            <span className={styles.modalValue}>
+                              {selectedSale.invoiceNumber}
+                            </span>
+                          </div>
+                          {selectedSale.invoiceDate && (
+                            <div className={styles.modalField}>
+                              <label>Data Fattura</label>
+                              <span className={styles.modalValue}>
+                                {formatDate(selectedSale.invoiceDate)}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      {selectedSale.receiptNumber && (
+                        <>
+                          <div className={styles.modalField}>
+                            <label>Numero Scontrino</label>
+                            <span className={styles.modalValue}>
+                              {selectedSale.receiptNumber}
+                            </span>
+                          </div>
+                          {selectedSale.receiptDate && (
+                            <div className={styles.modalField}>
+                              <label>Data Scontrino</label>
+                              <span className={styles.modalValue}>
+                                {formatDate(selectedSale.receiptDate)}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sezione Venditore */}
+                {selectedSale.sellerName && (
+                  <div className={styles.modalSection}>
+                    <h3 className={styles.modalSectionTitle}>👨‍💼 Venditore</h3>
+                    <div className={styles.modalGrid}>
+                      <div className={styles.modalField}>
+                        <label>Nome Venditore</label>
+                        <span className={styles.modalValue}>
+                          {selectedSale.sellerName}
+                        </span>
+                      </div>
+                      {selectedSale.sellerCode && (
+                        <div className={styles.modalField}>
+                          <label>Codice Venditore</label>
+                          <span className={styles.modalValue}>
+                            {selectedSale.sellerCode}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sezione Pagamenti */}
+                {selectedSale.payments && selectedSale.payments.length > 0 && (
+                  <div className={styles.modalSection}>
+                    <h3 className={styles.modalSectionTitle}>
+                      💳 Storico Pagamenti
+                    </h3>
+                    <div className={styles.paymentsTable}>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Data</th>
+                            <th>Importo</th>
+                            <th>Metodo</th>
+                            <th>Riferimento</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedSale.payments.map((payment) => (
+                            <tr key={payment.id}>
+                              <td>{formatDate(payment.paymentDate)}</td>
+                              <td className={styles.paymentAmount}>
+                                {formatCurrency(payment.amount)}
+                              </td>
+                              <td>{payment.paymentMethod || "-"}</td>
+                              <td>{payment.transactionReference || "-"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Sezione Note */}
+                {selectedSale.notes && (
+                  <div className={styles.modalSection}>
+                    <h3 className={styles.modalSectionTitle}>📝 Note</h3>
+                    <div className={styles.modalNotes}>
+                      {selectedSale.notes}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sezione Accessori Inclusi */}
+                {selectedSale.includedAccessories && (
+                  <div className={styles.modalSection}>
+                    <h3 className={styles.modalSectionTitle}>
+                      🎧 Accessori Inclusi
+                    </h3>
+                    <div className={styles.modalNotes}>
+                      {selectedSale.includedAccessories}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sezione Date Sistema */}
+                <div className={styles.modalSection}>
+                  <h3 className={styles.modalSectionTitle}>
+                    🕒 Informazioni Sistema
+                  </h3>
+                  <div className={styles.modalGrid}>
+                    <div className={styles.modalField}>
+                      <label>Creato il</label>
+                      <span className={styles.modalValue}>
+                        {formatDate(selectedSale.createdAt)}
+                      </span>
+                    </div>
+                    {selectedSale.updatedAt && (
+                      <div className={styles.modalField}>
+                        <label>Ultimo Aggiornamento</label>
+                        <span className={styles.modalValue}>
+                          {formatDate(selectedSale.updatedAt)}
+                        </span>
+                      </div>
+                    )}
+                    {selectedSale.deliveryDate && (
+                      <div className={styles.modalField}>
+                        <label>Data Consegna</label>
+                        <span className={styles.modalValue}>
+                          {formatDate(selectedSale.deliveryDate)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer del Modal */}
+              <div className={styles.modalFooter}>
+                <button
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                  onClick={() => setShowDetailModal(false)}
+                >
+                  Chiudi
+                </button>
+                <button
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    navigate("/modifica-vendite", {
+                      state: {
+                        saleId: selectedSale.saleId,
+                        id: selectedSale.id,
+                      },
+                    });
+                  }}
+                >
+                  <Edit className={styles.btnIcon} />
+                  Modifica Vendita
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <BottomBar />
       </div>

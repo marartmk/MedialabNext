@@ -977,3 +977,410 @@
 .salesTableWrapper::-webkit-scrollbar-thumb:hover {
   background: #a1a1a1;
 }
+
+/* ========================================
+   STILI MODAL DETTAGLI VENDITA
+   ======================================== */
+
+/* Overlay del modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Contenuto del modal */
+.modalContent {
+  background: white;
+  border-radius: 20px;
+  max-width: 1200px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header del modal */
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 2px solid #f0f0f0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.modalTitle {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.modalTitleIcon {
+  width: 32px;
+  height: 32px;
+  color: white;
+}
+
+.modalTitle h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: white;
+}
+
+.modalSubtitle {
+  margin: 4px 0 0 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.modalCloseBtn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-weight: 300;
+}
+
+.modalCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* Body del modal */
+.modalBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  background: #fafafa;
+}
+
+.modalBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modalBody::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.modalBody::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.modalBody::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Sezioni del modal */
+.modalSection {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e5e5;
+  transition: all 0.3s ease;
+}
+
+.modalSection:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.modalSectionTitle {
+  margin: 0 0 20px 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Grid dei campi */
+.modalGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.modalField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modalField label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modalValue {
+  font-size: 1rem;
+  color: #1a1a1a;
+  font-weight: 500;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.modalValueHighlight {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.modalValueDanger {
+  background: linear-gradient(135deg, #fc5c65 0%, #eb3b5a 100%);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(235, 59, 90, 0.3);
+}
+
+/* Badge nel modal */
+.modalBadge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+}
+
+.badgePending {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+  color: #856404;
+}
+
+.badgeConfirmed {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+}
+
+.badgeDelivered {
+  background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%);
+  color: #004085;
+}
+
+.badgeCancelled {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+}
+
+.badgeReturned {
+  background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+  color: #383d41;
+}
+
+.badgePartial {
+  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+  color: #d63031;
+}
+
+.badgePaid {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+}
+
+.badgeRefunded {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+  color: #0c5460;
+}
+
+/* Tabella pagamenti */
+.paymentsTable {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+}
+
+.paymentsTable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.paymentsTable thead {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.paymentsTable th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.paymentsTable td {
+  padding: 14px 16px;
+  font-size: 0.95rem;
+  color: #333;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.paymentsTable tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.paymentsTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.paymentAmount {
+  font-weight: 700;
+  color: #28a745;
+}
+
+/* Note */
+.modalNotes {
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Footer del modal */
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 32px;
+  border-top: 2px solid #f0f0f0;
+  background: white;
+}
+
+/* Responsive per il modal */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 10px;
+  }
+
+  .modalContent {
+    max-height: 95vh;
+    border-radius: 16px;
+  }
+
+  .modalHeader {
+    padding: 20px;
+  }
+
+  .modalTitle {
+    gap: 12px;
+  }
+
+  .modalTitleIcon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .modalTitle h2 {
+    font-size: 1.4rem;
+  }
+
+  .modalSubtitle {
+    font-size: 0.85rem;
+  }
+
+  .modalBody {
+    padding: 20px;
+  }
+
+  .modalSection {
+    padding: 16px;
+  }
+
+  .modalSectionTitle {
+    font-size: 1rem;
+  }
+
+  .modalGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .modalFooter {
+    padding: 16px 20px;
+    flex-direction: column;
+  }
+
+  .modalFooter .btn {
+    width: 100%;
+  }
+
+  .paymentsTable {
+    font-size: 0.85rem;
+  }
+
+  .paymentsTable th,
+  .paymentsTable td {
+    padding: 10px 12px;
+  }
+}
