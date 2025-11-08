@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import * as React from "react";
+import { useState, useEffect, useRef } from "react";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import styles from "./styles.module.css";

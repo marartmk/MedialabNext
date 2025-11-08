@@ -3,7 +3,6 @@ import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import styles from "./styles.module.css";
 import BottomBar from "../../components/BottomBar";
-import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { it } from "date-fns/locale";
@@ -29,10 +28,39 @@ interface CustomerData {
   iban: string;
 }
 
-// Tipo per i componenti e problemi della riparazione
-interface RepairComponent {
-  name: string;
-  selected: boolean;
+interface CustomerData {
+  id: string;
+  tipologia: string;
+  ragioneSociale: string;
+  nome: string;
+  cognome: string;
+  email: string;
+  telefono: string;
+  cap: string;
+  indirizzo: string;
+  citta: string;
+  provincia: string;
+  regione: string;
+  fiscalCode: string;
+  pIva: string;
+  emailPec: string;
+  codiceSdi: string;
+  iban: string;
+}
+
+// 🆕 AGGIUNGI QUESTA INTERFACE
+interface BookingResponse {
+  id: number;
+  bookingId: string;
+  bookingCode: string;
+  customerName: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  deviceType: string;
+  deviceModel: string;
+  bookingStatus: string;
+  message: string;
+  createdAt: string;
 }
 
 const Prenotazioni: React.FC = () => {
@@ -43,7 +71,6 @@ const Prenotazioni: React.FC = () => {
   });
 
   const API_URL = import.meta.env.VITE_API_URL;
-  const navigate = useNavigate();
 
   // Stati per la ricerca cliente
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,6 +80,11 @@ const Prenotazioni: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(
     null
   );
+  const [selectedOperator, setSelectedOperator] = useState<Operator | null>(
+    null
+  );
+  const [operators, setOperators] = useState<Operator[]>([]);
+  const [showValidationModal, setShowValidationModal] = useState(false);
 
   // Refs per gestire i dropdown
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -75,18 +107,7 @@ const Prenotazioni: React.FC = () => {
     colore: "",
   });
 
-  // Stati per i componenti della riparazione (menù a tendina con lista)
-  const [componentOptions] = useState<RepairComponent[]>([
-    { name: "Schermo", selected: false },
-    { name: "Batteria", selected: false },
-    { name: "Altri Danni", selected: false },
-    { name: "Scheda Madre", selected: false },
-    { name: "Software", selected: false },
-  ]);
-
-  const [selectedComponents, setSelectedComponents] = useState<string[]>([]);
-  const [showComponentDropdown, setShowComponentDropdown] = useState(false);
-  const componentDropdownRef = useRef<HTMLDivElement>(null);
+  const [repairComponent, setRepairComponent] = useState("");
 
   // Stati per la riparazione
   const [riparazioneData, setRiparazioneData] = useState({
@@ -100,20 +121,21 @@ const Prenotazioni: React.FC = () => {
     informazioneFatturazione: "",
   });
 
+  // Define a type for Operator
+  interface Operator {
+    id: string;
+    firstName: string;
+    lastName: string;
+    codiceDipendente?: string;
+    internalCode?: string;
+    email?: string;
+    phoneNumber?: string;
+  }
+
   // Stato per il DatePicker
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  // Lista tecnici (da sostituire con dati dal backend)
-  const tecniciOptions = [
-    "Mario Rossi",
-    "Luigi Bianchi",
-    "Giuseppe Verdi",
-    "Andrea Neri",
-    "Francesco Gialli",
-  ];
-
   // Stati per il menù tecnici
-  const [showTecniciDropdown, setShowTecniciDropdown] = useState(false);
   const tecniciDropdownRef = useRef<HTMLDivElement>(null);
 
   // Stati per i modal
@@ -143,16 +165,21 @@ const Prenotazioni: React.FC = () => {
   const [savingNewClient, setSavingNewClient] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdBooking, setCreatedBooking] = useState<BookingResponse | null>(
+    null
+  );
 
   // Nome azienda e utente (prelevati dalla sessionStorage se presenti)
   const companyName =
-    sessionStorage.getItem("companyName") ||
-    sessionStorage.getItem("CompanyName") ||
-    "";
+    (typeof window !== "undefined" && sessionStorage.getItem("fullName")) ||
+    "CLINICA iPHONE STORE";
   const userName =
-    sessionStorage.getItem("userName") ||
-    sessionStorage.getItem("UserName") ||
-    "";
+    (typeof window !== "undefined" &&
+      (sessionStorage.getItem("userId") ||
+        sessionStorage.getItem("username") ||
+        "")) ||
+    "Utente";
 
   // Tipi di dispositivo
   const deviceTypes = [
@@ -199,8 +226,9 @@ const Prenotazioni: React.FC = () => {
       const year = now.getFullYear().toString().slice(-2);
       const month = String(now.getMonth() + 1).padStart(2, "0");
       const day = String(now.getDate()).padStart(2, "0");
-      const random = Math.floor(Math.random() * 9000) + 1000;
-      const bookingCode = `BOOK-${year}${month}${day}-${random}`;
+      const timestamp = Date.now().toString().slice(-6); // 6 cifre invece di 4
+      const random = Math.floor(Math.random() * 100); // Numero random 00-99 come ulteriore sicurezza
+      const bookingCode = `BOOK-${year}${month}${day}-${timestamp}${random}`;
 
       setRiparazioneData((prev) => ({
         ...prev,
@@ -226,21 +254,6 @@ const Prenotazioni: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Gestione click fuori dal dropdown componenti
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        componentDropdownRef.current &&
-        !componentDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowComponentDropdown(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   // Gestione click fuori dal dropdown tecnici
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -248,13 +261,67 @@ const Prenotazioni: React.FC = () => {
         tecniciDropdownRef.current &&
         !tecniciDropdownRef.current.contains(event.target as Node)
       ) {
-        setShowTecniciDropdown(false);
+        //setShowTecniciDropdown(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Carica gli operatori al mount del componente
+  useEffect(() => {
+    loadOperators();
+  }, []);
+
+  const loadOperators = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/operator`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const operatorsData = await response.json();
+        setOperators(operatorsData);
+      } else {
+        console.error("Errore nel caricamento operatori");
+      }
+    } catch (error) {
+      console.error("Errore durante il caricamento operatori:", error);
+
+      // In caso di errore, usa comunque i dati fake
+      const fakeOperators = [
+        {
+          id: "1",
+          firstName: "Mario",
+          lastName: "Rossi",
+          codiceDipendente: "TEC001",
+          email: "mario.rossi@medialab.it",
+          phoneNumber: "+39 333 1234567",
+        },
+        {
+          id: "2",
+          firstName: "Luigi",
+          lastName: "Verdi",
+          codiceDipendente: "TEC002",
+          email: "luigi.verdi@medialab.it",
+          phoneNumber: "+39 333 2345678",
+        },
+        {
+          id: "3",
+          firstName: "Giuseppe",
+          lastName: "Bianchi",
+          codiceDipendente: "TEC003",
+          email: "giuseppe.bianchi@medialab.it",
+          phoneNumber: "+39 333 3456789",
+        },
+      ];
+
+      setOperators(fakeOperators);
+    }
+  };
 
   // Funzione per la ricerca del cliente
   const handleSearchClient = async (query: string) => {
@@ -406,25 +473,6 @@ const Prenotazioni: React.FC = () => {
     }
   };
 
-  // Funzione per gestire il toggle dei componenti
-  const handleToggleComponent = (componentName: string) => {
-    setSelectedComponents((prev) => {
-      if (prev.includes(componentName)) {
-        return prev.filter((c) => c !== componentName);
-      } else {
-        return [...prev, componentName];
-      }
-    });
-  };
-
-  // Aggiorna il campo componenti problema quando cambiano i componenti selezionati
-  useEffect(() => {
-    setRiparazioneData((prev) => ({
-      ...prev,
-      componentiProblema: selectedComponents.join(", "),
-    }));
-  }, [selectedComponents]);
-
   // Funzione per validare il form
   const validateForm = (): boolean => {
     const errors: string[] = [];
@@ -441,11 +489,11 @@ const Prenotazioni: React.FC = () => {
     if (!riparazioneData.dataOraPrenotazione.trim()) {
       errors.push("Inserisci data e ora di prenotazione");
     }
-    if (!riparazioneData.tecnicoAssegnato.trim()) {
+    if (!selectedOperator) {
       errors.push("Seleziona un tecnico");
     }
-    if (selectedComponents.length === 0) {
-      errors.push("Seleziona almeno un componente/problema");
+    if (!repairComponent) {
+      errors.push("Selezionare il componente/tipo di riparazione");
     }
     if (!riparazioneData.descrizioneInterventoProblema.trim()) {
       errors.push("Inserisci una descrizione del problema");
@@ -460,59 +508,121 @@ const Prenotazioni: React.FC = () => {
 
   // Funzione per creare la prenotazione
   const handleCreateBooking = async () => {
+    // Validazione
     if (!validateForm()) {
       return;
     }
 
     setIsCreatingBooking(true);
+    setValidationErrors([]);
+
     try {
-      // TODO: Implementare la chiamata API per creare la prenotazione
-      // const bookingData = {
-      //   customerId: selectedCustomer?.id,
-      //   deviceType: dispositivoData.dispositivo,
-      //   model: dispositivoData.modello,
-      //   color: dispositivoData.colore,
-      //   components: selectedComponents,
-      //   problemDescription: riparazioneData.descrizioneInterventoProblema,
-      //   estimatedPrice: parseFloat(riparazioneData.prezzoPreventivato),
-      //   paymentType: riparazioneData.tipoPagamento,
-      //   billingInfo: riparazioneData.informazioneFatturazione,
-      //   dateTime: dateTime,
-      // };
+      const token = sessionStorage.getItem("token");
+      const multitenantId = sessionStorage.getItem("IdCompany");
+      const companyId = sessionStorage.getItem("IdCompany");
 
-      // const response = await fetch(`${API_URL}/api/bookings`, {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify(bookingData),
-      // });
+      // Combina data e ora selezionate
+      const bookingDateTime = new Date(selectedDate);
 
-      // if (response.ok) {
-      //   const result = await response.json();
-      //   console.log("Prenotazione creata:", result);
-      //   // Redirect o mostra messaggio di successo
-      // }
+      // Prepara il payload per il backend
+      const bookingPayload = {
+        // Cliente
+        customerId: selectedCustomer?.id || null,
+        customerName: selectedCustomer
+          ? selectedCustomer.tipologia === "Privato"
+            ? `${selectedCustomer.cognome} ${selectedCustomer.nome}`
+            : selectedCustomer.ragioneSociale
+          : `${clienteData.cognome} ${clienteData.nome}`,
+        customerPhone: selectedCustomer?.telefono || clienteData.telefono,
+        customerEmail: selectedCustomer?.email || clienteData.email,
 
-      console.log("Prenotazione da creare:", {
-        customerId: selectedCustomer?.id,
+        // Dispositivo
         deviceType: dispositivoData.dispositivo,
-        model: dispositivoData.modello,
-        color: dispositivoData.colore,
-        bookingDateTime: riparazioneData.dataOraPrenotazione,
-        bookingCode: riparazioneData.codicePrenotazione,
-        assignedTo: riparazioneData.tecnicoAssegnato,
-        components: selectedComponents,
+        deviceBrand: "Apple",
+        deviceModel: dispositivoData.modello,
+        deviceColor: dispositivoData.colore,
+
+        // Data e ora prenotazione
+        bookingDateTime: bookingDateTime.toISOString(),
+
+        // Tecnico
+        technicianCode: selectedOperator?.codiceDipendente || null,
+        technicianName: selectedOperator
+          ? `${selectedOperator.firstName} ${selectedOperator.lastName}`
+          : null,
+
+        // Problema
+        componentIssue:
+          repairComponent || riparazioneData.componentiProblema || null,
         problemDescription: riparazioneData.descrizioneInterventoProblema,
-        estimatedPrice: riparazioneData.prezzoPreventivato,
+
+        // Preventivo
+        estimatedPrice: riparazioneData.prezzoPreventivato
+          ? parseFloat(riparazioneData.prezzoPreventivato)
+          : null,
         paymentType: riparazioneData.tipoPagamento,
-        billingInfo: riparazioneData.informazioneFatturazione,
-        dateTime: dateTime,
+
+        // Fatturazione
+        billingInfo: riparazioneData.informazioneFatturazione || null,
+
+        // Contesto
+        companyId: companyId,
+        multitenantId: multitenantId,
+
+        // Note
+        notes: null,
+        createdBy: userName,
+      };
+
+      console.log("📤 Payload prenotazione:", bookingPayload);
+
+      const response = await fetch(`${API_URL}/api/Booking`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookingPayload),
       });
 
-      alert("Prenotazione creata con successo! (placeholder)");
+      if (response.ok) {
+        const result: BookingResponse = await response.json();
+        console.log("✔️ Prenotazione creata:", result);
+
+        setCreatedBooking(result);
+        setShowSuccessModal(true);
+
+        // Reset form dopo successo
+        handleClearSearch();
+        setDispositivoData({
+          dispositivo: "iPhone",
+          modello: "",
+          colore: "",
+        });
+        setRiparazioneData({
+          dataOraPrenotazione: "",
+          codicePrenotazione: "generato automaticamente",
+          tecnicoAssegnato: "",
+          componentiProblema: "",
+          descrizioneInterventoProblema: "",
+          prezzoPreventivato: "",
+          tipoPagamento: "Amex",
+          informazioneFatturazione: "",
+        });
+        setRepairComponent("");
+        setSelectedOperator(null);
+        setSelectedDate(new Date());
+      } else {
+        const errorData = await response.json();
+        alert(
+          `❌ Errore: ${
+            errorData.message || "Impossibile creare la prenotazione"
+          }`
+        );
+      }
     } catch (error) {
-      console.error("Errore nella creazione della prenotazione:", error);
+      console.error("❌ Errore nella creazione della prenotazione:", error);
+      alert("Errore di connessione al server");
     } finally {
       setIsCreatingBooking(false);
     }
@@ -520,29 +630,32 @@ const Prenotazioni: React.FC = () => {
 
   return (
     <div className={styles.mainLayout}>
-      <Sidebar menuState={menuState} setMenuState={setMenuState} />
+      <Sidebar
+        menuState={menuState}
+        toggleMenu={() =>
+          setMenuState(menuState === "open" ? "closed" : "open")
+        }
+      />
 
       <div className={styles.contentArea}>
         <Topbar
-          userName={userName}
-          companyName={companyName}
-          menuState={menuState}
-          setMenuState={setMenuState}
+          toggleMenu={() =>
+            setMenuState(menuState === "open" ? "closed" : "open")
+          }
         />
 
-        {/* Header con breadcrumb */}
+        {/* Header */}
         <div className={styles.schedaHeader}>
           <div className={styles.leftBlock}>
-            <button className={styles.roundBtn} onClick={() => navigate(-1)}>
-              <span className={styles.plusIcon}>←</span>
-            </button>
-            <div className={styles.breadcrumb}>
-              <span className={styles.breadcrumbItem}>
-                {companyName || "Azienda"}
-              </span>
-              <span className={styles.breadcrumbSeparator}>/</span>
-              <span>Crea Prenotazione</span>
+            <div className={styles.roundBtn}>
+              <span className={styles.plusIcon}>+</span>
             </div>
+          </div>
+
+          <div className={styles.breadcrumb}>
+            <span className={styles.breadcrumbItem}>{companyName}</span>
+            <span className={styles.breadcrumbSeparator}> • </span>
+            <span className={styles.breadcrumbItem}>{userName}</span>
           </div>
         </div>
 
@@ -834,49 +947,39 @@ const Prenotazioni: React.FC = () => {
                       />
                     </div>
 
-                    <div className={styles.topField}>
-                      <label>Assegnata a</label>
-                      <div className={styles.searchContainer}>
-                        <input
-                          type="text"
-                          className={styles.formControl}
-                          placeholder="menù a tendina con lista tecnici"
-                          value={riparazioneData.tecnicoAssegnato}
-                          readOnly
-                          onClick={() =>
-                            setShowTecniciDropdown(!showTecniciDropdown)
-                          }
-                          style={{ cursor: "pointer" }}
-                        />
-                        {showTecniciDropdown && (
-                          <div
-                            ref={tecniciDropdownRef}
-                            className={styles.dropdown}
-                          >
-                            {tecniciOptions.map((tecnico) => (
-                              <div
-                                key={tecnico}
-                                className={styles.dropdownItem}
-                                onClick={() => {
-                                  setRiparazioneData({
-                                    ...riparazioneData,
-                                    tecnicoAssegnato: tecnico,
-                                  });
-                                  setShowTecniciDropdown(false);
-                                }}
-                                style={{
-                                  backgroundColor:
-                                    riparazioneData.tecnicoAssegnato === tecnico
-                                      ? "#e8f5e8"
-                                      : "white",
-                                }}
-                              >
-                                {tecnico}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                    <div className={styles.formGroup}>
+                      <label>Assegnata a *</label>
+                      <select
+                        className={`${styles.formControl} ${
+                          validationErrors.includes(
+                            "Assegnare la riparazione a un tecnico"
+                          )
+                            ? styles.error
+                            : ""
+                        }`}
+                        value={selectedOperator?.id || ""}
+                        onChange={(e) => {
+                          const operator = operators.find(
+                            (op) => op.id === e.target.value
+                          );
+                          setSelectedOperator(operator || null);
+                        }}
+                      >
+                        <option value="">-- Seleziona Tecnico --</option>
+                        {operators.map((operator) => (
+                          <option key={operator.id} value={operator.id}>
+                            {operator.firstName} {operator.lastName} (
+                            {operator.codiceDipendente || "N/A"})
+                          </option>
+                        ))}
+                      </select>
+                      {validationErrors.includes(
+                        "Assegnare la riparazione a un tecnico"
+                      ) && (
+                        <div className={styles.errorText}>
+                          Campo obbligatorio
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -886,55 +989,33 @@ const Prenotazioni: React.FC = () => {
                   <h3>Riparazione</h3>
 
                   <div className={styles.formGroup}>
-                    <label>Componente/Problema</label>
-                    <div className={styles.searchContainer}>
-                      <input
-                        type="text"
-                        className={styles.formControl}
-                        placeholder="menù a tendina con lista"
-                        value={riparazioneData.componentiProblema}
-                        readOnly
-                        onClick={() =>
-                          setShowComponentDropdown(!showComponentDropdown)
-                        }
-                        style={{ cursor: "pointer" }}
-                      />
-                      {showComponentDropdown && (
-                        <div
-                          ref={componentDropdownRef}
-                          className={styles.dropdown}
-                        >
-                          {componentOptions.map((component) => (
-                            <div
-                              key={component.name}
-                              className={styles.dropdownItem}
-                              onClick={() =>
-                                handleToggleComponent(component.name)
-                              }
-                              style={{
-                                backgroundColor: selectedComponents.includes(
-                                  component.name
-                                )
-                                  ? "#e8f5e8"
-                                  : "white",
-                              }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedComponents.includes(
-                                  component.name
-                                )}
-                                onChange={() =>
-                                  handleToggleComponent(component.name)
-                                }
-                                style={{ marginRight: "8px" }}
-                              />
-                              {component.name}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <label>Componente/riparazione *</label>
+                    <select
+                      className={`${styles.formControl} ${
+                        validationErrors.includes(
+                          "Selezionare il componente/tipo di riparazione"
+                        )
+                          ? styles.error
+                          : ""
+                      }`}
+                      value={repairComponent}
+                      onChange={(e) => setRepairComponent(e.target.value)}
+                    >
+                      <option value="">-- Seleziona --</option>
+                      <option value="Schermo">📱 Schermo</option>
+                      <option value="Batteria">🔋 Batteria</option>
+                      <option value="Altri Danni">🔧 Altri Danni</option>
+                      <option value="Scheda Madre">💾 Scheda Madre</option>
+                      <option value="Software">⚙️ Software</option>
+                      <option value="Riparazione Completa">
+                        🛠️ Riparazione Completa
+                      </option>
+                    </select>
+                    {validationErrors.includes(
+                      "Selezionare il componente/tipo di riparazione"
+                    ) && (
+                      <div className={styles.errorText}>Campo obbligatorio</div>
+                    )}
                   </div>
 
                   <div className={styles.formGroup}>
@@ -1352,6 +1433,55 @@ const Prenotazioni: React.FC = () => {
                 disabled={savingNewClient}
               >
                 {savingNewClient ? "Salvando..." : "Salva Cliente"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 🆕 AGGIUNGI QUESTO MODAL DI SUCCESSO */}
+      {showSuccessModal && createdBooking && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>✔️ Prenotazione Creata con Successo!</h2>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.successInfo}>
+                <p>
+                  <strong>Codice Prenotazione:</strong>{" "}
+                  <span className={styles.bookingCode}>
+                    {createdBooking.bookingCode}
+                  </span>
+                </p>
+                <p>
+                  <strong>Cliente:</strong> {createdBooking.customerName}
+                </p>
+                <p>
+                  <strong>Dispositivo:</strong> {createdBooking.deviceModel}
+                </p>
+                <p>
+                  <strong>Data:</strong>{" "}
+                  {new Date(createdBooking.scheduledDate).toLocaleDateString(
+                    "it-IT"
+                  )}
+                </p>
+                <p>
+                  <strong>Ora:</strong> {createdBooking.scheduledTime}
+                </p>
+                <p>
+                  <strong>Stato:</strong> {createdBooking.bookingStatus}
+                </p>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  setCreatedBooking(null);
+                }}
+              >
+                Chiudi
               </button>
             </div>
           </div>

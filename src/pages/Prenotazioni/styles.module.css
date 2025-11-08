@@ -495,21 +495,42 @@ textarea.formControl {
 
 .modalContent {
   background: white;
-  border-radius: 8px;
+  border-radius: 12px;       /* arrotonda di più, coerente con la barra */
   max-width: 800px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+  overflow: hidden;          /* fondamentale per fondere gli angoli della barra */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease;
 }
 
+/* BARRA NERA IN TESTA AL MODAL */
 .modalHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #ddd;
+  padding: 12px 16px;
+  background: #000;                 /* nero */
+  color: #fff;                      /* testo bianco */
+  border-bottom: none;              /* niente linea grigia */
+  border-top-left-radius: 12px;     /* angoli arrotondati in alto */
+  border-top-right-radius: 12px;
+}
+
+.modalHeader h2,
+.modalHeader h4 {
+  margin: 0;
+  color: #fff;                      /* assicura titolo bianco */
+  font-weight: 400;
+}
+
+.modalHeader .modalCloseButton {
+  color: #fff;                      /* X bianca */
+}
+
+.modalHeader .modalCloseButton:hover {
+  color: #e6e6e6;
 }
 
 .modalHeader h4 {
@@ -1088,5 +1109,40 @@ textarea.formControl {
     padding: 6px 8px !important;
   }
 }
+/* Barra nera superiore del modal */
+.modalTopBar {
+  background: #000;
+  color: #fff;
+  padding: 12px 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+/* Titolo nella barra */
+.modalTopBarTitle {
+  font-size: 14px; /* compatto come nello screenshot */
+  line-height: 1;
+}
+
+/* Bottone chiudi dentro barra nera */
+.modalTopBarClose {
+  color: #fff;
+  background: transparent;
+  border: 0;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* assicurati che gli angoli della barra si fondano con il modal */
+.modalContent {
+  border-radius: 12px;
+  overflow: hidden; /* importante per “tagliare” correttamente la barra */
+  background: #fff; /* corpo bianco come nello screenshot del successo */
+}
+
 
 /* ========== FINE STYLES.MODULE.CSS ========== */
