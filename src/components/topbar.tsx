@@ -526,7 +526,7 @@ const Topbar: React.FC<TopbarProps> = () => {
                 <li>
                   <button
                     className="dropdown-item"
-                    onClick={() => navigate("/vendite/accessorio-garanzia")}
+                    onClick={() => navigate("/ricerca-prenotazioni")}
                   >
                     Prenotazioni Attive
                   </button>

@@ -27,6 +27,7 @@ import PagamentoVendite from "./pages/PagamentoVendite";
 import RicercaVendite from "./pages/RicercaVendite";
 import ModificaVendite from "./pages/ModificaVendite";
 import Prenotazioni from "./pages/Prenotazioni";
+import RicercaPrenotazioni from "./pages/RicercaPrenotazioni";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -235,7 +236,7 @@ const AppRoutes = () => {
         }
       />
 
-<Route
+      <Route
         path="/prenotazioni"
         element={
           <ProtectedRoute>
@@ -244,6 +245,14 @@ const AppRoutes = () => {
         }
       />
       
+      <Route
+        path="/ricerca-prenotazioni"
+        element={
+          <ProtectedRoute>
+            <RicercaPrenotazioni />
+          </ProtectedRoute>
+        }
+      />
       
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
