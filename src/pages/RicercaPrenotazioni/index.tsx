@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 // Interfacce TypeScript
 interface Booking {
   id: number;
+  bookingId: string;
   bookingCode: string;
   customerName: string;
   customerEmail: string;
@@ -225,6 +226,20 @@ const RicercaPrenotazioni: React.FC = () => {
             title="Modifica prenotazione"
           >
             <i className="fa-solid fa-edit"></i>
+          </button>
+          <button
+            className={`${styles.actionBtn} ${styles.completeBtn}`}
+            onClick={() => handleCompleteRepair(info.row.original)}
+            title="Completa riparazione"
+          >
+            <i className="fa-solid fa-check-circle"></i>
+          </button>
+          <button
+            className={`${styles.actionBtn} ${styles.cancelBtn}`}
+            onClick={() => handleNotArrived(info.row.original)}
+            title="Riparazione non pervenuta"
+          >
+            <i className="fa-solid fa-times-circle"></i>
           </button>
         </div>
       ),
@@ -562,15 +577,15 @@ const RicercaPrenotazioni: React.FC = () => {
 
   const getStatusBadgeClass = (status: string): string => {
     switch (status?.toLowerCase()) {
-      case "confermata":
+      case "prenotata":
         return styles.statusConfermata;
-      case "pendente":
+      case "in attesa":
         return styles.statusPendente;
       case "completata":
         return styles.statusCompletata;
       case "annullata":
         return styles.statusAnnullata;
-      case "in corso":
+      case "non pervenuta":
         return styles.statusInCorso;
       default:
         return styles.statusDefault;
@@ -581,6 +596,62 @@ const RicercaPrenotazioni: React.FC = () => {
     navigate(`/modifica-prenotazione/${booking.id}`, {
       state: { booking },
     });
+  };
+
+  // 🆕 Handler per completare la riparazione
+  const handleCompleteRepair = (booking: Booking) => {
+    console.log("Completa riparazione:", booking);
+    window.location.href = `/accettazione?bookingId=${booking?.bookingId}`;
+    // Naviga alla pagina accettazione passando i dati della prenotazione
+    // navigate("/accettazione", {
+    //   state: {
+    //     fromBooking: true,
+    //     bookingData: booking,
+    //   },
+    // });
+  };
+
+  // 🆕 Handler per segnare come non pervenuta
+  const handleNotArrived = async (booking: Booking) => {
+    const confirmed = window.confirm(
+      `Sei sicuro di voler segnare la prenotazione "${booking.bookingCode}" come "Non Pervenuta"?\n\n` +
+        "Questa azione aggiornerà lo stato della prenotazione."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/booking/${booking.id}/not-arrived`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            bookingStatus: "Non Pervenuta",
+            updatedAt: new Date().toISOString(),
+          }),
+        }
+      );
+
+      if (response.ok) {
+        alert("✅ Prenotazione segnata come non pervenuta");
+        // Ricarica i dati
+        fetchData();
+      } else {
+        const errorData = await response.json();
+        alert(
+          `❌ Errore: ${
+            errorData.message || "Impossibile aggiornare la prenotazione"
+          }`
+        );
+      }
+    } catch (error) {
+      console.error("Errore durante l'aggiornamento:", error);
+      alert("❌ Errore di connessione. Riprova più tardi.");
+    }
   };
 
   // Funzione per caricare dati più vecchi

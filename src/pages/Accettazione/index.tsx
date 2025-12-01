@@ -87,9 +87,13 @@ const Accettazione: React.FC = () => {
   // ✅ USA QUESTO
   const [searchParams] = useSearchParams();
   const noteIdFromQuery = searchParams.get("noteId");
+  const bookingIdFromQuery = searchParams.get("bookingId");
 
   // 🆕 Stato per sapere se stiamo caricando i dati da una nota
   const [isLoadingFromNote, setIsLoadingFromNote] = useState(false);
+
+  // 🆕 Stato per sapere se stiamo caricando i dati da un booking
+  const [isLoadingFromBooking, setIsLoadingFromBooking] = useState(false);
 
   // Stati per la ricerca cliente
   const [searchQuery, setSearchQuery] = useState("");
@@ -529,6 +533,14 @@ const Accettazione: React.FC = () => {
     }
   }, [noteIdFromQuery]);
 
+  // 🆕 useEffect per caricare i dati del booking quando arriva il bookingId
+  useEffect(() => {
+    if (bookingIdFromQuery && !isLoadingFromBooking) {
+      console.log("� Caricamento booking con ID:", bookingIdFromQuery);
+      loadBookingDataForRepair(bookingIdFromQuery);
+    }
+  }, [bookingIdFromQuery]);
+
   // Funzioni per la gestione della firma digitale
   const startDrawing = (
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
@@ -855,8 +867,93 @@ const Accettazione: React.FC = () => {
     }
   };
 
+  // 🆕 Funzione per caricare i dati della nota tramite GUID
+  const loadBookingDataForRepair = async (bookingGuid: string) => {
+    setIsLoadingFromBooking(true);
+
+    try {
+      const token = sessionStorage.getItem("token");
+
+      console.log("🔍 Chiamata API per booking:", bookingGuid);
+
+      const response = await fetch(
+        `${API_URL}/api/Booking/guid/${bookingGuid}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Errore ${response.status}: impossibile caricare la nota`
+        );
+      }
+
+      const bookingData = await response.json();
+      console.log("✅ Dati prenotazione caricati:", bookingData);
+
+      // Pre-compila il form con i dati della prenotazione
+      await prePopulateFormFromBooking(bookingData);
+
+      alert(
+        "✅ Dati della nota caricati con successo!\n\nControlla i campi pre-compilati."
+      );
+    } catch (error) {
+      console.error("❌ Errore durante il caricamento nota:", error);
+      alert(
+        "❌ Impossibile caricare i dati della nota.\n\nVerifica che la nota esista."
+      );
+    } finally {
+      setIsLoadingFromBooking(false);
+    }
+  };
+
   // 🆕 Funzione per pre-compilare il form con i dati della nota
-  const prePopulateFormFromNote = async (noteData: any) => {
+  interface QuickNoteData {
+    customerId?: string;
+    cognome?: string;
+    nome?: string;
+    email?: string;
+    telefono?: string;
+    cap?: string;
+    deviceId?: string;
+    brand?: string;
+    model?: string;
+    serialNumber?: string;
+    deviceType?: string;
+    color?: string;
+    codiceRiparazione?: string;
+    problema?: string;
+    prezzoPreventivo?: number;
+    [key: string]: unknown;
+  }
+
+  // 🆕 Funzione per pre-compilare il form con i dati dell booking
+  interface QuickBookingData {
+    customerId?: string;
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    deviceType?: string;
+    deviceBrand: string;
+    deviceModel: string;
+    deviceColor: string;
+    technicianCode: string;
+    technicianName: string;
+    componentIssue: string;
+    problemDescription: string;
+    estimatedPrice: number;
+    paymentType: string;
+    billingInfo: string;
+    bookingStatus: string;
+    bookingStatusCode: string;
+    notes: string;
+    [key: string]: unknown;
+  }
+
+  const prePopulateFormFromNote = async (noteData: QuickNoteData) => {
     console.log("📝 Pre-compilazione form da nota:", noteData);
 
     // ==================== CLIENTE ====================
@@ -874,11 +971,11 @@ const Accettazione: React.FC = () => {
       setSearchQuery(fullName);
 
       setClienteData({
-        email: noteData.email || "",
-        nome: noteData.nome || "",
-        cognome: noteData.cognome || "",
-        telefono: noteData.telefono || "",
-        cap: noteData.cap || "",
+        email: (noteData.email as string) || "",
+        nome: (noteData.nome as string) || "",
+        cognome: (noteData.cognome as string) || "",
+        telefono: (noteData.telefono as string) || "",
+        cap: (noteData.cap as string) || "",
       });
     }
 
@@ -897,12 +994,12 @@ const Accettazione: React.FC = () => {
       setDeviceSearchQuery(deviceName);
 
       setDispositivoData({
-        serialNumber: noteData.serialNumber || "",
-        brand: noteData.brand || "",
-        model: noteData.model || "",
-        deviceType: noteData.deviceType || "Mobile",
-        color: noteData.color || "",
-        unlockCode: noteData.codiceRiparazione || "",
+        serialNumber: (noteData.serialNumber as string) || "",
+        brand: (noteData.brand as string) || "",
+        model: (noteData.model as string) || "",
+        deviceType: (noteData.deviceType as string) || "Mobile",
+        color: (noteData.color as string) || "",
+        unlockCode: (noteData.codiceRiparazione as string) || "",
         courtesyPhone: "",
       });
     }
@@ -910,8 +1007,79 @@ const Accettazione: React.FC = () => {
     // ==================== RIPARAZIONE ====================
     setRepairData({
       ...repairData,
-      faultDeclared: noteData.problema || "",
-      estimatedPrice: noteData.prezzoPreventivo || 0,
+      faultDeclared: (noteData.problema as string) || "",
+      estimatedPrice: (noteData.prezzoPreventivo as number) || 0,
+    });
+
+    console.log("✅ Pre-compilazione completata");
+  };
+
+  // 🆕 Funzione per pre-compilare il form con i dati del booking
+  const prePopulateFormFromBooking = async (bookingData: QuickBookingData) => {
+    console.log("📝 Pre-compilazione form da nota:", bookingData);
+
+    // ==================== CLIENTE ====================
+    if (bookingData.customerId) {
+      // ✅ CASO 1: Ha customerId → carica e seleziona il cliente
+      console.log("👤 Caricamento cliente con ID:", bookingData.customerId);
+      await loadAndSelectCustomer(bookingData.customerId);
+    } else {
+      // ✅ CASO 2: NON ha customerId → inserisci solo come testo
+      console.log("👤 Inserimento dati cliente come testo (nessun ID)");
+
+      const fullName = `${bookingData.customerName || ""} ${
+        bookingData.customerSurname || ""
+      }`.trim();
+      setSearchQuery(fullName);
+
+      setClienteData({
+        email: (bookingData.customerEmail as string) || "",
+        nome: (bookingData.customerName as string) || "",
+        cognome: (bookingData.customerSurname as string) || "",
+        telefono: (bookingData.customerPhone as string) || "",
+        cap: (bookingData.customerCap as string) || "",
+      });
+    }
+
+    // ==================== DISPOSITIVO ====================
+    if (bookingData.deviceType) {
+      // ✅ CASO 1: Ha deviceId → carica e seleziona il dispositivo
+      console.log("📱 Caricamento dispositivo con ID:", bookingData.deviceType);
+      //await loadAndSelectDevice(bookingData.deviceId);
+      setDispositivoData({
+        serialNumber: String(bookingData.serialNumber ?? ""),
+        brand: bookingData.deviceBrand || "",
+        model: bookingData.deviceModel || "",
+        deviceType: bookingData.deviceType || "Mobile",
+        color: bookingData.deviceColor || "",
+        unlockCode: String(bookingData.codiceRiparazione ?? ""),
+        courtesyPhone: "",
+      });    
+    } else {
+      // ✅ CASO 2: NON ha deviceId → inserisci solo come testo
+      console.log("📱 Inserimento dati dispositivo come testo (nessun ID)");
+
+      const deviceName = `${bookingData.brand || ""} ${
+        bookingData.model || ""
+      }`.trim();
+      setDeviceSearchQuery(deviceName);
+
+      setDispositivoData({
+        serialNumber: (bookingData.serialNumber as string) || "",
+        brand: (bookingData.deviceBrand as string) || "",
+        model: (bookingData.deviceModel as string) || "",
+        deviceType: (bookingData.deviceType as string) || "Mobile",
+        color: (bookingData.deviceColor as string) || "",
+        unlockCode: (bookingData.codiceRiparazione as string) || "",
+        courtesyPhone: "",
+      });
+    }
+
+    // ==================== RIPARAZIONE ====================
+    setRepairData({
+      ...repairData,
+      faultDeclared: (bookingData.problema as string) || "",
+      estimatedPrice: (bookingData.prezzoPreventivo as number) || 0,
     });
 
     console.log("✅ Pre-compilazione completata");
@@ -1357,8 +1525,12 @@ const Accettazione: React.FC = () => {
       errors.push("Assegnare la riparazione a un tecnico");
     }
 
-    if (repairData.estimatedPrice <= 0) {
-      errors.push("Inserire un prezzo preventivo valido");
+    // if (repairData.estimatedPrice <= 0) {
+    //   errors.push("Inserire un prezzo preventivo valido");
+    // }
+    
+    if (repairData.estimatedPrice < 0) {
+       errors.push("Inserire un prezzo preventivo valido");
     }
 
     // Validazione diagnostica - almeno un elemento deve essere selezionato
@@ -1705,6 +1877,8 @@ const Accettazione: React.FC = () => {
       multitenantId: sessionStorage.getItem("IdCompany") || "",
     };
 
+    console.log("Payload per la creazione del cliente:", JSON.stringify(payload, null, 2));
+    
     setSavingNewClient(true);
 
     try {

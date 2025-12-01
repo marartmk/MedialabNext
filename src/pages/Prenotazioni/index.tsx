@@ -28,26 +28,6 @@ interface CustomerData {
   iban: string;
 }
 
-interface CustomerData {
-  id: string;
-  tipologia: string;
-  ragioneSociale: string;
-  nome: string;
-  cognome: string;
-  email: string;
-  telefono: string;
-  cap: string;
-  indirizzo: string;
-  citta: string;
-  provincia: string;
-  regione: string;
-  fiscalCode: string;
-  pIva: string;
-  emailPec: string;
-  codiceSdi: string;
-  iban: string;
-}
-
 // 🆕 AGGIUNGI QUESTA INTERFACE
 interface BookingResponse {
   id: number;
@@ -84,7 +64,6 @@ const Prenotazioni: React.FC = () => {
     null
   );
   const [operators, setOperators] = useState<Operator[]>([]);
-  const [showValidationModal, setShowValidationModal] = useState(false);
 
   // Refs per gestire i dropdown
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -117,7 +96,7 @@ const Prenotazioni: React.FC = () => {
     componentiProblema: "",
     descrizioneInterventoProblema: "",
     prezzoPreventivato: "",
-    tipoPagamento: "Amex",
+    tipoPagamento: "",
     informazioneFatturazione: "",
   });
 
@@ -188,15 +167,7 @@ const Prenotazioni: React.FC = () => {
     { value: "Mac", label: "💻 Mac" },
     { value: "Watch", label: "⌚ Watch" },
     { value: "AirPods", label: "🎧 AirPods" },
-  ];
-
-  const tipoPagamentoOptions = [
-    "Amex",
-    "Carta di Credito",
-    "Contanti",
-    "Bonifico",
-    "PayPal",
-  ];
+  ];  
 
   // Imposta data e ora corrente
   useEffect(() => {
@@ -403,74 +374,148 @@ const Prenotazioni: React.FC = () => {
 
   // Funzione per gestire il salvataggio del nuovo cliente
   const handleSaveNewClient = async () => {
-    // Validazione base
-    if (newClientData.tipo === "Privato") {
-      if (!newClientData.nome || !newClientData.cognome) {
-        alert("Nome e cognome sono obbligatori per i clienti privati");
-        return;
-      }
-    } else if (newClientData.tipo === "Azienda") {
-      if (
-        !newClientData.ragioneSociale ||
-        !newClientData.nome ||
-        !newClientData.cognome
-      ) {
-        alert(
-          "Ragione sociale e dati del referente sono obbligatori per le aziende"
-        );
-        return;
-      }
+    if (!newClientData.tipo) {
+      alert("Selezionare un tipo di cliente");
+      return;
     }
 
+    const isPrivato = newClientData.tipo === "Privato";
+    const tipologia = isPrivato ? "1" : "0";
+
+    const ragioneSociale = isPrivato
+      ? `${newClientData.cognome} ${newClientData.nome}`.trim()
+      : newClientData.ragioneSociale;
+
+    if (!isPrivato && ragioneSociale === "") {
+      alert("Inserire una ragione sociale");
+      return;
+    }
+
+    if (!newClientData.indirizzo) {
+      alert("Inserire un indirizzo");
+      return;
+    }
+
+    if (!newClientData.cap) {
+      alert("Inserire un CAP");
+      return;
+    }
+
+    if (!newClientData.regione) {
+      alert("Inserire una regione");
+      return;
+    }
+
+    if (!newClientData.provincia) {
+      alert("Inserire una provincia");
+      return;
+    }
+
+    if (!newClientData.citta) {
+      alert("Inserire una città");
+      return;
+    }
+
+    if (!newClientData.telefono) {
+      alert("Inserire un numero di telefono");
+      return;
+    }
+
+    if (!newClientData.email) {
+      alert("Inserire un'email");
+      return;
+    }
+
+    const payload = {
+      tipologia: tipologia,
+      isCustomer: newClientData.cliente,
+      tipoCliente: newClientData.tipoCliente,
+      ragioneSociale: ragioneSociale,
+      indirizzo: newClientData.indirizzo,
+      cognome: isPrivato ? newClientData.cognome : null,
+      nome: isPrivato ? newClientData.nome : null,
+      cap: newClientData.cap,
+      regione: newClientData.regione,
+      provincia: newClientData.provincia,
+      citta: newClientData.citta,
+      telefono: newClientData.telefono,
+      email: newClientData.email,
+      fiscalCode: newClientData.codiceFiscale,
+      pIva: newClientData.partitaIva,
+      emailPec: newClientData.emailPec,
+      codiceSdi: newClientData.codiceSdi,
+      iban: newClientData.iban,
+      multitenantId: sessionStorage.getItem("IdCompany") || "",
+    };
+
+    console.log(
+      "Payload per la creazione del cliente:",
+      JSON.stringify(payload, null, 2)
+    );
+
     setSavingNewClient(true);
+
     try {
-      const response = await fetch(`${API_URL}/api/customers`, {
+      const response = await fetch(`${API_URL}/api/customer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
-        body: JSON.stringify(newClientData),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        const savedCustomer = await response.json();
-        handleSelectCustomer(savedCustomer);
-        setShowNewClientModal(false);
-
-        // Reset form
-        setNewClientData({
-          tipo: "Privato",
-          cliente: true,
-          fornitore: false,
-          tipoCliente: "",
-          ragioneSociale: "",
-          indirizzo: "",
-          cognome: "",
-          nome: "",
-          cap: "",
-          regione: "",
-          provincia: "",
-          citta: "",
-          telefono: "",
-          email: "",
-          codiceFiscale: "",
-          partitaIva: "",
-          emailPec: "",
-          codiceSdi: "",
-          iban: "",
-        });
-
+        const newCustomer = await response.json();
         alert("Cliente creato con successo!");
+
+        const customerData: CustomerData = {
+          id: newCustomer.id,
+          tipologia: newCustomer.tipologia,
+          ragioneSociale: newCustomer.ragioneSociale,
+          nome: newCustomer.nome || "",
+          cognome: newCustomer.cognome || "",
+          email: newCustomer.email || "",
+          telefono: newCustomer.telefono || "",
+          cap: newCustomer.cap || "",
+          indirizzo: newCustomer.indirizzo || "",
+          citta: newCustomer.citta || "",
+          provincia: newCustomer.provincia || "",
+          regione: newCustomer.regione || "",
+          fiscalCode: newCustomer.fiscalCode || "",
+          pIva: newCustomer.pIva || "",
+          emailPec: newCustomer.emailPec || "",
+          codiceSdi: newCustomer.codiceSdi || "",
+          iban: newCustomer.iban || "",
+        };
+
+        onSelectCustomer(customerData);
+        setShowNewClientModal(false);
       } else {
-        const error = await response.json();
-        alert(`Errore: ${error.message || "Impossibile creare il cliente"}`);
+        const errText = await response.text();
+        alert("Errore nel salvataggio:\n" + errText);
       }
     } catch (error) {
-      console.error("Errore nel salvataggio del cliente:", error);
-      alert("Errore durante la creazione del cliente");
+      console.error("Errore durante il salvataggio:", error);
+      alert("Errore durante il salvataggio");
     } finally {
       setSavingNewClient(false);
     }
+  };
+
+  // Funzione per selezionare un cliente
+  const onSelectCustomer = (customer: CustomerData) => {
+    setSelectedCustomer(customer);
+    setSearchQuery(customer.ragioneSociale);
+    setShowDropdown(false);
+
+    setClienteData({
+      email: customer.email || "",
+      nome: customer.nome || "",
+      cognome: customer.cognome || "",
+      telefono: customer.telefono || "",
+      cap: customer.cap || "",
+    });
   };
 
   // Funzione per validare il form
@@ -574,7 +619,10 @@ const Prenotazioni: React.FC = () => {
         createdBy: userName,
       };
 
-      console.log("📤 Payload prenotazione:", bookingPayload);
+      console.log(
+        "📤 Payload prenotazione:",
+        JSON.stringify(bookingPayload, null, 2)
+      );
 
       const response = await fetch(`${API_URL}/api/Booking`, {
         method: "POST",
@@ -606,7 +654,7 @@ const Prenotazioni: React.FC = () => {
           componentiProblema: "",
           descrizioneInterventoProblema: "",
           prezzoPreventivato: "",
-          tipoPagamento: "Amex",
+          tipoPagamento: "",
           informazioneFatturazione: "",
         });
         setRepairComponent("");
@@ -1066,11 +1114,16 @@ const Prenotazioni: React.FC = () => {
                         })
                       }
                     >
-                      {tipoPagamentoOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
+                      <option value="">-- Seleziona --</option>
+                      <option value="Contanti">💵 Contanti</option>
+                      <option value="Carta di Credito">
+                        💳 Carta di Credito
+                      </option>
+                      <option value="Bancomat">💳 Bancomat</option>
+                      <option value="Bonifico">🏦 Bonifico</option>
+                      <option value="Amex">💳 American Express</option>
+                      <option value="PayPal">💰 PayPal</option>
+                      <option value="Altro">🔄 Altro</option>
                     </select>
                   </div>
 

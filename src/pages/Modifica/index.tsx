@@ -1336,39 +1336,25 @@ const Modifica: React.FC = () => {
     }
   };
 
-  const loadOperators = async () => {
+  const loadOperators = async () => {    
     try {
-      // Dati fake per ora
-      const fakeOperators = [
-        {
-          id: "1",
-          firstName: "Mario",
-          lastName: "Rossi",
-          codiceDipendente: "TEC001",
-          email: "mario.rossi@medialab.it",
-          phoneNumber: "+39 333 1234567",
+     
+      const response = await fetch(`${API_URL}/api/operator`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
-        {
-          id: "2",
-          firstName: "Luigi",
-          lastName: "Verdi",
-          codiceDipendente: "TEC002",
-          email: "luigi.verdi@medialab.it",
-          phoneNumber: "+39 333 2345678",
-        },
-        {
-          id: "3",
-          firstName: "Giuseppe",
-          lastName: "Bianchi",
-          codiceDipendente: "TEC003",
-          email: "giuseppe.bianchi@medialab.it",
-          phoneNumber: "+39 333 3456789",
-        },
-      ];
+      });
 
-      setOperators(fakeOperators);
+      if (response.ok) {
+        const operatorsData = await response.json();
+        setOperators(operatorsData);
+      } else {
+        console.error("Errore nel caricamento operatori");
+      }
     } catch (error) {
-      console.error("Errore nel caricamento operatori:", error);
+
+      console.error("Errore durante il caricamento operatori:", error);      
+
     }
   };
 

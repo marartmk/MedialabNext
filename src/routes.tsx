@@ -28,6 +28,8 @@ import RicercaVendite from "./pages/RicercaVendite";
 import ModificaVendite from "./pages/ModificaVendite";
 import Prenotazioni from "./pages/Prenotazioni";
 import RicercaPrenotazioni from "./pages/RicercaPrenotazioni";
+import CalendarioPrenotazioni from "./pages/RicercaPrenotazioni/CalendarioPrenotazioni";
+import AcquistoUsato from "./pages/Acquisti/AcquistoUsato";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -253,6 +255,24 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+        <Route
+        path="/calendario-prenotazioni"
+        element={
+          <ProtectedRoute>
+            <CalendarioPrenotazioni />
+          </ProtectedRoute>
+        }
+      />      
+
+         <Route
+        path="/acquisto-usato"
+        element={
+          <ProtectedRoute>
+            <AcquistoUsato />
+          </ProtectedRoute>
+        }
+      />      
       
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
