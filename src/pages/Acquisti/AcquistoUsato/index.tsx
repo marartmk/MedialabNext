@@ -62,6 +62,14 @@ const AcquistoUsato: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentPurchaseId, setCurrentPurchaseId] = useState<string | null>(
+    null
+  );
+  const [currentPurchaseCode, setCurrentPurchaseCode] = useState<string | null>(
+    null
+  );
+
   // Stati per i campi del form cliente
   const [clienteData, setClienteData] = useState({
     email: "",
@@ -112,7 +120,7 @@ const AcquistoUsato: React.FC = () => {
     iban: "",
   });
 
-  const [savingNewClient, setSavingNewClient] = useState(false);
+  const [savingNewClient, setSavingNewClient] = useState(false);  
 
   // Tipi di dispositivo
   const deviceTypes = [
@@ -123,16 +131,6 @@ const AcquistoUsato: React.FC = () => {
     { value: "AirPods", label: "🎧 AirPods" },
   ];
 
-  // Opzioni per i dropdown
-  const brandOptions = [
-    "Apple",
-    "Samsung",
-    "Huawei",
-    "Xiaomi",
-    "OnePlus",
-    "Google",
-    "Altro",
-  ];
   const memoriaOptions = [
     "64 GB",
     "128 GB",
@@ -312,10 +310,6 @@ const AcquistoUsato: React.FC = () => {
   const companyName =
     sessionStorage.getItem("companyName") ||
     sessionStorage.getItem("CompanyName") ||
-    "";
-  const userName =
-    sessionStorage.getItem("userName") ||
-    sessionStorage.getItem("UserName") ||
     "";
 
   // Aggiorna data e ora ogni secondo
@@ -608,30 +602,371 @@ const AcquistoUsato: React.FC = () => {
     return errors.length === 0;
   };
 
-  // Crea acquisto (MOCK)
+  // Crea acquisto (chiamata API reale con fetch)
   const handleCreatePurchase = async () => {
     if (!validateForm()) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
+    // Verifica che ci sia un cliente selezionato
+    if (!selectedCustomer) {
+      alert("Devi selezionare un cliente prima di procedere");
+      return;
+    }
+
     setIsCreatingPurchase(true);
 
-    // Simula creazione acquisto
-    setTimeout(() => {
-      console.log("Acquisto creato:", {
-        cliente: clienteData,
-        dispositivo: dispositivoData,
-        diagnostica: diagnosticItems,
-        acquisto: acquistoData,
+    try {
+      const token = sessionStorage.getItem("token");
+      const multitenantId = sessionStorage.getItem("IdCompany");
+      const idCompany = sessionStorage.getItem("IdCompany");
+
+      if (!token || !multitenantId) {
+        alert("Sessione scaduta. Effettua di nuovo il login.");
+        setIsCreatingPurchase(false);
+        return;
+      }
+
+      // Prepara i dati per il backend nel formato del model DevicePurchase
+      const purchaseData = {
+        // ==================== TIPO E CONDIZIONE ====================
+        purchaseType: "Apparato",
+        deviceCondition: "Usato",
+
+        // ==================== IDENTIFICATIVI ====================
+        CompanyId: idCompany,
+
+        // ==================== DATI PRODOTTO ====================
+        brand: dispositivoData.brand,
+        model: dispositivoData.model,
+        serialNumber: dispositivoData.serialNumber || null,
+        imei: dispositivoData.serialNumber || null,
+
+        // ==================== IDs RELAZIONALI ====================
+        supplierId: selectedCustomer.id,
+
+        // ==================== PREZZI ====================
+        purchasePrice: parseFloat(acquistoData.prezzoTotale) || 0,
+        shippingCost: 0,
+        otherCosts: 0,
+        vatRate: 22.0,
+        totalAmount: parseFloat(acquistoData.prezzoTotale) || 0,
+
+        // ==================== PAGAMENTO ====================
+        paymentType: acquistoData.tipoPagamento,
+        paymentStatus: "Da Pagare",
+        paidAmount: 0,
+        remainingAmount: parseFloat(acquistoData.prezzoTotale) || 0,
+        installmentsCount: null,
+        installmentAmount: null,
+
+        // ==================== STATO ACQUISTO ====================
+        purchaseStatus: "Bozza",
+        purchaseStatusCode: "DRAFT",
+
+        // ==================== DOCUMENTI FORNITORE ====================
+        supplierInvoiceId: null,
+        supplierInvoiceNumber: null,
+        supplierInvoiceDate: null,
+        orderNumber: null,
+        orderDate: null,
+
+        // ==================== DDT ====================
+        ddtNumber: acquistoData.codScheda || null,
+        ddtDate: acquistoData.dataAcquisto
+          ? new Date(acquistoData.dataAcquisto).toISOString()
+          : null,
+
+        // ==================== ACQUIRENTE/RESPONSABILE ====================
+        buyerCode: null,
+        buyerName: `${selectedCustomer.nome} ${selectedCustomer.cognome}`,
+
+        // ==================== NOTE E ACCESSORI ====================
+        notes: `Acquisto da ${selectedCustomer.nome} ${selectedCustomer.cognome}. Documento: ${clienteData.tipoDocumento} n. ${clienteData.numeroDocumento}`,
+        includedAccessories: null,
+
+        // ==================== CONTROLLO QUALITÀ ====================
+        qualityCheckStatus: "Da Verificare",
+        qualityCheckNotes: null,
+        qualityCheckDate: null,
+        qualityCheckedBy: null,
+
+        // ==================== GARANZIA FORNITORE ====================
+        hasSupplierWarranty: false,
+        supplierWarrantyMonths: null,
+        supplierWarrantyExpiryDate: null,
+
+        // ==================== DATE ====================
+        purchaseDate: acquistoData.dataAcquisto
+          ? new Date(acquistoData.dataAcquisto).toISOString()
+          : new Date().toISOString(),
+        receivedDate: null,
+      };
+
+      console.log(
+        "Invio dati acquisto:",
+        JSON.stringify(purchaseData, null, 2)
+      );
+
+      // Chiamata API con fetch
+      const response = await fetch(`${API_URL}/api/Purchase`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "X-Multitenant-Id": multitenantId,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(purchaseData),
       });
 
-      alert("Acquisto usato creato con successo!");
-      setIsCreatingPurchase(false);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message ||
+            errorData?.title ||
+            `Errore ${response.status}: ${response.statusText}`
+        );
+      }
 
-      // In un'app reale, qui navigheresti alla pagina di dettaglio o lista acquisti
-      // navigate("/acquisti");
-    }, 1500);
+      const data = await response.json();
+      console.log("Acquisto creato con successo:", data);
+
+      // ============ NUOVA LOGICA: PASSA IN MODALITÀ EDIT ============
+      setIsEditMode(true);
+      setCurrentPurchaseId(data.purchaseId); // Salva l'ID per gli aggiornamenti
+      setCurrentPurchaseCode(data.purchaseCode); // Salva il codice per visualizzazione
+
+      alert(`Acquisto usato creato con successo! Codice: ${data.purchaseCode}`);
+
+      // ============ NON RESETTARE PIÙ IL FORM ============
+      // COMMENTA O RIMUOVI QUESTE RIGHE:
+      /*
+    setSelectedCustomer(null);
+    setClienteData({
+      email: "",
+      nome: "",
+      cognome: "",
+      telefono: "",
+      cap: "",
+      tipoDocumento: "Patente",
+      numeroDocumento: "",
+    });
+    setDispositivoData({
+      serialNumber: "",
+      brand: "Apple",
+      model: "",
+      deviceType: "iPhone",
+      colore: "",
+      memoria: "512 GB",
+    });
+    setAcquistoData({
+      dataAcquisto: "",
+      codScheda: "",
+      prezzoTotale: "",
+      tipoPagamento: "Bonifico",
+    });
+    setDiagnosticItems((prev) =>
+      prev.map((item) => ({ ...item, active: true }))
+    );
+    */
+    } catch (error) {
+      console.error("Errore durante la creazione dell'acquisto:", error);
+
+      let errorMessage = "Errore durante la creazione dell'acquisto";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      alert(errorMessage);
+    } finally {
+      setIsCreatingPurchase(false);
+    }
+  };
+
+  const handleUpdatePurchase = async () => {
+    if (!validateForm()) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (!selectedCustomer || !currentPurchaseId) {
+      alert("Errore: dati mancanti per l'aggiornamento");
+      return;
+    }
+
+    setIsCreatingPurchase(true);
+
+    try {
+      const token = sessionStorage.getItem("token");
+      const multitenantId = sessionStorage.getItem("IdCompany");
+
+      if (!token || !multitenantId) {
+        alert("Sessione scaduta. Effettua di nuovo il login.");
+        setIsCreatingPurchase(false);
+        return;
+      }
+
+      // Prepara i dati per l'update (stessa struttura ma senza i campi read-only)
+      const updateData = {
+        // ==================== TIPO E CONDIZIONE ====================
+        purchaseType: "Apparato",
+        deviceCondition: "Usato",
+
+        // ==================== DATI PRODOTTO ====================
+        brand: dispositivoData.brand,
+        model: dispositivoData.model,
+        serialNumber: dispositivoData.serialNumber || null,
+        imei: dispositivoData.serialNumber || null,
+
+        // ==================== IDs RELAZIONALI ====================
+        supplierId: selectedCustomer.id,
+
+        // ==================== PREZZI ====================
+        purchasePrice: parseFloat(acquistoData.prezzoTotale) || 0,
+        shippingCost: 0,
+        otherCosts: 0,
+        vatRate: 22.0,
+        totalAmount: parseFloat(acquistoData.prezzoTotale) || 0,
+
+        // ==================== PAGAMENTO ====================
+        paymentType: acquistoData.tipoPagamento,
+        paymentStatus: "Da Pagare",
+        paidAmount: 0,
+        remainingAmount: parseFloat(acquistoData.prezzoTotale) || 0,
+        installmentsCount: null,
+        installmentAmount: null,
+
+        // ==================== STATO ACQUISTO ====================
+        purchaseStatus: "Bozza",
+        purchaseStatusCode: "DRAFT",
+
+        // ==================== DOCUMENTI FORNITORE ====================
+        supplierInvoiceNumber: null,
+        supplierInvoiceDate: null,
+        orderNumber: null,
+        orderDate: null,
+
+        // ==================== DDT ====================
+        ddtNumber: acquistoData.codScheda || null,
+        ddtDate: acquistoData.dataAcquisto
+          ? new Date(acquistoData.dataAcquisto).toISOString()
+          : null,
+
+        // ==================== ACQUIRENTE/RESPONSABILE ====================
+        buyerCode: null,
+        buyerName: `${selectedCustomer.nome} ${selectedCustomer.cognome}`,
+
+        // ==================== NOTE E ACCESSORI ====================
+        notes: `Acquisto da ${selectedCustomer.nome} ${selectedCustomer.cognome}. Documento: ${clienteData.tipoDocumento} n. ${clienteData.numeroDocumento}`,
+        includedAccessories: null,
+
+        // ==================== CONTROLLO QUALITÀ ====================
+        qualityCheckStatus: "Da Verificare",
+        qualityCheckNotes: null,
+        qualityCheckDate: null,
+        qualityCheckedBy: null,
+
+        // ==================== GARANZIA FORNITORE ====================
+        hasSupplierWarranty: false,
+        supplierWarrantyMonths: null,
+        supplierWarrantyExpiryDate: null,
+
+        // ==================== DATE ====================
+        purchaseDate: acquistoData.dataAcquisto
+          ? new Date(acquistoData.dataAcquisto).toISOString()
+          : new Date().toISOString(),
+        receivedDate: null,
+      };
+
+      console.log(
+        "Invio dati aggiornamento:",
+        JSON.stringify(updateData, null, 2)
+      );
+
+      // Chiamata API PUT per l'update
+      const response = await fetch(
+        `${API_URL}/api/Purchase/${currentPurchaseId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "X-Multitenant-Id": multitenantId,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updateData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message ||
+            errorData?.title ||
+            `Errore ${response.status}: ${response.statusText}`
+        );
+      }
+
+      console.log("Acquisto aggiornato con successo");
+      alert(`Acquisto ${currentPurchaseCode} aggiornato con successo!`);
+    } catch (error) {
+      console.error("Errore durante l'aggiornamento dell'acquisto:", error);
+
+      let errorMessage = "Errore durante l'aggiornamento dell'acquisto";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      alert(errorMessage);
+    } finally {
+      setIsCreatingPurchase(false);
+    }
+  };
+
+  // ============ AGGIUNGI QUESTA FUNZIONE PER NUOVO ACQUISTO ============
+  const handleNewPurchase = () => {
+    setIsEditMode(false);
+    setCurrentPurchaseId(null);
+    setCurrentPurchaseCode(null);
+
+    setSelectedCustomer(null);
+    setClienteData({
+      email: "",
+      nome: "",
+      cognome: "",
+      telefono: "",
+      cap: "",
+      tipoDocumento: "Patente",
+      numeroDocumento: "",
+    });
+    setDispositivoData({
+      serialNumber: "",
+      brand: "Apple",
+      model: "",
+      deviceType: "iPhone",
+      colore: "",
+      memoria: "512 GB",
+    });
+    setAcquistoData({
+      dataAcquisto: "",
+      codScheda: "",
+      prezzoTotale: "",
+      tipoPagamento: "Bonifico",
+    });
+    setDiagnosticItems((prev) =>
+      prev.map((item) => ({ ...item, active: true }))
+    );
+  };
+
+  // ============ AGGIUNGI QUESTA FUNZIONE PER LA STAMPA ============
+  const handlePrintReceipt = () => {
+    // TODO: Implementare la logica di stampa ricevuta
+    console.log("Stampa ricevuta per acquisto:", currentPurchaseId);
+    alert(
+      `Funzione stampa ricevuta in sviluppo per acquisto ${currentPurchaseCode}`
+    );
   };
 
   // Genera codice scheda automatico (MOCK)
@@ -1063,32 +1398,62 @@ const AcquistoUsato: React.FC = () => {
 
             {/* Bottoni azione */}
             <div className={styles.formActions}>
-              <button
-                className={`${styles.btn} ${styles.btnSecondary}`}
-                onClick={() => navigate("/acquisti")}
-              >
-                Annulla
-              </button>
+              {!isEditMode ? (
+                // ============ MODALITÀ CREAZIONE ============
+                <>
+                  <button
+                    className={`${styles.btn} ${styles.btnSecondary}`}
+                    onClick={handleNewPurchase}
+                    disabled={isCreatingPurchase}
+                  >
+                    Annulla
+                  </button>
 
-              <button
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                onClick={handleCreatePurchase}
-                disabled={isCreatingPurchase}
-              >
-                {isCreatingPurchase
-                  ? "Creazione in corso..."
-                  : "Crea/invia E-Mail"}
-              </button>
+                  <button
+                    className={`${styles.btn} ${styles.btnPrimary}`}
+                    onClick={handleCreatePurchase}
+                    disabled={isCreatingPurchase || !selectedCustomer}
+                  >
+                    {isCreatingPurchase
+                      ? "Creazione in corso..."
+                      : "Crea/Invia E-Mail"}
+                  </button>
 
-              <button
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                onClick={handleCreatePurchase}
-                disabled={isCreatingPurchase}
-              >
-                {isCreatingPurchase
-                  ? "Creazione in corso..."
-                  : "Crea/Stampa ricevuta"}
-              </button>
+                  <button
+                    className={`${styles.btn} ${styles.btnPrimary}`}
+                    disabled={true}
+                  >
+                    Crea/Stampa Ricevuta
+                  </button>
+                </>
+              ) : (
+                // ============ MODALITÀ MODIFICA ============
+                <>
+                  <button
+                    className={`${styles.btn} ${styles.btnSecondary}`}
+                    onClick={handleNewPurchase}
+                    disabled={isCreatingPurchase}
+                  >
+                    Nuovo Acquisto
+                  </button>
+
+                  <button
+                    className={`${styles.btn} ${styles.btnPrimary}`}
+                    onClick={handleUpdatePurchase}
+                    disabled={isCreatingPurchase || !selectedCustomer}
+                  >
+                    {isCreatingPurchase ? "Aggiornamento..." : "Aggiorna"}
+                  </button>
+
+                  <button
+                    className={`${styles.btn} ${styles.btnPrimary}`}
+                    onClick={handlePrintReceipt}
+                    disabled={isCreatingPurchase}
+                  >
+                    Stampa Ricevuta
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
