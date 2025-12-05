@@ -30,6 +30,7 @@ import Prenotazioni from "./pages/Prenotazioni";
 import RicercaPrenotazioni from "./pages/RicercaPrenotazioni";
 import CalendarioPrenotazioni from "./pages/RicercaPrenotazioni/CalendarioPrenotazioni";
 import AcquistoUsato from "./pages/Acquisti/AcquistoUsato";
+import RicercaAcquistiUsato from "./pages/RicercaAcquistiUsato";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -270,6 +271,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <AcquistoUsato />
+          </ProtectedRoute>
+        }
+      />      
+
+   <Route
+        path="/ricerca-acquisto-usato"
+        element={
+          <ProtectedRoute>
+            <RicercaAcquistiUsato />
           </ProtectedRoute>
         }
       />      
