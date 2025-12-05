@@ -203,7 +203,7 @@ const RicercaAcquistiUsato: React.FC = () => {
   // Funzione per ottenere gli headers di autenticazione completi
   const getAuthHeaders = () => {
     const token = sessionStorage.getItem("token");
-    const multitenantId = sessionStorage.getItem("multitenantId");
+    const multitenantId = sessionStorage.getItem("IdCompany");
     return {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`,
@@ -229,6 +229,9 @@ const RicercaAcquistiUsato: React.FC = () => {
         pageSize: 100, // Recupera i primi 100 risultati
       };
 
+      console.log("Chiamata API Purchase/search con payload:", searchPayload);
+      console.log("Headers:", getAuthHeaders());
+
       const response = await fetch(`${API_URL}/api/Purchase/search`, {
         method: "POST",
         headers: getAuthHeaders(),
@@ -236,12 +239,16 @@ const RicercaAcquistiUsato: React.FC = () => {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Errore risposta API:", response.status, errorText);
         throw new Error(`Errore HTTP: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log("Dati ricevuti dall'API:", data);
       const purchasesData = data.items || data || [];
-      
+      console.log("Acquisti processati:", purchasesData.length);
+
       setPurchases(purchasesData);
       setFilteredPurchases(purchasesData);
       calculateStats(purchasesData);
