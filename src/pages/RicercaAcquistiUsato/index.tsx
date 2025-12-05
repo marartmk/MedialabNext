@@ -13,7 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-import styles from "./ricerca-acquisto-usato.modules.css";
+import styles from "./ricerca-acquisto-usato.module.css";
 
 // Interfacce TypeScript per i dati degli acquisti
 interface PurchaseDetailDto {
@@ -200,166 +200,51 @@ const RicercaAcquistiUsato: React.FC = () => {
     return sessionStorage.getItem("token") || "";
   };
 
+  // Funzione per ottenere gli headers di autenticazione completi
+  const getAuthHeaders = () => {
+    const token = sessionStorage.getItem("token");
+    const multitenantId = sessionStorage.getItem("multitenantId");
+    return {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+      "X-Multitenant-Id": multitenantId || "",
+    };
+  };
+
   // Carica tutti gli acquisti all'avvio
   useEffect(() => {
     fetchPurchases();
   }, []);
 
-  // Funzione per caricare gli acquisti (FAKE DATA per ora)
+  // Funzione per caricare gli acquisti
   const fetchPurchases = async (filters?: PurchaseSearchRequestDto) => {
     setLoading(true);
     setError(null);
 
     try {
-      // SIMULAZIONE: Per ora usiamo dati fake
-      // TODO: Sostituire con chiamata API reale quando il BE sarà pronto
-
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simula latenza
-
-      // Dati fake per demo
-      const fakeData: PurchaseDetailDto[] = [
-        {
-          id: 1,
-          purchaseId: "pur-001",
-          purchaseCode: "ACQ-2024-00001",
-          purchaseType: "Apparato",
-          deviceCondition: "Usato",
-          brand: "Apple",
-          model: "iPhone 14 Pro",
-          serialNumber: "ABC123456789",
-          imei: "123456789012345",
-          supplierId: "sup-001",
-          supplierName: "Mario Rossi",
-          companyId: "comp-001",
-          companyName: "MediaLab",
-          multitenantId: "tenant-001",
-          purchasePrice: 650.00,
-          shippingCost: 0,
-          otherCosts: 0,
-          vatRate: 22.0,
-          totalAmount: 793.00,
-          paymentType: "Bonifico",
-          paymentStatus: "Da Pagare",
-          paidAmount: 0,
-          remainingAmount: 793.00,
-          purchaseStatus: "Ricevuto",
-          purchaseStatusCode: "RECEIVED",
-          ddtNumber: "DDT-001",
-          ddtDate: "2024-12-01",
-          buyerName: "Marco Bianchi",
-          notes: "iPhone in ottime condizioni",
-          qualityCheckStatus: "Da Verificare",
-          hasSupplierWarranty: false,
-          purchaseDate: "2024-12-01T10:30:00",
-          createdAt: "2024-12-01T10:30:00",
-        },
-        {
-          id: 2,
-          purchaseId: "pur-002",
-          purchaseCode: "ACQ-2024-00002",
-          purchaseType: "Apparato",
-          deviceCondition: "Usato",
-          brand: "Samsung",
-          model: "Galaxy S23",
-          serialNumber: "DEF987654321",
-          imei: "987654321098765",
-          supplierId: "sup-002",
-          supplierName: "Luigi Verdi",
-          companyId: "comp-001",
-          companyName: "MediaLab",
-          multitenantId: "tenant-001",
-          purchasePrice: 480.00,
-          shippingCost: 0,
-          otherCosts: 0,
-          vatRate: 22.0,
-          totalAmount: 585.60,
-          paymentType: "Contanti",
-          paymentStatus: "Pagato",
-          paidAmount: 585.60,
-          remainingAmount: 0,
-          purchaseStatus: "Approvato",
-          purchaseStatusCode: "APPROVED",
-          ddtNumber: "DDT-002",
-          ddtDate: "2024-12-02",
-          buyerName: "Marco Bianchi",
-          notes: "Samsung Galaxy in buone condizioni",
-          qualityCheckStatus: "Approvato",
-          hasSupplierWarranty: false,
-          purchaseDate: "2024-12-02T14:15:00",
-          createdAt: "2024-12-02T14:15:00",
-        },
-        {
-          id: 3,
-          purchaseId: "pur-003",
-          purchaseCode: "ACQ-2024-00003",
-          purchaseType: "Apparato",
-          deviceCondition: "Rigenerato",
-          brand: "Apple",
-          model: "iPhone 13",
-          serialNumber: "GHI456789123",
-          imei: "456789123456789",
-          supplierId: "sup-003",
-          supplierName: "Anna Neri",
-          companyId: "comp-001",
-          companyName: "MediaLab",
-          multitenantId: "tenant-001",
-          purchasePrice: 520.00,
-          shippingCost: 0,
-          otherCosts: 0,
-          vatRate: 22.0,
-          totalAmount: 634.40,
-          paymentType: "Bonifico",
-          paymentStatus: "Parziale",
-          paidAmount: 300.00,
-          remainingAmount: 334.40,
-          purchaseStatus: "Bozza",
-          purchaseStatusCode: "DRAFT",
-          ddtNumber: "DDT-003",
-          ddtDate: "2024-12-03",
-          buyerName: "Marco Bianchi",
-          notes: "iPhone rigenerato con batteria nuova",
-          qualityCheckStatus: "In Verifica",
-          hasSupplierWarranty: true,
-          supplierWarrantyMonths: 6,
-          purchaseDate: "2024-12-03T09:00:00",
-          createdAt: "2024-12-03T09:00:00",
-        },
-      ];
-
-      setPurchases(fakeData);
-      setFilteredPurchases(fakeData);
-      calculateStats(fakeData);
-
-      /*
-      // CODICE REALE (da attivare quando il BE sarà pronto):
-      const token = getAuthToken();
-      const url = filters
-        ? `${API_URL}/api/Purchase/search`
-        : `${API_URL}/api/Purchase`;
-
-      const options: RequestInit = {
-        method: filters ? "POST" : "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+      // Prepara il payload per la ricerca
+      const searchPayload: PurchaseSearchRequestDto = {
+        ...filters,
+        page: 1,
+        pageSize: 100, // Recupera i primi 100 risultati
       };
 
-      if (filters) {
-        options.body = JSON.stringify(filters);
-      }
-
-      const response = await fetch(url, options);
+      const response = await fetch(`${API_URL}/api/Purchase/search`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(searchPayload),
+      });
 
       if (!response.ok) {
         throw new Error(`Errore HTTP: ${response.status}`);
       }
 
-      const data: PurchaseDetailDto[] = await response.json();
-      setPurchases(data);
-      setFilteredPurchases(data);
-      calculateStats(data);
-      */
+      const data = await response.json();
+      const purchasesData = data.items || data || [];
+      
+      setPurchases(purchasesData);
+      setFilteredPurchases(purchasesData);
+      calculateStats(purchasesData);
     } catch (err) {
       console.error("Errore nel caricamento degli acquisti:", err);
       setError("Errore nel caricamento degli acquisti");
@@ -501,29 +386,43 @@ const RicercaAcquistiUsato: React.FC = () => {
     setLoadingDetails(true);
     setSupplierDetails(null);
     try {
-      // TODO: Implementare caricamento dati fornitore quando il BE sarà pronto
-      /*
-      if (purchase.supplierId) {
-        const token = getAuthToken();
-        const supplierResponse = await fetch(
-          `${API_URL}/api/customer/${purchase.supplierId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+      // Carica i dettagli completi dell'acquisto dal backend
+      const response = await fetch(`${API_URL}/api/Purchase/${purchase.purchaseId}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
 
-        if (supplierResponse.ok) {
-          const supplier = await supplierResponse.json();
-          setSupplierDetails(supplier);
+      if (!response.ok) {
+        throw new Error(`Errore HTTP: ${response.status}`);
+      }
+
+      const purchaseDetails = await response.json();
+      setSelectedPurchase(purchaseDetails);
+
+      // Opzionale: Carica anche i dati del fornitore se necessario
+      if (purchaseDetails.supplierId) {
+        try {
+          const supplierResponse = await fetch(
+            `${API_URL}/api/Customer/${purchaseDetails.supplierId}`,
+            {
+              method: "GET",
+              headers: getAuthHeaders(),
+            }
+          );
+
+          if (supplierResponse.ok) {
+            const supplier = await supplierResponse.json();
+            setSupplierDetails(supplier);
+          }
+        } catch (supplierError) {
+          console.warn("Impossibile caricare i dettagli del fornitore:", supplierError);
         }
       }
-      */
-      setSelectedPurchase(purchase);
+
       setShowDetailModal(true);
     } catch (error) {
       console.error("Errore nel caricamento dei dettagli:", error);
+      // In caso di errore, mostra comunque i dati disponibili
       setSelectedPurchase(purchase);
       setShowDetailModal(true);
     } finally {
@@ -531,15 +430,40 @@ const RicercaAcquistiUsato: React.FC = () => {
     }
   };
 
+  // Funzione per eliminare un acquisto (soft delete)
+  const handleDeletePurchase = async (purchaseId: string) => {
+    if (!window.confirm("Sei sicuro di voler eliminare questo acquisto?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/Purchase/${purchaseId}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Errore HTTP: ${response.status}`);
+      }
+
+      // Ricarica la lista dopo l'eliminazione
+      alert("Acquisto eliminato con successo");
+      fetchPurchases(searchFilters);
+    } catch (error) {
+      console.error("Errore nell'eliminazione dell'acquisto:", error);
+      alert("Errore nell'eliminazione dell'acquisto");
+    }
+  };
+
+  const toggleMenu = () => {
+    setMenuState(menuState === "open" ? "closed" : "open");
+  };
+
   return (
     <div className={styles.mainLayout}>
-      <Sidebar
-        menuState={menuState}
-        setMenuState={setMenuState}
-        activeMenu="acquisti"
-      />
+    <Sidebar menuState={menuState} toggleMenu={toggleMenu}/>
       <div className={styles.contentArea}>
-        <Topbar companyName={companyName} userName={userName} />
+        <Topbar toggleMenu={toggleMenu} />
 
         <div className={styles.pageBody}>
           {/* Header della pagina */}
@@ -1049,18 +973,7 @@ const RicercaAcquistiUsato: React.FC = () => {
                                   </button>
                                   <button
                                     className={`${styles.actionBtn} ${styles.deleteBtn}`}
-                                    onClick={() => {
-                                      if (
-                                        window.confirm(
-                                          "Sei sicuro di voler eliminare questo acquisto?"
-                                        )
-                                      ) {
-                                        console.log(
-                                          "Elimina acquisto:",
-                                          purchase.purchaseId
-                                        );
-                                      }
-                                    }}
+                                    onClick={() => handleDeletePurchase(purchase.purchaseId)}
                                     title="Elimina acquisto"
                                   >
                                     <Trash2 className={styles.actionIcon} />
