@@ -121,6 +121,13 @@ const AcquistoUsato: React.FC = () => {
   });
 
   const [savingNewClient, setSavingNewClient] = useState(false);  
+  const [showPurchaseReceipt, setShowPurchaseReceipt] = useState(false);
+  
+  // Stati per la firma digitale
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Tipi di dispositivo
   const deviceTypes = [
@@ -961,12 +968,102 @@ const AcquistoUsato: React.FC = () => {
   };
 
   // ============ AGGIUNGI QUESTA FUNZIONE PER LA STAMPA ============
+  // ============ FUNZIONI PER LA GESTIONE DELLA FIRMA DIGITALE ============
+  const startDrawing = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    setIsDrawing(true);
+
+    const x =
+      "touches" in e ? e.touches[0].clientX - rect.left : e.nativeEvent.offsetX;
+    const y =
+      "touches" in e ? e.touches[0].clientY - rect.top : e.nativeEvent.offsetY;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    if (!isDrawing) return;
+
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const x =
+      "touches" in e ? e.touches[0].clientX - rect.left : e.nativeEvent.offsetX;
+    const y =
+      "touches" in e ? e.touches[0].clientY - rect.top : e.nativeEvent.offsetY;
+
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = "#2c3e50";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const clearSignature = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const saveSignature = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    // Converti il canvas in base64
+    const dataUrl = canvas.toDataURL("image/png");
+    setSignatureData(dataUrl);
+    setShowSignatureModal(false);
+
+    alert("✅ Firma acquisita con successo!");
+  };
+
+  const openSignatureModal = () => {
+    setShowSignatureModal(true);
+
+    // Inizializza il canvas dopo che il modal è stato renderizzato
+    setTimeout(() => {
+      const canvas = signatureCanvasRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Imposta lo sfondo bianco
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }, 100);
+  };
+
   const handlePrintReceipt = () => {
-    // TODO: Implementare la logica di stampa ricevuta
-    console.log("Stampa ricevuta per acquisto:", currentPurchaseId);
-    alert(
-      `Funzione stampa ricevuta in sviluppo per acquisto ${currentPurchaseCode}`
-    );
+    if (isEditMode && currentPurchaseId) {
+      setShowPurchaseReceipt(true);
+    } else {
+      alert("Salva prima l'acquisto per stampare la ricevuta");
+    }
   };
 
   // Genera codice scheda automatico (MOCK)
@@ -1757,6 +1854,429 @@ const AcquistoUsato: React.FC = () => {
                 disabled={savingNewClient}
               >
                 {savingNewClient ? "Salvando..." : "SALVA CLIENTE"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============ MODAL RICEVUTA ACQUISTO ============ */}
+      {showPurchaseReceipt && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalReceiptLarge}>
+            <div className={styles.modalHeader}>
+              <h2>Ricevuta Acquisto Dispositivo Usato</h2>
+              <button
+                className={styles.closeButton}
+                onClick={() => setShowPurchaseReceipt(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div className="accSheet">
+                {/* Header professionale con logo */}
+                <div className="accHeaderPro">
+                  {/* Colonna sinistra - Dati azienda */}
+                  <div className="accLogoSection">
+                    <div className="accLogo">
+                      <div style={{ 
+                        fontSize: '28px', 
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <span style={{ 
+                          background: '#2c3e50',
+                          color: 'white',
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          CLINICA <span style={{ fontSize: '32px' }}>📱</span> iPHONE
+                        </span>
+                      </div>
+                    </div>
+                    <div className="accCompanyTagline">ASSISTENZA TECNICA</div>
+
+                    <div className="accCompanyDetails">
+                      <div>CLINICA iPHONE STORE</div>
+                      <div>Città - AZIENDA</div>
+                      <div>Via Prova 1 – 73100 Lecce (LE)</div>
+                      <div>Tel. 0832 123456</div>
+                      <div>P.IVA 01234567890</div>
+                    </div>
+                  </div>
+
+                  {/* Colonna destra - Documento */}
+                  <div className="accDocSection">
+                    <h1 className="accDocTitle">RICEVUTA ACQUISTO USATO</h1>
+                    <div className="accDocInfo">
+                      <div>
+                        <strong>Tipo di operazione:</strong> Acquisto dispositivo usato
+                      </div>
+                      <div>
+                        <strong>Codice Acquisto:</strong> {currentPurchaseCode || 'N/A'}
+                      </div>
+                      <div>
+                        <strong>Data:</strong> {acquistoData.dataAcquisto || new Date().toLocaleDateString('it-IT')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <hr className="accDivider" />
+
+                {/* Dati venditore / dispositivo */}
+                <div className="accInfoGrid">
+                  <div className="accInfoSection">
+                    <div className="accSectionTitle">DATI VENDITORE</div>
+                    <div className="accInfoRows">
+                      <div className="accInfoRow">
+                        <span className="accLabel">Nome e Cognome:</span>
+                        <span className="accValue">{clienteData.nome} {clienteData.cognome}</span>
+                      </div>
+                      <div className="accInfoRow">
+                        <span className="accLabel">Email:</span>
+                        <span className="accValue">{clienteData.email || 'Non specificato'}</span>
+                      </div>
+                      <div className="accInfoRow">
+                        <span className="accLabel">Telefono:</span>
+                        <span className="accValue">{clienteData.telefono || 'Non specificato'}</span>
+                      </div>
+                      <div className="accInfoRow">
+                        <span className="accLabel">CAP:</span>
+                        <span className="accValue">{clienteData.cap || 'Non specificato'}</span>
+                      </div>
+                      <div className="accInfoRow">
+                        <span className="accLabel">Documento:</span>
+                        <span className="accValue">{clienteData.tipoDocumento} - {clienteData.numeroDocumento}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="accInfoSection">
+                    <div className="accSectionTitle">DATI DEL DISPOSITIVO</div>
+                    <div className="accInfoRows">
+                      <div className="accInfoRow">
+                        <span className="accLabel">Tipo:</span>
+                        <span className="accValue">{dispositivoData.deviceType}</span>
+                      </div>
+                      <div className="accInfoRow">
+                        <span className="accLabel">Marca e Modello:</span>
+                        <span className="accValue">{dispositivoData.brand} {dispositivoData.model}</span>
+                      </div>
+                      <div className="accInfoRow">
+                        <span className="accLabel">Serial Number:</span>
+                        <span className="accValue">{dispositivoData.serialNumber || 'Non specificato'}</span>
+                      </div>
+                      <div className="accInfoRow">
+                        <span className="accLabel">Colore:</span>
+                        <span className="accValue">{dispositivoData.colore || 'Non specificato'}</span>
+                      </div>
+                      <div className="accInfoRow">
+                        <span className="accLabel">Memoria:</span>
+                        <span className="accValue">{dispositivoData.memoria}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabella pagamento */}
+                <div className="accTableSection">
+                  <div className="accSectionTitle">DETTAGLI PAGAMENTO</div>
+                  <table className="accTable">
+                    <thead>
+                      <tr>
+                        <th className="accTableHeader">Metodo di Pagamento</th>
+                        <th className="accTableHeader" style={{ width: '80px', textAlign: 'center' }}>Q.tà</th>
+                        <th className="accTableHeader" style={{ width: '120px', textAlign: 'right' }}>Importo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="accTableCell">{acquistoData.tipoPagamento}</td>
+                        <td className="accTableCell" style={{ textAlign: 'center' }}>1</td>
+                        <td className="accTableCell" style={{ textAlign: 'right' }}>€ {acquistoData.prezzoTotale || '0.00'}</td>
+                      </tr>
+                      <tr>
+                        <td className="accTableCell" colSpan={2}><strong>TOTALE</strong></td>
+                        <td className="accTableCell" style={{ textAlign: 'right' }}>
+                          <strong>€ {acquistoData.prezzoTotale || '0.00'}</strong>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Clausole */}
+                <div className="accPrivacySection">
+                  <div className="accPrivacyTitle">DICHIARAZIONI E CLAUSOLE</div>
+                  <div className="accPrivacyText">
+                    <p>
+                      <strong>1. DICHIARAZIONE DI PROVENIENZA LECITA:</strong> Il venditore dichiara espressamente che il dispositivo oggetto della presente vendita è di sua legittima proprietà, non proviene da attività illecite, furti o ricettazione ed è libero da vincoli, gravami o diritti di terzi. Il venditore si assume ogni responsabilità civile e penale in merito alla provenienza del dispositivo.
+                    </p>
+                    <p>
+                      <strong>2. TRATTAMENTO DATI PERSONALI (GDPR 679/2016):</strong> Il venditore dichiara di aver preso visione dell'informativa privacy e di acconsentire al trattamento dei propri dati personali per le finalità connesse all'operazione di acquisto, in conformità al Regolamento UE 2016/679 (GDPR). I dati saranno conservati per il tempo necessario agli adempimenti fiscali e contabili di legge.
+                    </p>
+                    <p>
+                      <strong>3. CANCELLAZIONE DATI DAL DISPOSITIVO:</strong> Il venditore dichiara di aver provveduto alla cancellazione di tutti i dati personali presenti sul dispositivo e di aver disattivato eventuali blocchi di attivazione (es. Find My iPhone, Google Account, Samsung Account, ecc.). CLINICA iPHONE non sarà responsabile per eventuali dati residui presenti sul dispositivo.
+                    </p>
+                    <p>
+                      <strong>4. CONDIZIONI DEL DISPOSITIVO:</strong> Il dispositivo viene acquistato nello stato in cui si trova ("as is"). L'acquirente ha provveduto a verificare le condizioni estetiche e funzionali del dispositivo prima della conclusione della transazione. Il prezzo concordato tiene conto dello stato d'uso e di eventuali difetti riscontrati.
+                    </p>
+                    <p>
+                      <strong>5. NORMATIVA ANTIRICICLAGGIO:</strong> Ai sensi del D.Lgs. 231/2007 e successive modifiche, per operazioni di importo superiore a € 3.000,00 è stata acquisita copia del documento di identità del venditore agli atti della società.
+                    </p>
+                  </div>
+
+                  <div className="accConsentSection">
+                    <div className="accConsentTitle">RICEVUTA DI ACQUISTO</div>
+                    <div className="accSignatureArea">
+                      <div className="accSignatureBox">
+                        <div className="accSignatureLabel">Firma del Venditore</div>
+                        <div 
+                          className="accSignatureLine"
+                          onClick={openSignatureModal}
+                          style={{
+                            cursor: "pointer",
+                            position: "relative",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {signatureData ? (
+                            <img
+                              src={signatureData}
+                              alt="Firma"
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "contain",
+                              }}
+                            />
+                          ) : (
+                            <div style={{ 
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              color: '#95a5a6',
+                              fontSize: '0.85rem',
+                              textAlign: 'center',
+                              width: '100%'
+                            }}>
+                              ✍️ Clicca qui per firmare
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="accDateBox">
+                        <div className="accDateLabel">
+                          Data: {new Date().toLocaleDateString('it-IT')}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="accFooter">
+                  <div className="accFooterText">
+                    Documento generato automaticamente dal sistema di gestione - CLINICA iPHONE STORE
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => setShowPurchaseReceipt(false)}
+              >
+                CHIUDI
+              </button>
+              <button
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={() => {
+                  const printContent = document.querySelector('.accSheet');
+                  if (!printContent) return;
+                  
+                  const printWindow = window.open('', '_blank', 'width=800,height=600');
+                  if (!printWindow) return;
+                  
+                  const cssLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+                    .map(link => `<link rel="stylesheet" href="${(link as HTMLLinkElement).href}">`)
+                    .join('');
+                  
+                  const cssStyles = Array.from(document.querySelectorAll('style'))
+                    .map(style => style.outerHTML)
+                    .join('');
+                  
+                  const printHTML = `
+                    <!DOCTYPE html>
+                    <html lang="it">
+                    <head>
+                      <meta charset="UTF-8">
+                      <title>Ricevuta Acquisto - ${currentPurchaseCode || 'N/A'}</title>
+                      ${cssLinks}
+                      ${cssStyles}
+                      <style>
+                        @media print {
+                          * { visibility: hidden !important; box-sizing: border-box !important; }
+                          .print-content, .print-content * { visibility: visible !important; }
+                          .print-content {
+                            position: absolute !important;
+                            left: 0 !important;
+                            top: 0 !important;
+                            width: 100% !important;
+                            height: auto !important;
+                            margin: 0 !important;
+                            padding: 5mm !important;
+                          }
+                          @page { size: A4 portrait; margin: 10mm 8mm; }
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="print-content">
+                        ${printContent.innerHTML}
+                      </div>
+                      <script>
+                        window.onload = function() {
+                          setTimeout(() => {
+                            window.print();
+                            setTimeout(() => window.close(), 1000);
+                          }, 500);
+                        };
+                      </script>
+                    </body>
+                    </html>
+                  `;
+                  
+                  printWindow.document.write(printHTML);
+                  printWindow.document.close();
+                }}
+              >
+                🖨️ STAMPA
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============ MODAL FIRMA DIGITALE ============ */}
+      {showSignatureModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSignatureModal(false);
+            }
+          }}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "700px" }}
+          >
+            <div className={styles.modalHeader}>
+              <h4>✍️ Apponi la tua firma</h4>
+              <button
+                type="button"
+                className={styles.modalCloseButton}
+                onClick={() => setShowSignatureModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div
+                style={{
+                  padding: "12px 16px",
+                  background: "#e7f3ff",
+                  borderRadius: "6px",
+                  marginBottom: "16px",
+                  fontSize: "0.9rem",
+                  color: "#333",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <span style={{ fontSize: "1.2rem" }}>ℹ️</span>
+                <span>
+                  Firma nell'area sottostante utilizzando il mouse o il touch screen
+                </span>
+              </div>
+
+              <div
+                style={{
+                  border: "2px solid #333",
+                  borderRadius: "8px",
+                  background: "white",
+                  overflow: "hidden",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  position: "relative",
+                }}
+              >
+                <canvas
+                  ref={signatureCanvasRef}
+                  width={600}
+                  height={250}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    height: "auto",
+                    cursor: "crosshair",
+                    touchAction: "none",
+                  }}
+                />
+
+                {/* Watermark quando vuoto */}
+                {!isDrawing && !signatureData && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      color: "#ccc",
+                      fontSize: "1.2rem",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                    }}
+                  >
+                    Firma qui
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={clearSignature}
+              >
+                🗑️ Cancella
+              </button>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={saveSignature}
+              >
+                ✅ Salva Firma
               </button>
             </div>
           </div>

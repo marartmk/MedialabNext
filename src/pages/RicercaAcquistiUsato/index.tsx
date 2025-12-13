@@ -12,6 +12,7 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 import styles from "./ricerca-acquisto-usato.module.css";
 
@@ -186,6 +187,54 @@ const RicercaAcquistiUsato: React.FC = () => {
     { value: "Approvato", label: "✅ Approvato" },
     { value: "Rifiutato", label: "❌ Rifiutato" },
   ];
+  const getPurchaseStatusLabel = (code?: string) => {
+    const status = PURCHASE_STATUSES.find((s) => s.value === code);
+    return status ? status.label : code || "-";
+  };
+
+  // Ottieni label stato pagamento
+  const getPaymentStatusLabel = (status?: string) => {
+    const paymentStatus = PAYMENT_STATUSES.find((s) => s.value === status);
+    return paymentStatus ? paymentStatus.label : status || "-";
+  };
+
+  // Colori per i grafici donut
+  const COLORS = [
+    "#ffa726", // Arancione
+    "#26a69a", // Teal
+    "#42a5f5", // Blu
+    "#ef5350", // Rosso
+    "#ab47bc", // Viola
+    "#8d6e63", // Marrone
+    "#78909c", // Grigio
+    "#66bb6a", // Verde
+  ];
+
+  // Prepara i dati per il grafico donut (Acquisti per Stato)
+  const statusChartData = React.useMemo(() => {
+    const dataArray = Object.entries(stats.purchasesByStatus).map(([name, value]) => ({
+      name: getPurchaseStatusLabel(name),
+      value,
+    }));
+    // Ordina per valore discendente
+    return dataArray.sort((a, b) => b.value - a.value);
+  }, [stats.purchasesByStatus]);
+
+  // Dati per grafico - Pagamenti per Stato
+  const paymentChartData = React.useMemo(() => {
+    return Object.entries(stats.purchasesByPaymentStatus).map(([name, value]) => ({
+      name: getPaymentStatusLabel(name),
+      value,
+    })).sort((a, b) => b.value - a.value);
+  }, [stats.purchasesByPaymentStatus]);
+
+  // Dati per grafico - Condizione
+  const conditionChartData = React.useMemo(() => {
+    return Object.entries(stats.purchasesByCondition).map(([name, value]) => ({
+      name: name === "Nuovo" ? "🆕 Nuovo" : name === "Usato" ? "♻️ Usato" : "🔧 Rigenerato",
+      value,
+    })).sort((a, b) => b.value - a.value);
+  }, [stats.purchasesByCondition]);
 
   // Carica dati utente dal sessionStorage
   useEffect(() => {
@@ -238,6 +287,7 @@ const RicercaAcquistiUsato: React.FC = () => {
         body: JSON.stringify(searchPayload),
       });
 
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Errore risposta API:", response.status, errorText);
@@ -245,9 +295,39 @@ const RicercaAcquistiUsato: React.FC = () => {
       }
 
       const data = await response.json();
+      console.log("=== DEBUG API RESPONSE ===");
+      console.log("🌐 RESPONSE COMPLETA RAW:", JSON.stringify(data, null, 2));
       console.log("Dati ricevuti dall'API:", data);
-      const purchasesData = data.items || data || [];
+      console.log("Tipo di data:", typeof data);
+      console.log("data.items esiste?", data.hasOwnProperty('items'));
+      console.log("data.items è array?", Array.isArray(data.items));
+      console.log("data è array?", Array.isArray(data));
+      
+      // Estrai i dati in modo più sicuro
+      let purchasesData: any[] = [];
+      
+      if (Array.isArray(data.data)) {
+        // Nuova struttura: { data: [...], pagination: {...} }
+        purchasesData = data.data;
+        console.log("✅ Usando data.data (array di", purchasesData.length, "elementi)");
+        console.log("📊 Paginazione:", data.pagination);
+      } else if (Array.isArray(data.items)) {
+        // Vecchia struttura: { items: [...] }
+        purchasesData = data.items;
+        console.log("✅ Usando data.items (array di", purchasesData.length, "elementi)");
+      } else if (Array.isArray(data)) {
+        // Struttura diretta: [...]
+        purchasesData = data;
+        console.log("✅ Usando data direttamente (array di", purchasesData.length, "elementi)");
+      } else {
+        console.warn("⚠️ Struttura dati non riconosciuta. Keys disponibili:", Object.keys(data));
+        purchasesData = [];
+      }
+      
       console.log("Acquisti processati:", purchasesData.length);
+      console.log("📦 PAYLOAD COMPLETO purchasesData:", JSON.stringify(purchasesData, null, 2));
+      console.log("📦 PAYLOAD COMPLETO purchasesData (oggetto):", purchasesData);
+      console.log("=== FINE DEBUG ===");
 
       setPurchases(purchasesData);
       setFilteredPurchases(purchasesData);
@@ -264,6 +344,12 @@ const RicercaAcquistiUsato: React.FC = () => {
 
   // Calcola le statistiche
   const calculateStats = (purchasesData: PurchaseDetailDto[]) => {
+    // Controllo di sicurezza: verifica che purchasesData sia un array
+    if (!purchasesData || !Array.isArray(purchasesData)) {
+      console.warn("calculateStats chiamato con dati non validi:", purchasesData);
+      purchasesData = [];
+    }
+
     const totalCost = purchasesData.reduce(
       (sum, purchase) => sum + purchase.totalAmount,
       0
@@ -372,16 +458,6 @@ const RicercaAcquistiUsato: React.FC = () => {
   };
 
   // Ottieni label stato acquisto
-  const getPurchaseStatusLabel = (code?: string) => {
-    const status = PURCHASE_STATUSES.find((s) => s.value === code);
-    return status ? status.label : code || "-";
-  };
-
-  // Ottieni label stato pagamento
-  const getPaymentStatusLabel = (status?: string) => {
-    const paymentStatus = PAYMENT_STATUSES.find((s) => s.value === status);
-    return paymentStatus ? paymentStatus.label : status || "-";
-  };
 
   // Calcola percentuale per grafico
   const calculatePercentage = (value: number, total: number) => {
@@ -539,10 +615,164 @@ const RicercaAcquistiUsato: React.FC = () => {
               Cerca e gestisci gli acquisti di apparati usati
             </p>
 
-            {/* Layout principale */}
-            <div className={styles.pageContainer}>
-              {/* Colonna sinistra - Ricerca e Risultati */}
-              <div className={styles.leftColumn}>
+          {/* === RIEPILOGO GRAFICO & CARDS === */}
+          <section className={styles.statsRow}>
+            {/* Card larga con 3 grafici affiancati */}
+            <div className={styles.statsChartCard}>
+              <div className={styles.statsCardHeader}>
+                📊 Distribuzione Acquisti
+              </div>
+              <div className={styles.statsCardBody}>
+                <div className={styles.threeChartsRow}>
+                  {/* GRAFICO 1: Acquisti per Stato */}
+                  <div className={styles.miniChartContainer}>
+                    <h4 className={styles.miniChartTitle}>📈 Per Stato</h4>
+                    <div className={styles.miniDonutWrapper}>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <PieChart>
+                          <Tooltip />
+                          <Pie
+                            data={statusChartData}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius={45}
+                            outerRadius={75}
+                            paddingAngle={3}
+                            stroke="#fff"
+                            strokeWidth={2}
+                          >
+                            {statusChartData.map((_entry, idx) => (
+                              <Cell
+                                key={`cell-status-${idx}`}
+                                fill={COLORS[idx % COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className={styles.miniLegendList}>
+                      {statusChartData.slice(0, 3).map((s, i) => (
+                        <div key={s.name} className={styles.miniLegendItem}>
+                          <span
+                            className={styles.legendDot}
+                            style={{ background: COLORS[i % COLORS.length] }}
+                          />
+                          <span className={styles.miniLegendText}>{s.name}</span>
+                          <span className={styles.miniLegendValue}>{s.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* GRAFICO 2: Pagamenti per Stato */}
+                  <div className={styles.miniChartContainer}>
+                    <h4 className={styles.miniChartTitle}>💳 Per Pagamento</h4>
+                    <div className={styles.miniDonutWrapper}>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <PieChart>
+                          <Tooltip />
+                          <Pie
+                            data={paymentChartData}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius={45}
+                            outerRadius={75}
+                            paddingAngle={3}
+                            stroke="#fff"
+                            strokeWidth={2}
+                          >
+                            {paymentChartData.map((_entry, idx) => (
+                              <Cell
+                                key={`cell-payment-${idx}`}
+                                fill={COLORS[idx % COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className={styles.miniLegendList}>
+                      {paymentChartData.slice(0, 3).map((s, i) => (
+                        <div key={s.name} className={styles.miniLegendItem}>
+                          <span
+                            className={styles.legendDot}
+                            style={{ background: COLORS[i % COLORS.length] }}
+                          />
+                          <span className={styles.miniLegendText}>{s.name}</span>
+                          <span className={styles.miniLegendValue}>{s.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* GRAFICO 3: Per Condizione */}
+                  <div className={styles.miniChartContainer}>
+                    <h4 className={styles.miniChartTitle}>🏷️ Per Condizione</h4>
+                    <div className={styles.miniDonutWrapper}>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <PieChart>
+                          <Tooltip />
+                          <Pie
+                            data={conditionChartData}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius={45}
+                            outerRadius={75}
+                            paddingAngle={3}
+                            stroke="#fff"
+                            strokeWidth={2}
+                          >
+                            {conditionChartData.map((_entry, idx) => (
+                              <Cell
+                                key={`cell-condition-${idx}`}
+                                fill={COLORS[idx % COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className={styles.miniLegendList}>
+                      {conditionChartData.map((s, i) => (
+                        <div key={s.name} className={styles.miniLegendItem}>
+                          <span
+                            className={styles.legendDot}
+                            style={{ background: COLORS[i % COLORS.length] }}
+                          />
+                          <span className={styles.miniLegendText}>{s.name}</span>
+                          <span className={styles.miniLegendValue}>{s.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Cards di riepilogo (4 cards) */}
+            <div className={styles.statCardsGrid}>
+              <div className={`${styles.statCard} ${styles.statCard0}`}>
+                <h3>{formatCurrency(stats.totalCost)}</h3>
+                <small>COSTO TOTALE</small>
+              </div>
+              <div className={`${styles.statCard} ${styles.statCard1}`}>
+                <h3>{formatCurrency(stats.avgPurchaseValue)}</h3>
+                <small>VALORE MEDIO</small>
+              </div>
+              <div className={`${styles.statCard} ${styles.statCard2}`}>
+                <h3>{formatCurrency(stats.pendingPayments)}</h3>
+                <small>DA PAGARE</small>
+              </div>
+              <div className={`${styles.statCard} ${styles.statCard3}`}>
+                <h3>{stats.completedPurchases}</h3>
+                <small>COMPLETATI</small>
+              </div>
+            </div>
+          </section>
+
+          {/* === TABELLA ACQUISTI === */}
+          <div className={styles.tableSection}>
                 {/* Barra di ricerca */}
                 <div className={styles.formSection}>
                   <h3>🔍 Ricerca</h3>
@@ -571,10 +801,20 @@ const RicercaAcquistiUsato: React.FC = () => {
 
                   {/* Toggle filtri avanzati */}
                   <button
-                    className={styles.btnLink}
+                    className={`${styles.btn} ${styles.btnSecondary} ${styles.btnToggleFilters}`}
                     onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                   >
-                    {showAdvancedFilters ? "▼" : "▶"} Filtri Avanzati
+                    <span className={styles.btnIcon}>
+                      {showAdvancedFilters ? "🔽" : "▶️"}
+                    </span>
+                    Filtri Avanzati
+                    {!showAdvancedFilters && (
+                      <span className={styles.filterBadge}>
+                        {Object.keys(searchFilters).filter(k => searchFilters[k]).length > 0 
+                          ? Object.keys(searchFilters).filter(k => searchFilters[k]).length 
+                          : ""}
+                      </span>
+                    )}
                   </button>
 
                   {/* Filtri avanzati */}
@@ -994,176 +1234,7 @@ const RicercaAcquistiUsato: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* Colonna destra - Statistiche e Grafici */}
-              <div className={styles.rightColumn}>
-                {/* Riepilogo statistiche */}
-                <div className={`${styles.formSection} ${styles.statsSection}`}>
-                  <h3>📊 Riepilogo</h3>
-                  <div className={styles.statsGrid}>
-                    <div className={styles.statCard}>
-                      <div className={styles.statContent}>
-                        <div className={styles.statValue}>
-                          {stats.totalPurchases}
-                        </div>
-                        <div className={styles.statLabel}>Acquisti Totali</div>
-                      </div>
-                    </div>
-
-                    <div className={`${styles.statCard} ${styles.orange}`}>
-                      <div className={styles.statContent}>
-                        <div className={styles.statValue}>
-                          {formatCurrency(stats.totalCost)}
-                        </div>
-                        <div className={styles.statLabel}>Costo Totale</div>
-                      </div>
-                    </div>
-
-                    <div className={`${styles.statCard} ${styles.teal}`}>
-                      <div className={styles.statContent}>
-                        <div className={styles.statValue}>
-                          {formatCurrency(stats.avgPurchaseValue)}
-                        </div>
-                        <div className={styles.statLabel}>Valore Medio</div>
-                      </div>
-                    </div>
-
-                    <div className={`${styles.statCard} ${styles.red}`}>
-                      <div className={styles.statContent}>
-                        <div className={styles.statValue}>
-                          {formatCurrency(stats.pendingPayments)}
-                        </div>
-                        <div className={styles.statLabel}>
-                          Pagamenti in Sospeso
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Grafico stato acquisti */}
-                <div className={styles.formSection}>
-                  <h3>📈 Acquisti per Stato</h3>
-                  <div className={styles.chartContainer}>
-                    {Object.keys(stats.purchasesByStatus).length > 0 ? (
-                      Object.entries(stats.purchasesByStatus).map(
-                        ([status, count]) => {
-                          const percentage = calculatePercentage(
-                            count,
-                            stats.totalPurchases
-                          );
-                          return (
-                            <div
-                              key={status}
-                              className={styles.chartBarWrapper}
-                            >
-                              <div className={styles.chartLabel}>
-                                <span>{getPurchaseStatusLabel(status)}</span>
-                                <span className={styles.chartValue}>
-                                  {count} ({percentage.toFixed(1)}%)
-                                </span>
-                              </div>
-                              <div className={styles.chartBarBg}>
-                                <div
-                                  className={styles.chartBar}
-                                  style={{ width: `${percentage}%` }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        }
-                      )
-                    ) : (
-                      <div className={styles.noData}>
-                        Nessun dato disponibile
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Grafico stato pagamenti */}
-                <div className={styles.formSection}>
-                  <h3>💳 Pagamenti per Stato</h3>
-                  <div className={styles.chartContainer}>
-                    {Object.keys(stats.purchasesByPaymentStatus).length > 0 ? (
-                      Object.entries(stats.purchasesByPaymentStatus).map(
-                        ([status, count]) => {
-                          const percentage = calculatePercentage(
-                            count,
-                            stats.totalPurchases
-                          );
-                          return (
-                            <div
-                              key={status}
-                              className={styles.chartBarWrapper}
-                            >
-                              <div className={styles.chartLabel}>
-                                <span>{getPaymentStatusLabel(status)}</span>
-                                <span className={styles.chartValue}>
-                                  {count} ({percentage.toFixed(1)}%)
-                                </span>
-                              </div>
-                              <div className={styles.chartBarBg}>
-                                <div
-                                  className={`${styles.chartBar} ${styles.chartBarPayment}`}
-                                  style={{ width: `${percentage}%` }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        }
-                      )
-                    ) : (
-                      <div className={styles.noData}>
-                        Nessun dato disponibile
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Grafico condizione dispositivi */}
-                <div className={styles.formSection}>
-                  <h3>🏷️ Acquisti per Condizione</h3>
-                  <div className={styles.chartContainer}>
-                    {Object.keys(stats.purchasesByCondition).length > 0 ? (
-                      Object.entries(stats.purchasesByCondition).map(([condition, count]) => {
-                        const percentage = calculatePercentage(
-                          count,
-                          stats.totalPurchases
-                        );
-                        return (
-                          <div key={condition} className={styles.chartBarWrapper}>
-                            <div className={styles.chartLabel}>
-                              <span>
-                                {condition === "Nuovo"
-                                  ? "🆕 Nuovo"
-                                  : condition === "Usato"
-                                  ? "♻️ Usato"
-                                  : "🔧 Rigenerato"}
-                              </span>
-                              <span className={styles.chartValue}>
-                                {count} ({percentage.toFixed(1)}%)
-                              </span>
-                            </div>
-                            <div className={styles.chartBarBg}>
-                              <div
-                                className={`${styles.chartBar} ${styles.chartBarType}`}
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className={styles.noData}>
-                        Nessun dato disponibile
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+          </div>
           </div>
         </div>
 

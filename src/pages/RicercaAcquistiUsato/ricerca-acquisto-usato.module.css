@@ -1349,3 +1349,210 @@
     width: 100%;
   }
 }
+
+/* ========== NUOVI STILI PER LAYOUT GRAFICI ========== */
+
+/* Container principale grafici + cards */
+.statsRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+@media (max-width: 1200px) {
+  .statsRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card grande con i 3 grafici */
+.statsChartCard {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.statsCardHeader {
+  background: linear-gradient(135deg, #000 0%, #222 100%);
+  color: #fff;
+  padding: 16px 20px;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.statsCardBody {
+  padding: 0;
+}
+
+/* Riga con 3 grafici affiancati */
+.threeChartsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  padding: 20px;
+}
+
+/* Container singolo mini grafico */
+.miniChartContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.miniChartTitle {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.miniDonutWrapper {
+  width: 100%;
+  max-width: 220px;
+  margin-bottom: 12px;
+}
+
+.miniLegendList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.miniLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.miniLegendText {
+  flex: 1;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.miniLegendValue {
+  font-weight: 600;
+  color: #333;
+  min-width: 30px;
+  text-align: right;
+}
+
+.legendDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Grid 4 cards a destra */
+.statCardsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.statCard {
+  border-radius: 12px;
+  color: #fff;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 100px;
+}
+
+.statCard h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.statCard small {
+  margin: 0;
+  font-size: 0.75rem;
+  opacity: 0.9;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.statCard0 {
+  background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+}
+
+.statCard1 {
+  background: linear-gradient(135deg, #26a69a 0%, #00897b 100%);
+}
+
+.statCard2 {
+  background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);
+}
+
+.statCard3 {
+  background: linear-gradient(135deg, #ef5350 0%, #e53935 100%);
+}
+
+/* Sezione Tabella */
+.tableSection {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin: 30px 0;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .threeChartsRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .statCardsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .threeChartsRow {
+    grid-template-columns: 1fr;
+  }
+  .statCardsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+/* Bottone Toggle Filtri Avanzati */
+.btnToggleFilters {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.btnToggleFilters:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.filterBadge {
+  background: #ef5350;
+  color: white;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+  margin-left: 4px;
+}
