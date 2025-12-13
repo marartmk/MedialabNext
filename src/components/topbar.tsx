@@ -448,7 +448,7 @@ const Topbar: React.FC<TopbarProps> = () => {
                     className="dropdown-item"
                     onClick={() => navigate("/ricerca-acquisto-usato")}
                   >
-                    Acquisti Completati
+                    Ricerca Acquisti
                   </button>
                 </li>
                 <li>
@@ -464,7 +464,7 @@ const Topbar: React.FC<TopbarProps> = () => {
                     className="dropdown-item"
                     onClick={() => navigate("/Acquisti/valutazioni-completate")}
                   >
-                    Valutazioni Completate
+                    Ricerca Valutazioni
                   </button>
                 </li>                
               </ul>
