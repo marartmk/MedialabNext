@@ -27,6 +27,8 @@ export interface DeviceInventoryItem {
   updatedAt?: string;
   createdBy?: string;
   updatedBy?: string;
+  memoria?: string;
+  condizione?: string;
 }
 
 export interface DeviceInventoryStats {

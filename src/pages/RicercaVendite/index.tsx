@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
@@ -130,6 +130,9 @@ const RicercaVendite: React.FC = () => {
   const [companyName, setCompanyName] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
 
+  console.log("companyName",companyName);
+  console.log("userName",userName);
+
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Stati per la ricerca
@@ -142,6 +145,8 @@ const RicercaVendite: React.FC = () => {
   const [filteredSales, setFilteredSales] = useState<SaleDetailDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  console.log("sales:", sales);
 
   // Stati per le statistiche
   const [stats, setStats] = useState<SalesStats>({
@@ -185,14 +190,14 @@ const RicercaVendite: React.FC = () => {
     { value: "REFUNDED", label: "💰 Rimborsato" },
   ];
 
-  const PAYMENT_TYPES = [
-    { value: "", label: "Tutti i metodi" },
-    { value: "Cash", label: "💵 Contanti" },
-    { value: "Card", label: "💳 Carta" },
-    { value: "BankTransfer", label: "🏦 Bonifico" },
-    { value: "Installments", label: "📅 Rate" },
-    { value: "Mixed", label: "🔀 Misto" },
-  ];
+  // const PAYMENT_TYPES = [
+  //   { value: "", label: "Tutti i metodi" },
+  //   { value: "Cash", label: "💵 Contanti" },
+  //   { value: "Card", label: "💳 Carta" },
+  //   { value: "BankTransfer", label: "🏦 Bonifico" },
+  //   { value: "Installments", label: "📅 Rate" },
+  //   { value: "Mixed", label: "🔀 Misto" },
+  // ];
 
   // Carica dati utente dal sessionStorage
   useEffect(() => {
@@ -352,16 +357,16 @@ const RicercaVendite: React.FC = () => {
   };
 
   // Formattazione data e ora
-  const formatDateTime = (dateString?: string) => {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleString("it-IT", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  // const formatDateTime = (dateString?: string) => {
+  //   if (!dateString) return "-";
+  //   return new Date(dateString).toLocaleString("it-IT", {
+  //     day: "2-digit",
+  //     month: "2-digit",
+  //     year: "numeric",
+  //     hour: "2-digit",
+  //     minute: "2-digit",
+  //   });
+  // };
 
   // Ottieni label stato vendita
   const getSaleStatusLabel = (code?: string) => {
@@ -428,15 +433,15 @@ const RicercaVendite: React.FC = () => {
     }
   };
 
+   const toggleMenu = () => {
+    setMenuState(menuState === "open" ? "closed" : "open");
+  };
+
   return (
     <div className={styles.mainLayout}>
-      <Sidebar
-        menuState={menuState}
-        setMenuState={setMenuState}
-        activeMenu="vendite"
-      />
+       <Sidebar menuState={menuState} toggleMenu={toggleMenu} />      
       <div className={styles.contentArea}>
-        <Topbar companyName={companyName} userName={userName} />
+         <Topbar toggleMenu={toggleMenu} />
 
         <div className={styles.pageBody}>
           {/* Header della pagina */}

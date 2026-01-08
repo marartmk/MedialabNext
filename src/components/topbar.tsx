@@ -43,313 +43,21 @@ const Topbar: React.FC<TopbarProps> = () => {
               >
                 Riparazione
               </button>
-              <ul className="dropdown-menu">
-                <li className="dropdown-submenu">
-                  <button className="dropdown-item dropdown-toggle">
-                    IPhone
-                  </button>
-                  <ul className="dropdown-menu">
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni/iphone/display")}
-                      >
-                        Display
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni/iphone/batteria")}
-                      >
-                        Batteria
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() =>
-                          navigate("/riparazioni/iphone/altri-danni")
-                        }
-                      >
-                        Altri Danni
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() =>
-                          navigate("/riparazioni/iphone/chip-livello2")
-                        }
-                      >
-                        Danni Chip II Livello
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() =>
-                          navigate("/riparazioni/iphone/danni-liquido")
-                        }
-                      >
-                        Danni Da Liquido
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni/iphone/software")}
-                      >
-                        Interventi Software
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni-attive")}
-                      >
-                        Riparazioni Attive
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni-archivio")}
-                      >
-                        Riparazioni in Archivio
-                      </button>
-                    </li>
-                  </ul>
-                </li>
-                <li className="dropdown-submenu">
-                  <button className="dropdown-item dropdown-toggle">
-                    IMac
-                  </button>
-                  <ul className="dropdown-menu">
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni/imac/display")}
-                      >
-                        Display
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni/imac/batteria")}
-                      >
-                        Batteria
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() =>
-                          navigate("/riparazioni/imac/altri-danni")
-                        }
-                      >
-                        Altri Danni
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() =>
-                          navigate("/riparazioni/imac/chip-livello2")
-                        }
-                      >
-                        Danni Chip II Livello
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() =>
-                          navigate("/riparazioni/imac/danni-liquido")
-                        }
-                      >
-                        Danni Da Liquido
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni/imac/software")}
-                      >
-                        Interventi Software
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni-attive")}
-                      >
-                        Riparazioni Attive
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni-archivio")}
-                      >
-                        Riparazioni in Archivio
-                      </button>
-                    </li>
-                  </ul>
-                </li>
-                <li className="dropdown-submenu">
-                  <button className="dropdown-item dropdown-toggle">
-                    MacBook
-                  </button>
-                  <ul className="dropdown-menu">
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni/macbook/air")}
-                      >
-                        MacBook Air
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni/macbook/pro")}
-                      >
-                        MacBook Pro
-                      </button>
-                    </li>
-                  </ul>
-                </li>
-                <li className="dropdown-submenu">
-                  <button className="dropdown-item dropdown-toggle">
-                    IPad
-                  </button>
-                  <ul className="dropdown-menu">
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni/ipad/display")}
-                      >
-                        Display
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni/ipad/batteria")}
-                      >
-                        Batteria
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() =>
-                          navigate("/riparazioni/ipad/altri-danni")
-                        }
-                      >
-                        Altri Danni
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() =>
-                          navigate("/riparazioni/ipad/chip-livello2")
-                        }
-                      >
-                        Danni Chip II Livello
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() =>
-                          navigate("/riparazioni/ipad/danni-liquido")
-                        }
-                      >
-                        Danni Da Liquido
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni/ipad/software")}
-                      >
-                        Interventi Software
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni-attive")}
-                      >
-                        Riparazioni Attive
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni-archivio")}
-                      >
-                        Riparazioni in Archivio
-                      </button>
-                    </li>
-                  </ul>
-                </li>
-                <li className="dropdown-submenu">
-                  <button className="dropdown-item dropdown-toggle">
-                    Apple Watch
-                  </button>
-                  <ul className="dropdown-menu">
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() =>
-                          navigate("/riparazioni/apple-watch/display")
-                        }
-                      >
-                        Display
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() =>
-                          navigate("/riparazioni/apple-watch/batteria")
-                        }
-                      >
-                        Batteria
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni-attive")}
-                      >
-                        Riparazioni Attive
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate("/riparazioni-archivio")}
-                      >
-                        Riparazioni in Archivio
-                      </button>
-                    </li>
-                  </ul>
-                </li>
+              <ul className="dropdown-menu">                                                 
                 <li>
-                  <hr className="dropdown-divider" />
-                </li>
-                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/accettazione")}
+                  >
+                    Crea Riparazione
+                  </button>
+                </li>               
+                 <li>
                   <button
                     className="dropdown-item"
                     onClick={() => navigate("/nota-riparazione")}
                   >
-                    Crea Nota di Riparazione Veloce
+                    Crea Nota Riparazione
                   </button>
                 </li>
                 <li>
@@ -360,13 +68,21 @@ const Topbar: React.FC<TopbarProps> = () => {
                     Lista Note di Riparazione
                   </button>
                 </li>
+                 <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/preventivi")}
+                  >
+                    Crea Preventivo Riparazione
+                  </button>
+                </li>
                 <li>
                   <hr className="dropdown-divider" />
                 </li>
                 <li>
                   <button
                     className="dropdown-item custom-bg-green"
-                    onClick={() => navigate("/riparazioni-attive")}
+                    onClick={() => navigate("/ricerca-schede")}
                   >
                     Tutte le Riparazioni Attive
                   </button>
@@ -374,7 +90,7 @@ const Topbar: React.FC<TopbarProps> = () => {
                 <li>
                   <button
                     className="dropdown-item custom-bg-red"
-                    onClick={() => navigate("/riparazioni-archivio")}
+                    onClick={() => navigate("/ricerca-schede")}
                   >
                     Tutte le Riparazioni In Archivio
                   </button>

@@ -109,6 +109,9 @@ const RicercaAcquistiUsato: React.FC = () => {
   const [companyName, setCompanyName] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
 
+  console.log ("companyName",companyName);
+  console.log ("userName",userName);
+
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Stati per la ricerca
@@ -121,6 +124,8 @@ const RicercaAcquistiUsato: React.FC = () => {
   const [filteredPurchases, setFilteredPurchases] = useState<PurchaseDetailDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  console.log("purchases:", purchases);
 
   // Stati per le statistiche
   const [stats, setStats] = useState<PurchasesStats>({
@@ -139,6 +144,9 @@ const RicercaAcquistiUsato: React.FC = () => {
   const [selectedPurchase, setSelectedPurchase] = useState<PurchaseDetailDto | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [supplierDetails, setSupplierDetails] = useState<any>(null);
+
+  console.log("loadingDetails:", loadingDetails);
+  console.log("supplierDetails:", supplierDetails);
 
   // Filtri disponibili
   const PURCHASE_TYPES = [
@@ -172,13 +180,13 @@ const RicercaAcquistiUsato: React.FC = () => {
     { value: "Rimborsato", label: "💰 Rimborsato" },
   ];
 
-  const PAYMENT_TYPES = [
-    { value: "", label: "Tutti i metodi" },
-    { value: "Contanti", label: "💵 Contanti" },
-    { value: "Carta", label: "💳 Carta" },
-    { value: "Bonifico", label: "🏦 Bonifico" },
-    { value: "Assegno", label: "📝 Assegno" },
-  ];
+  // const PAYMENT_TYPES = [
+  //   { value: "", label: "Tutti i metodi" },
+  //   { value: "Contanti", label: "💵 Contanti" },
+  //   { value: "Carta", label: "💳 Carta" },
+  //   { value: "Bonifico", label: "🏦 Bonifico" },
+  //   { value: "Assegno", label: "📝 Assegno" },
+  // ];
 
   const QUALITY_CHECK_STATUSES = [
     { value: "", label: "Tutti" },
@@ -245,9 +253,9 @@ const RicercaAcquistiUsato: React.FC = () => {
   }, []);
 
   // Funzione per ottenere il token di autenticazione
-  const getAuthToken = () => {
-    return sessionStorage.getItem("token") || "";
-  };
+  // const getAuthToken = () => {
+  //   return sessionStorage.getItem("token") || "";
+  // };
 
   // Funzione per ottenere gli headers di autenticazione completi
   const getAuthHeaders = () => {
@@ -446,23 +454,23 @@ const RicercaAcquistiUsato: React.FC = () => {
   };
 
   // Formattazione data e ora
-  const formatDateTime = (dateString?: string) => {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleString("it-IT", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  // const formatDateTime = (dateString?: string) => {
+  //   if (!dateString) return "-";
+  //   return new Date(dateString).toLocaleString("it-IT", {
+  //     day: "2-digit",
+  //     month: "2-digit",
+  //     year: "numeric",
+  //     hour: "2-digit",
+  //     minute: "2-digit",
+  //   });
+  // };
 
   // Ottieni label stato acquisto
 
   // Calcola percentuale per grafico
-  const calculatePercentage = (value: number, total: number) => {
-    return total > 0 ? (value / total) * 100 : 0;
-  };
+  // const calculatePercentage = (value: number, total: number) => {
+  //   return total > 0 ? (value / total) * 100 : 0;
+  // };
 
   // Funzione per caricare i dettagli completi di un acquisto includendo il fornitore
   const loadPurchaseWithSupplier = async (purchase: PurchaseDetailDto) => {
@@ -810,8 +818,8 @@ const RicercaAcquistiUsato: React.FC = () => {
                     Filtri Avanzati
                     {!showAdvancedFilters && (
                       <span className={styles.filterBadge}>
-                        {Object.keys(searchFilters).filter(k => searchFilters[k]).length > 0 
-                          ? Object.keys(searchFilters).filter(k => searchFilters[k]).length 
+                        {Object.keys(searchFilters).filter(k => (searchFilters as any)[k]).length > 0 
+                          ? Object.keys(searchFilters).filter(k => (searchFilters as any)[k]).length 
                           : ""}
                       </span>
                     )}

@@ -639,7 +639,7 @@ const RicercaPrenotazioni: React.FC = () => {
       if (response.ok) {
         alert("✅ Prenotazione segnata come non pervenuta");
         // Ricarica i dati
-        fetchData();
+        // fetchData();
       } else {
         const errorData = await response.json();
         alert(

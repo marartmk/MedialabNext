@@ -7,8 +7,8 @@ import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import deviceInventoryService, {
   type DeviceInventoryItem,
 } from "../../services/deviceInventoryService";
-import { saleService } from "../../services/saleService";
-import type { CreateSaleRequest } from "../../services/saleService";
+
+console.log("ModificaVendite loaded", deviceInventoryService);
 
 // Alias per DeviceInventoryItem
 type DeviceData = DeviceInventoryItem;
@@ -301,10 +301,10 @@ const ModificaVendite: React.FC = () => {
   const [isUpdatingSale, setIsUpdatingSale] = useState(false);
 
   // Nome azienda e utente (prelevati dalla sessionStorage se presenti)
-  const companyName =
-    sessionStorage.getItem("companyName") ||
-    sessionStorage.getItem("CompanyName") ||
-    "";
+  // const companyName =
+  //   sessionStorage.getItem("companyName") ||
+  //   sessionStorage.getItem("CompanyName") ||
+  //   "";
   const userName =
     sessionStorage.getItem("userName") ||
     sessionStorage.getItem("UserName") ||
@@ -587,7 +587,20 @@ const ModificaVendite: React.FC = () => {
     deviceDebounceRef.current = setTimeout(async () => {
       setDeviceLoading(true);
       try {
-        const devices = await deviceInventoryService.searchDevices(query);
+        const response = await fetch(
+          `${API_URL}/api/device-inventory/search?q=${encodeURIComponent(query)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Errore nella ricerca");
+        }
+
+        const devices = await response.json();
         setDeviceSearchResults(devices);
         setShowDeviceDropdown(true);
       } catch (error) {
@@ -608,14 +621,14 @@ const ModificaVendite: React.FC = () => {
     setShowDeviceDropdown(false);
 
     setDispositivoData({
-      condizione: device.condizione || "Nuovo",
+      condizione: (device as any).condizione || "Nuovo",
       serialNumber: device.serialNumber || "",
       brand: device.brand || "Apple",
       model: device.model || "",
-      deviceType: device.deviceType || "iPhone",
-      colore: device.colore || "",
-      memoria: device.memoria || "512 GB",
-      durataGaranzia: device.durataGaranzia || "6 Mesi",
+      deviceType: (device as any).deviceType || "iPhone",
+      colore: (device as any).colore || "",
+      memoria: (device as any).memoria || "512 GB",
+      durataGaranzia: (device as any).durataGaranzia || "6 Mesi",
     });
   };
 
@@ -778,6 +791,7 @@ const ModificaVendite: React.FC = () => {
       }
 
       const result = await response.json();
+      console.log("Vendita aggiornata con successo:", result);
 
       setUpdateSuccess("Vendita aggiornata con successo!");
 
@@ -877,18 +891,17 @@ const ModificaVendite: React.FC = () => {
     };
   }, []);
 
+  const toggleMenu = () => {
+    setMenuState(menuState === "open" ? "closed" : "open");
+  };
+
   // Renderizza errore di caricamento
   if (loadError) {
     return (
       <div className={styles.mainLayout}>
-        <Sidebar state={menuState} />
+        <Sidebar menuState={menuState} toggleMenu={toggleMenu} />
         <div className={styles.contentArea}>
-          <Topbar
-            title="Modifica Vendita"
-            onMenuToggle={() =>
-              setMenuState(menuState === "open" ? "closed" : "open")
-            }
-          />
+          <Topbar toggleMenu={toggleMenu} />
           <div className={styles.pageBody}>
             <div className={styles.repairFormContainer}>
               <div
@@ -920,14 +933,9 @@ const ModificaVendite: React.FC = () => {
   if (loadingSale) {
     return (
       <div className={styles.mainLayout}>
-        <Sidebar state={menuState} />
+        <Sidebar menuState={menuState} toggleMenu={toggleMenu} />
         <div className={styles.contentArea}>
-          <Topbar
-            title="Modifica Vendita"
-            onMenuToggle={() =>
-              setMenuState(menuState === "open" ? "closed" : "open")
-            }
-          />
+          <Topbar toggleMenu={toggleMenu} />
           <div className={styles.pageBody}>
             <div className={styles.repairFormContainer}>
               <div className={styles.loadingContainer}>
@@ -944,14 +952,9 @@ const ModificaVendite: React.FC = () => {
 
   return (
     <div className={styles.mainLayout}>
-      <Sidebar state={menuState} />
+      <Sidebar menuState={menuState} toggleMenu={toggleMenu} />
       <div className={styles.contentArea}>
-        <Topbar
-          title="Modifica Vendita"
-          onMenuToggle={() =>
-            setMenuState(menuState === "open" ? "closed" : "open")
-          }
-        />
+        <Topbar toggleMenu={toggleMenu} />
         <div className={styles.pageBody}>
           <div className={styles.repairFormContainer}>
             <div className={styles.pageTitle}>
@@ -1196,11 +1199,11 @@ const ModificaVendite: React.FC = () => {
                                       {device.brand} {device.model}
                                     </div>
                                     <div className={styles.customerDetails}>
-                                      SN: {device.serialNumber} •{" "}
-                                      {device.memoria}
+                                      SN: {device.serialNumber}
                                     </div>
                                     <div className={styles.customerAddress}>
-                                      {device.colore} • {device.condizione}
+                                      {device.color ? `${device.color} • ` : ""}
+                                      {(device as any).condizione || ""}
                                     </div>
                                   </div>
                                 </div>
