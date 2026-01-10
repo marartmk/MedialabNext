@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import styles from './styles.module.css';
+import logoUrl from "../../assets/logo-black-white.jpg";
 
 interface CustomerData {
   id: string;
@@ -52,6 +53,44 @@ interface Operator {
   phoneNumber?: string;
 }
 
+interface CreateQuotationResponse {
+  id: number;
+  quotationId: string;
+  quotationCode: string;
+  quotationStatus: string;
+  quotationStatusCode: string;
+  createdAt: string;
+}
+
+interface PrintQuotationData {
+  quotationId?: string;
+  quotationCode?: string;
+  quotationStatus?: string;
+  createdAt?: string;
+  customer?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    postalCode?: string;
+    city?: string;
+    province?: string;
+    fiscalCode?: string;
+    vatNumber?: string;
+  };
+  device?: {
+    brand?: string;
+    model?: string;
+    serialNumber?: string;
+    deviceType?: string;
+  };
+  technicianName?: string;
+  componentIssue?: string;
+  problemDescription?: string;
+  estimatedPrice?: number | null;
+  notes?: string | null;
+}
+
 const PreventiviPage: React.FC = () => {
   // Stati per la ricerca cliente (dalla pagina note)
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
@@ -84,6 +123,14 @@ const PreventiviPage: React.FC = () => {
   const deviceDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const API_URL = import.meta.env.VITE_API_URL;
+  const userName =
+    (typeof window !== "undefined" &&
+      (sessionStorage.getItem("userId") ||
+        sessionStorage.getItem("username") ||
+        sessionStorage.getItem("userName") ||
+        sessionStorage.getItem("UserName") ||
+        "")) ||
+    "Utente";
 
   // Stati per il modal nuovo dispositivo
   const [showNewDeviceModal, setShowNewDeviceModal] = useState(false);
@@ -154,6 +201,45 @@ const PreventiviPage: React.FC = () => {
     // Prezzo
     prezzoPreventivo: ''
   });
+  const [isCreatingQuotation, setIsCreatingQuotation] = useState(false);
+  const [isUpdatingQuotation, setIsUpdatingQuotation] = useState(false);
+  const [savedQuotation, setSavedQuotation] =
+    useState<CreateQuotationResponse | null>(null);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printQuotation, setPrintQuotation] =
+    useState<PrintQuotationData | null>(null);
+  const [showSignatureQrModal, setShowSignatureQrModal] = useState(false);
+  const [signatureAccessKey, setSignatureAccessKey] = useState<string | null>(
+    null
+  );
+  const [signatureAccessUrl, setSignatureAccessUrl] = useState<string | null>(
+    null
+  );
+  const [isCreatingAccessKey, setIsCreatingAccessKey] = useState(false);
+  const [accessKeyError, setAccessKeyError] = useState<string | null>(null);
+
+  // Stati per la firma digitale (stampa preventivo)
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const signatureCanvasRef = React.useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+
+  // Dati aziendali per la stampa
+  const companyName =
+    (typeof window !== "undefined" && sessionStorage.getItem("fullName")) ||
+    "CLINICA iPHONE STORE";
+  const companyAddr =
+    (typeof window !== "undefined" &&
+      sessionStorage.getItem("companyAddress")) ||
+    "Via Prova 1 73100 Lecce (LE)";
+  const companyVat =
+    (typeof window !== "undefined" && sessionStorage.getItem("companyVat")) ||
+    "P.IVA 01234567890";
+  const companyPhone =
+    (typeof window !== "undefined" && sessionStorage.getItem("companyPhone")) ||
+    "0832 123456";
+
+    console.log("signatureAccessKey",signatureAccessKey);
 
   useEffect(() => {
     loadOperators();
@@ -454,6 +540,93 @@ const PreventiviPage: React.FC = () => {
     );
   };
 
+  // Funzioni per la gestione della firma digitale (stampa preventivo)
+  const startDrawing = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    setIsDrawing(true);
+
+    const x =
+      "touches" in e ? e.touches[0].clientX - rect.left : e.nativeEvent.offsetX;
+    const y =
+      "touches" in e ? e.touches[0].clientY - rect.top : e.nativeEvent.offsetY;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    if (!isDrawing) return;
+
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const x =
+      "touches" in e ? e.touches[0].clientX - rect.left : e.nativeEvent.offsetX;
+    const y =
+      "touches" in e ? e.touches[0].clientY - rect.top : e.nativeEvent.offsetY;
+
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = "#2c3e50";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const clearSignature = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const saveSignature = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const dataUrl = canvas.toDataURL("image/png");
+    setSignatureData(dataUrl);
+    setShowSignatureModal(false);
+
+    alert("Firma acquisita con successo!");
+  };
+
+  const openSignatureModal = () => {
+    setShowSignatureModal(true);
+
+    setTimeout(() => {
+      const canvas = signatureCanvasRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }, 100);
+  };
+
   // Funzione per aprire il modal di nuovo cliente
   const openNewClientModal = () => {
     setNewClientData({
@@ -712,25 +885,425 @@ const PreventiviPage: React.FC = () => {
     }
   };
 
-  // Funzione creazione preventivo con email (da implementare)
+  const validateQuotationForm = () => {
+    const errors: string[] = [];
+    const companyId = sessionStorage.getItem("IdCompany");
+    const deviceType = selectedDevice?.deviceType || formData.dispositivo;
+    const deviceModel = selectedDevice?.model || formData.modello;
+    const technicianCode =
+      selectedOperator?.codiceDipendente || selectedOperator?.internalCode || "";
+    const quotationDate = formData.dataOraRilevazione
+      ? new Date(formData.dataOraRilevazione)
+      : null;
+
+    if (!companyId) {
+      errors.push("Selezionare un'azienda valida");
+    }
+    if (!deviceType?.trim()) {
+      errors.push("Selezionare il tipo di dispositivo");
+    }
+    if (!deviceModel?.trim()) {
+      errors.push("Inserire il modello del dispositivo");
+    }
+    if (!formData.descrizioneIntervento.trim()) {
+      errors.push("Inserire la descrizione del problema");
+    }
+    if (!technicianCode) {
+      errors.push("Selezionare un tecnico");
+    }
+    if (!quotationDate || Number.isNaN(quotationDate.getTime())) {
+      errors.push("Inserire una data valida");
+    }
+    if (formData.prezzoPreventivo.trim()) {
+      const price = Number.parseFloat(formData.prezzoPreventivo);
+      if (Number.isNaN(price) || price <= 0) {
+        errors.push("Inserire un prezzo preventivo valido");
+      }
+    }
+
+    return errors;
+  };
+
+  const buildQuotationPayload = () => {
+    const multitenantId = sessionStorage.getItem("IdCompany");
+    const companyId = sessionStorage.getItem("IdCompany");
+    const quotationDateTime = new Date(formData.dataOraRilevazione);
+    const estimatedPrice = formData.prezzoPreventivo.trim()
+      ? Number.parseFloat(formData.prezzoPreventivo)
+      : null;
+    const technicianCode =
+      selectedOperator?.codiceDipendente || selectedOperator?.internalCode || "";
+    const technicianName = selectedOperator
+      ? `${selectedOperator.firstName} ${selectedOperator.lastName}`.trim()
+      : null;
+    const customerName = selectedCustomer
+      ? selectedCustomer.ragioneSociale ||
+        `${selectedCustomer.nome} ${selectedCustomer.cognome}`.trim()
+      : `${formData.nome} ${formData.cognome}`.trim();
+
+    return {
+      // Cliente
+      customerId: selectedCustomer?.id || null,
+      customerName: customerName || null,
+      customerPhone: selectedCustomer?.telefono || formData.telefono || null,
+      customerEmail: selectedCustomer?.email || formData.email || null,
+
+      // Dispositivo
+      deviceType: selectedDevice?.deviceType || formData.dispositivo,
+      deviceBrand: selectedDevice?.brand || formData.marca || null,
+      deviceModel: selectedDevice?.model || formData.modello,
+      deviceColor: null,
+
+      // Preventivo
+      quotationDateTime: quotationDateTime.toISOString(),
+      validUntil: null,
+
+      // Tecnico
+      technicianCode,
+      technicianName,
+
+      // Problema
+      componentIssue: formData.componenteProblem || null,
+      problemDescription: formData.descrizioneIntervento,
+
+      // Importi
+      estimatedPrice,
+      paymentType: null,
+      billingInfo: null,
+
+      // Contesto
+      companyId,
+      multitenantId,
+
+      // Note
+      notes: null,
+      createdBy: userName,
+    };
+  };
+
+  const formatCurrency = (value?: number | null) => {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      return "0,00";
+    }
+    return value.toLocaleString("it-IT", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const buildPrintQuotationData = (): PrintQuotationData => {
+    const customerName = selectedCustomer
+      ? selectedCustomer.ragioneSociale ||
+        `${selectedCustomer.nome} ${selectedCustomer.cognome}`.trim()
+      : `${formData.nome} ${formData.cognome}`.trim();
+    const address = selectedCustomer?.indirizzo || "";
+    const postalCode = selectedCustomer?.cap || "";
+    const city = selectedCustomer?.citta || "";
+    const province = selectedCustomer?.provincia || "";
+    const estimatedPrice = formData.prezzoPreventivo.trim()
+      ? Number.parseFloat(formData.prezzoPreventivo)
+      : null;
+
+    return {
+      quotationId: savedQuotation?.quotationId,
+      quotationCode: savedQuotation?.quotationCode,
+      quotationStatus: savedQuotation?.quotationStatus,
+      createdAt: savedQuotation?.createdAt,
+      customer: {
+        name: customerName || "Non specificato",
+        phone: selectedCustomer?.telefono || formData.telefono || "",
+        email: selectedCustomer?.email || formData.email || "",
+        address: address || "",
+        postalCode,
+        city,
+        province,
+        fiscalCode: selectedCustomer?.fiscalCode || "",
+        vatNumber: selectedCustomer?.pIva || "",
+      },
+      device: {
+        brand: selectedDevice?.brand || formData.marca || "",
+        model: selectedDevice?.model || formData.modello || "",
+        serialNumber: selectedDevice?.serialNumber || formData.numeroSerieIMEI || "",
+        deviceType: selectedDevice?.deviceType || formData.dispositivo || "",
+      },
+      technicianName: selectedOperator
+        ? `${selectedOperator.firstName} ${selectedOperator.lastName}`.trim()
+        : "",
+      componentIssue: formData.componenteProblem || "",
+      problemDescription: formData.descrizioneIntervento || "",
+      estimatedPrice,
+      notes: null,
+    };
+  };
+
+  const handleSaveOrUpdateQuotation = async () => {
+    const errors = validateQuotationForm();
+    if (errors.length > 0) {
+      alert("Errori di validazione:\n\n" + errors.join("\n"));
+      return;
+    }
+
+    console.log("Token:", sessionStorage.getItem("token"));
+
+    if (isCreatingQuotation) return;
+    setIsCreatingQuotation(true);
+
+    const currentQuotationId = savedQuotation?.quotationId;
+    const isUpdate = Boolean(currentQuotationId);
+
+    try {
+      const payload = buildQuotationPayload();
+      console.log(
+        "Payload preventivo (json):",
+        JSON.stringify(payload, null, 2)
+      );
+      const endpoint = isUpdate
+        ? `${API_URL}/api/quotations/${currentQuotationId}`
+        : `${API_URL}/api/quotations`;
+      const response = await fetch(endpoint, {
+        method: isUpdate ? "PUT" : "POST",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result: CreateQuotationResponse = await response.json();
+        const quotationCode =
+          result.quotationCode || savedQuotation?.quotationCode || "";
+        const quotationStatus =
+          result.quotationStatus || savedQuotation?.quotationStatus || "";
+        const baseMessage = isUpdate
+          ? `Preventivo aggiornato con successo!\n\nCodice: ${quotationCode}\nStato: ${quotationStatus}`
+          : `Preventivo creato con successo!\n\nCodice: ${quotationCode}\nStato: ${quotationStatus}`;
+        const nextQuotationId = result.quotationId || currentQuotationId || "";
+        if (nextQuotationId) {
+          setSavedQuotation({
+            ...(savedQuotation || {}),
+            ...result,
+            quotationId: nextQuotationId,
+            quotationCode,
+            quotationStatus,
+          });
+          setIsUpdatingQuotation(true);
+        } else {
+          setSavedQuotation({ ...(savedQuotation || {}), ...result });
+        }
+        alert(baseMessage);
+      } else {
+        const errText = await response.text();
+        alert(
+          `Errore ${isUpdate ? "nell'aggiornamento" : "nella creazione"} del preventivo:\n` +
+            errText
+        );
+      }
+    } catch (error) {
+      console.error(
+        `Errore durante ${isUpdate ? "l'aggiornamento" : "la creazione"} preventivo:`,
+        error
+      );
+      alert(
+        `Errore durante ${isUpdate ? "l'aggiornamento" : "la creazione"} del preventivo. Riprova.`
+      );
+    } finally {
+      setIsCreatingQuotation(false);
+    }
+  };
+
+  // Funzione creazione preventivo con email
   const handleCreaEmail = () => {
-    console.log('Crea Preventivo & E-Mail:', { ...formData, cliente: selectedCustomer });
-    // TODO: Implementare chiamata API
-    alert('Funzionalità da implementare: Crea Preventivo & E-Mail');
+    if (!savedQuotation?.quotationId) {
+      alert("Salva prima il preventivo per poter inviare l'email.");
+      return;
+    }
+    alert("Invio email non ancora implementato in FE.");
   };
 
-  // Funzione creazione preventivo con stampa (da implementare)
+  // Funzione creazione preventivo con stampa
   const handleCreaStampa = () => {
-    console.log('Crea Preventivo & Stampa:', { ...formData, cliente: selectedCustomer });
-    // TODO: Implementare chiamata API
-    alert('Funzionalità da implementare: Crea Preventivo & Stampa');
+    if (!savedQuotation?.quotationId) {
+      alert("Salva prima il preventivo per poter stampare.");
+      return;
+    }
+    setPrintQuotation(buildPrintQuotationData());
+    setShowPrintModal(true);
   };
 
-  // Funzione salvataggio preventivo (da implementare)
+  // Funzione salvataggio preventivo
   const handleSalvaPreventivo = () => {
-    console.log('Salva Preventivo:', { ...formData, cliente: selectedCustomer });
-    // TODO: Implementare chiamata API
-    alert('Funzionalità da implementare: Salva Preventivo');
+    handleSaveOrUpdateQuotation();
+  };
+
+  const handleOpenSignatureQr = async () => {
+    if (!savedQuotation?.quotationId) {
+      alert("Salva prima il preventivo per poter firmare.");
+      return;
+    }
+
+    if (isCreatingAccessKey) return;
+    setIsCreatingAccessKey(true);
+    setAccessKeyError(null);
+
+    try {
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const createdBy = sessionStorage.getItem("userId") || "";
+      const response = await fetch(`${API_URL}/api/Signature/generateKey`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceId: savedQuotation.quotationId,
+          areaId: "9b40e7a0-9b87-4c12-9d9c-9f5208f3f3f6",
+          areaName: "Preventivi",
+          createdBy,
+          expiresAt: expiresAt.toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || "Errore nella creazione access key");
+      }
+
+      const data = await response.json();
+      const accessKey = data?.accessKey || data?.key || data?.token;
+      if (!accessKey) {
+        throw new Error("Access key non disponibile nella risposta");
+      }
+
+      const accessUrl = `${window.location.origin}/firma-preventivo-ext?accessKey=${encodeURIComponent(
+        accessKey
+      )}`;
+      setSignatureAccessKey(accessKey);
+      setSignatureAccessUrl(accessUrl);
+      setShowSignatureQrModal(true);
+    } catch (error) {
+      console.error("Errore creazione access key:", error);
+      const message =
+        error instanceof Error ? error.message : "Errore nella richiesta";
+      setAccessKeyError(message);
+      alert(
+        "Errore nella creazione della chiave di accesso.\n" + message
+      );
+    } finally {
+      setIsCreatingAccessKey(false);
+    }
+  };
+
+  const handleCopySignatureLink = async () => {
+    if (!signatureAccessUrl) return;
+    try {
+      await navigator.clipboard.writeText(signatureAccessUrl);
+      alert("Link copiato negli appunti.");
+    } catch (error) {
+      console.error("Errore copia link:", error);
+      alert("Impossibile copiare il link. Copialo manualmente.");
+    }
+  };
+
+  const handlePrintQuotationDocument = async () => {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      const printContent = document.querySelector(`.accSheet`);
+      if (!printContent) {
+        console.error("Elemento da stampare non trovato");
+        alert("Errore: impossibile trovare il contenuto da stampare");
+        return;
+      }
+
+      const printWindow = window.open("", "_blank", "width=800,height=600");
+      if (!printWindow) {
+        console.error("Impossibile aprire la finestra di stampa");
+        alert(
+          "Errore: impossibile aprire la finestra di stampa. Verifica che i popup siano consentiti."
+        );
+        return;
+      }
+
+      const cssLinks = Array.from(
+        document.querySelectorAll('link[rel="stylesheet"]')
+      )
+        .map(
+          (link) =>
+            `<link rel="stylesheet" href="${(link as HTMLLinkElement).href}">`
+        )
+        .join("");
+
+      const cssStyles = Array.from(document.querySelectorAll("style"))
+        .map((style) => style.outerHTML)
+        .join("");
+
+      const printHTML = `
+      <!DOCTYPE html>
+      <html lang="it">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Preventivo - ${printQuotation?.quotationCode || ""}</title>
+        ${cssLinks}
+        ${cssStyles}
+        <style>
+          @media print {
+            * {
+              visibility: hidden !important;
+              box-sizing: border-box !important;
+            }
+            .print-content,
+            .print-content * {
+              visibility: visible !important;
+            }
+            .print-content {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              height: auto !important;
+              margin: 0 !important;
+              padding: 5mm !important;
+              background: white !important;
+              border: none !important;
+              box-shadow: none !important;
+              border-radius: 0 !important;
+              font-size: 10px !important;
+              line-height: 1.2 !important;
+              color: #000 !important;
+              overflow: hidden !important;
+            }
+            @page {
+              size: A4 portrait;
+              margin: 10mm 8mm;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-content accSheet">
+          ${printContent.innerHTML}
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(() => {
+              window.print();
+              setTimeout(() => window.close(), 1000);
+            }, 500);
+          };
+        </script>
+      </body>
+      </html>
+      `;
+
+      printWindow.document.write(printHTML);
+      printWindow.document.close();
+      printWindow.focus();
+    } catch (error) {
+      console.error("Errore durante la stampa:", error);
+      alert("Errore durante la stampa del preventivo. Riprova.");
+    }
   };
 
   return (
@@ -1103,7 +1676,7 @@ const PreventiviPage: React.FC = () => {
                   className={styles.btnSave}
                   onClick={handleSalvaPreventivo}
                 >
-                  Salva
+                  {isUpdatingQuotation ? "Aggiorna" : "Salva"}
                 </button>
                 <button
                   type="button"
@@ -1111,6 +1684,14 @@ const PreventiviPage: React.FC = () => {
                   onClick={handleCreaStampa}
                 >
                   Stampa
+                </button>
+                <button
+                  type="button"
+                  className={styles.btnSignature}
+                  onClick={handleOpenSignatureQr}
+                  disabled={isCreatingAccessKey}
+                >
+                  {isCreatingAccessKey ? "Generando..." : "Firma"}
                 </button>
                 <button
                   type="button"
@@ -1124,6 +1705,430 @@ const PreventiviPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal Stampa Preventivo */}
+      {showPrintModal && printQuotation && (
+        <div
+          className="accOverlay"
+          onClick={(e) =>
+            e.target === e.currentTarget &&
+            (setShowPrintModal(false), setPrintQuotation(null))
+          }
+        >
+          <div className="accModal" onClick={(e) => e.stopPropagation()}>
+            {/* AREA CHE SI STAMPA */}
+            <div className="accSheet">
+              <div className="accHeaderPro">
+                <div className="accLogoSection">
+                  <div className="accLogo">
+                    <img src={logoUrl} alt="Logo" className="accLogoImage" />
+                  </div>
+                  <div className="accCompanyTagline">ASSISTENZA TECNICA</div>
+
+                  <div className="accCompanyDetails">
+                    <div>{companyName}</div>
+                    <div>{companyAddr}</div>
+                    <div>Tel. {companyPhone}</div>
+                    <div>{companyVat}</div>
+                  </div>
+                </div>
+
+                <div className="accDocSection">
+                  <h1 className="accDocTitle">Preventivo di riparazione</h1>
+                  <div className="accDocInfo">
+                    <div>
+                      <strong>Gestita da:</strong>{" "}
+                      {selectedOperator
+                        ? `${selectedOperator.firstName} ${selectedOperator.lastName}`.trim()
+                        : userName}
+                    </div>
+                    <div>
+                      <strong>Numero Preventivo:</strong>{" "}
+                      {printQuotation?.quotationCode || ""}
+                    </div>
+                    <div>
+                      <strong>Stato:</strong>{" "}
+                      {printQuotation?.quotationStatus || ""}
+                    </div>
+                    <div>
+                      <strong>Data:</strong>{" "}
+                      {new Date(
+                        printQuotation?.createdAt ||
+                          formData.dataOraRilevazione
+                      ).toLocaleDateString("it-IT")}{" "}
+                      {new Date(
+                        printQuotation?.createdAt ||
+                          formData.dataOraRilevazione
+                      ).toLocaleTimeString("it-IT", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <hr className="accDivider" />
+              <div className="accInfoGrid">
+                <div className="accInfoSection">
+                  <div className="accSectionTitle">
+                    INFORMAZIONI DEL CLIENTE
+                  </div>
+                  <div className="accInfoRows">
+                    <div className="accInfoRow">
+                      <span className="accLabel">Cliente:</span>
+                      <span className="accValue">
+                        {printQuotation.customer?.name || "Non specificato"}
+                      </span>
+                    </div>
+                    <div className="accInfoRow">
+                      <span className="accLabel">Telefono:</span>
+                      <span className="accValue">
+                        {printQuotation.customer?.phone || "Non specificato"}
+                      </span>
+                    </div>
+                    <div className="accInfoRow">
+                      <span className="accLabel">Email:</span>
+                      <span className="accValue">
+                        {printQuotation.customer?.email || "Non specificato"}
+                      </span>
+                    </div>
+                    <div className="accInfoRow">
+                      <span className="accLabel">Indirizzo:</span>
+                      <span className="accValue">
+                        {[
+                          printQuotation.customer?.address,
+                          printQuotation.customer?.postalCode,
+                          printQuotation.customer?.city,
+                          printQuotation.customer?.province,
+                        ]
+                          .filter(Boolean)
+                          .join(", ") || "Non specificato"}
+                      </span>
+                    </div>
+                    {printQuotation.customer?.fiscalCode && (
+                      <div className="accInfoRow">
+                        <span className="accLabel">Codice Fiscale:</span>
+                        <span className="accValue">
+                          {printQuotation.customer.fiscalCode}
+                        </span>
+                      </div>
+                    )}
+                    {printQuotation.customer?.vatNumber && (
+                      <div className="accInfoRow">
+                        <span className="accLabel">P.IVA:</span>
+                        <span className="accValue">
+                          {printQuotation.customer.vatNumber}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="accInfoSection">
+                  <div className="accSectionTitle">DATI DEL DISPOSITIVO</div>
+                  <div className="accInfoRows">
+                    <div className="accInfoRow">
+                      <span className="accLabel">Marca e Modello:</span>
+                      <span className="accValue">
+                        {printQuotation.device?.brand}{" "}
+                        {printQuotation.device?.model}
+                      </span>
+                    </div>
+                    <div className="accInfoRow">
+                      <span className="accLabel">Numero Seriale:</span>
+                      <span className="accValue">
+                        {printQuotation.device?.serialNumber ||
+                          "Non specificato"}
+                      </span>
+                    </div>
+                    <div className="accInfoRow">
+                      <span className="accLabel">Tipologia:</span>
+                      <span className="accValue">
+                        {printQuotation.device?.deviceType || "Non specificato"}
+                      </span>
+                    </div>
+                    {printQuotation.technicianName && (
+                      <div className="accInfoRow">
+                        <span className="accLabel">Tecnico Assegnato:</span>
+                        <span className="accValue">
+                          {printQuotation.technicianName}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="accProblemSection">
+                <div className="accSectionTitle">DESCRIZIONE DEL PROBLEMA</div>
+                <div className="accProblemText">
+                  {printQuotation.problemDescription ||
+                    "Nessuna descrizione fornita"}
+                </div>
+                {printQuotation.componentIssue && (
+                  <div className="accNotesText">
+                    <strong>Componente:</strong> {printQuotation.componentIssue}
+                  </div>
+                )}
+              </div>
+
+              <div className="accTableSection">
+                <div className="accSectionTitle">PREVENTIVO</div>
+                <table className="accTable">
+                  <thead>
+                    <tr>
+                      <th className="accTableHeader">Descrizione Intervento</th>
+                      <th
+                        className="accTableHeader"
+                        style={{ width: "80px", textAlign: "center" }}
+                      >
+                        Q.ta
+                      </th>
+                      <th
+                        className="accTableHeader"
+                        style={{ width: "120px", textAlign: "right" }}
+                      >
+                        Importo
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="accTableCell">
+                        {printQuotation.problemDescription ||
+                          "Diagnosi e preventivo riparazione"}
+                      </td>
+                      <td
+                        className="accTableCell"
+                        style={{ textAlign: "center" }}
+                      >
+                        1
+                      </td>
+                      <td
+                        className="accTableCell"
+                        style={{ textAlign: "right" }}
+                      >
+                        € {formatCurrency(printQuotation.estimatedPrice || 0)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="accTableCell" colSpan={2}>
+                        <strong>TOTALE</strong>
+                      </td>
+                      <td
+                        className="accTableCell"
+                        style={{ textAlign: "right" }}
+                      >
+                        <strong>
+                          € {formatCurrency(printQuotation.estimatedPrice || 0)}
+                        </strong>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="accPrivacySection">
+                <div className="accPrivacyTitle">
+                  AUTORIZZAZIONE DEL SERVIZIO DI ASSISTENZA
+                </div>
+                <div className="accPrivacyText">
+                  <p>
+                    Accetto che i Termini e condizioni di riparazione riportati
+                    sul retro di questa pagina verranno applicati al servizio di
+                    assistenza per il prodotto sopra indicato, che, poiche
+                    l'espletamento del servizio di assistenza puo comportare
+                    l'accidentale perdita dei dati, sara responsabilita
+                    esclusiva mia quella di backed archiviare i dati per
+                    recuperarli in caso di necessita e che quindi CLINICA IPHONE
+                    non e responsabile dell'eventuale perdita o danneggiamento
+                    dei dati archiviati sul prodotto che i componenti potranno
+                    essere riparati o sostituiti con componenti nuovi o
+                    ricondizionati e che gli eventuali componenti difettosi
+                    rimossi dal prodotto non potranno essere ritirati o
+                    recuperati dal Cliente.
+                  </p>
+                  <p>
+                    Ai sensi ed in conformita degli artt. 13 Dlgs 196/03 e 14
+                    del GDPR regolamento UE 2016/679, per il trattamento dei
+                    dati personali, i dati raccolti con la presente scheda sono
+                    destinati ad essere archiviati (sia manualmente su supporti
+                    cartacei sia mediante l'utilizzo di moderni sistemi
+                    informatici su supporti magnetici) nel pieno rispetto dei
+                    dettami normativi vigenti e potranno essere oggetto di
+                    trattamento solo ed esclusivamente da parte di soggetti
+                    appositamente nominati incaricati ai sensi del citato
+                    Decreto legislativo. I dati medesimi saranno utilizzati
+                    unicamente per gli scopi indicati nella presente scheda e
+                    non saranno utilizzati per ulteriori comunicazioni o per usi
+                    diversi dal trattamento della "riparazione".
+                  </p>
+                </div>
+
+                <div className="accConsentSection">
+                  <div className="accConsentTitle">COPIA DI ASSISTENZA</div>
+                  <div className="accSignatureArea">
+                    <div className="accSignatureBox">
+                      <div className="accSignatureLabel">
+                        Firma per accettazione
+                      </div>
+                      <div
+                        className="accSignatureLine"
+                        onClick={openSignatureModal}
+                        style={{
+                          cursor: "pointer",
+                          position: "relative",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {signatureData ? (
+                          <img
+                            src={signatureData}
+                            alt="Firma"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "contain",
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              color: "#95a5a6",
+                              fontSize: "0.85rem",
+                              textAlign: "center",
+                              width: "100%",
+                            }}
+                          >
+                            Clicca qui per firmare
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="accDateBox">
+                      <div className="accDateLabel">
+                        Data: {new Date().toLocaleDateString("it-IT")}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="accFooter">
+                <div className="accFooterText">
+                  Documento generato automaticamente dal sistema di gestione
+                  preventivi - {companyName}
+                </div>
+              </div>
+            </div>
+
+            <div className="accActions">
+              <button
+                className="accBtnSecondary"
+                onClick={() => {
+                  setShowPrintModal(false);
+                  setPrintQuotation(null);
+                }}
+              >
+                Chiudi
+              </button>
+              <button
+                className="accBtnPrimary"
+                onClick={handlePrintQuotationDocument}
+              >
+                Stampa Documento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal QR Firma Preventivo */}
+      {showSignatureQrModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowSignatureQrModal(false)}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h4>Firma da Tablet</h4>
+              <button
+                type="button"
+                className={styles.modalCloseButton}
+                onClick={() => setShowSignatureQrModal(false)}
+              >
+                x
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div className={styles.qrContent}>
+                <div className={styles.qrBox}>
+                  {signatureAccessUrl ? (
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+                        signatureAccessUrl
+                      )}`}
+                      alt="QR firma preventivo"
+                      className={styles.qrImage}
+                    />
+                  ) : (
+                    <div className={styles.qrPlaceholder}>QR non disponibile</div>
+                  )}
+                </div>
+                <div className={styles.qrInfo}>
+                  <div className={styles.qrTitle}>
+                    Scansiona il QR con il tablet
+                  </div>
+                  <div className={styles.qrText}>
+                    Apri la pagina di firma esterna per il preventivo.
+                  </div>
+                  <div className={styles.qrLink}>
+                    {signatureAccessUrl || "Link non disponibile"}
+                  </div>
+                  {accessKeyError && (
+                    <div className={styles.qrError}>{accessKeyError}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => setShowSignatureQrModal(false)}
+              >
+                Chiudi
+              </button>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={handleCopySignatureLink}
+                disabled={!signatureAccessUrl}
+              >
+                Copia Link
+              </button>
+              {signatureAccessUrl && (
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  onClick={() => window.open(signatureAccessUrl, "_blank")}
+                >
+                  Apri Link
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal per inserimento nuovo cliente */}
       {showNewClientModal && (
@@ -1452,6 +2457,121 @@ const PreventiviPage: React.FC = () => {
         </div>
       )}
 
+      {/* Modal firma digitale */}
+      {showSignatureModal && (
+        <div
+          className={styles.signatureModalOverlay}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSignatureModal(false);
+            }
+          }}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "700px" }}
+          >
+            <div className={styles.modalHeader}>
+              <h4>Apponi la tua firma</h4>
+              <button
+                type="button"
+                className={styles.modalCloseButton}
+                onClick={() => setShowSignatureModal(false)}
+              >
+                x
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div
+                style={{
+                  padding: "12px 16px",
+                  background: "#e7f3ff",
+                  borderRadius: "6px",
+                  marginBottom: "16px",
+                  fontSize: "0.9rem",
+                  color: "#333",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <span style={{ fontSize: "1.2rem" }}>Nota:</span>
+                <span>
+                  Firma nell'area sottostante utilizzando il mouse o il touch
+                  screen
+                </span>
+              </div>
+
+              <div
+                style={{
+                  border: "2px solid #333",
+                  borderRadius: "8px",
+                  background: "white",
+                  overflow: "hidden",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  position: "relative",
+                }}
+              >
+                <canvas
+                  ref={signatureCanvasRef}
+                  width={600}
+                  height={250}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    height: "auto",
+                    cursor: "crosshair",
+                    touchAction: "none",
+                  }}
+                />
+
+                {!isDrawing && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      color: "#ccc",
+                      fontSize: "1.2rem",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                    }}
+                  >
+                    Firma qui
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={clearSignature}
+              >
+                Cancella
+              </button>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={saveSignature}
+              >
+                Salva Firma
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Modal per inserimento nuovo dispositivo - DALLA PAGINA ACCETTAZIONE */}
       {showNewDeviceModal && (
         <div
@@ -1641,4 +2761,3 @@ const PreventiviPage: React.FC = () => {
 };
 
 export default PreventiviPage;
-

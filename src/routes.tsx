@@ -32,6 +32,7 @@ import CalendarioPrenotazioni from "./pages/RicercaPrenotazioni/CalendarioPrenot
 import AcquistoUsato from "./pages/Acquisti/AcquistoUsato";
 import RicercaAcquistiUsato from "./pages/RicercaAcquistiUsato";
 import Preventivi from "./pages/Preventivi";
+import FirmaPreventivoExt from "./pages/Preventivi/FirmaPreventivoExt";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -45,6 +46,7 @@ const AppRoutes = () => {
       {/* Rotta pubblica */}
       <Route path="/" element={<Login />} />
       <Route path="/admin" element={<LoginAdmin />} />
+      <Route path="/firma-preventivo-ext" element={<FirmaPreventivoExt />} />
       {/* Rotte protette */}
       <Route
         path="/dashboard"
