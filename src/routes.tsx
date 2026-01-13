@@ -31,6 +31,7 @@ import RicercaPrenotazioni from "./pages/RicercaPrenotazioni";
 import CalendarioPrenotazioni from "./pages/RicercaPrenotazioni/CalendarioPrenotazioni";
 import AcquistoUsato from "./pages/Acquisti/AcquistoUsato";
 import RicercaAcquistiUsato from "./pages/RicercaAcquistiUsato";
+import RicercaPreventivi from "./pages/RicercaPreventivi";
 import Preventivi from "./pages/Preventivi";
 import FirmaPreventivoExt from "./pages/Preventivi/FirmaPreventivoExt";
 
@@ -283,6 +284,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <RicercaAcquistiUsato />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/ricerca-preventivi"
+        element={
+          <ProtectedRoute>
+            <RicercaPreventivi />
           </ProtectedRoute>
         }
       />

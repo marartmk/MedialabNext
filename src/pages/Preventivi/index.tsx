@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import styles from './styles.module.css';
@@ -62,6 +63,28 @@ interface CreateQuotationResponse {
   createdAt: string;
 }
 
+interface QuotationDetail {
+  id: number;
+  quotationId: string;
+  quotationCode?: string | null;
+  quotationStatus?: string | null;
+  quotationStatusCode?: number | null;
+  quotationDateTime?: string | null;
+  customerId?: string | null;
+  customerName?: string | null;
+  customerEmail?: string | null;
+  customerPhone?: string | null;
+  deviceType?: string | null;
+  deviceBrand?: string | null;
+  deviceModel?: string | null;
+  technicianCode?: string | null;
+  technicianName?: string | null;
+  componentIssue?: string | null;
+  problemDescription?: string | null;
+  estimatedPrice?: number | null;
+  createdAt?: string | null;
+}
+
 interface PrintQuotationData {
   quotationId?: string;
   quotationCode?: string;
@@ -94,6 +117,13 @@ interface PrintQuotationData {
 const PreventiviPage: React.FC = () => {
   // Stati per la ricerca cliente (dalla pagina note)
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const navState = (location.state || {}) as {
+    quotationId?: string;
+    quotationCode?: string;
+    quotationNumericId?: number;
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<CustomerData[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -205,6 +235,8 @@ const PreventiviPage: React.FC = () => {
   const [isUpdatingQuotation, setIsUpdatingQuotation] = useState(false);
   const [savedQuotation, setSavedQuotation] =
     useState<CreateQuotationResponse | null>(null);
+  const [quotationToEdit, setQuotationToEdit] =
+    useState<QuotationDetail | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [printQuotation, setPrintQuotation] =
     useState<PrintQuotationData | null>(null);
@@ -244,6 +276,205 @@ const PreventiviPage: React.FC = () => {
   useEffect(() => {
     loadOperators();
   }, []);
+
+  const splitCustomerName = (fullName: string) => {
+    const normalized = fullName.trim();
+    if (!normalized) {
+      return { nome: "", cognome: "" };
+    }
+    const parts = normalized.split(/\s+/);
+    if (parts.length === 1) {
+      return { nome: parts[0], cognome: "" };
+    }
+    const nome = parts[parts.length - 1];
+    const cognome = parts.slice(0, -1).join(" ");
+    return { nome, cognome };
+  };
+
+  const formatDateTimeForInput = (value?: string | null) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+      date.getDate()
+    )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const hydrateFormFromQuotation = (quotation: QuotationDetail) => {
+    const customerName = (quotation.customerName || "").trim();
+    const { nome, cognome } = splitCustomerName(customerName);
+
+    setSearchQuery(customerName);
+    setShowDropdown(false);
+    setSearchResults([]);
+
+    if (quotation.customerId) {
+      setSelectedCustomer({
+        id: quotation.customerId,
+        tipologia: "",
+        ragioneSociale: customerName,
+        nome,
+        cognome,
+        email: quotation.customerEmail || "",
+        telefono: quotation.customerPhone || "",
+        cap: "",
+        indirizzo: "",
+        citta: "",
+        provincia: "",
+        regione: "",
+        fiscalCode: "",
+        pIva: "",
+        emailPec: "",
+        codiceSdi: "",
+        iban: "",
+      });
+    } else {
+      setSelectedCustomer(null);
+    }
+
+    setSelectedDevice(null);
+    setDeviceSearchQuery(
+      [quotation.deviceBrand, quotation.deviceModel].filter(Boolean).join(" ")
+    );
+
+    setFormData((prev) => ({
+      ...prev,
+      dataOraRilevazione:
+        formatDateTimeForInput(quotation.quotationDateTime) ||
+        prev.dataOraRilevazione,
+      email: quotation.customerEmail || "",
+      nome,
+      cognome,
+      massimocapriLoreti: "",
+      telefono: quotation.customerPhone || "",
+      numeroSerieIMEI: "",
+      dispositivo: quotation.deviceType || prev.dispositivo,
+      marca: quotation.deviceBrand || "",
+      modello: quotation.deviceModel || "",
+      assegnataA: quotation.technicianName || "",
+      componenteProblem: quotation.componentIssue || prev.componenteProblem,
+      descrizioneIntervento: quotation.problemDescription || "",
+      prezzoPreventivo:
+        typeof quotation.estimatedPrice === "number"
+          ? String(quotation.estimatedPrice)
+          : "",
+    }));
+
+    setSavedQuotation({
+      id: quotation.id || 0,
+      quotationId: quotation.quotationId,
+      quotationCode: quotation.quotationCode || navState.quotationCode || "",
+      quotationStatus: quotation.quotationStatus || "",
+      quotationStatusCode: String(quotation.quotationStatusCode || ""),
+      createdAt: quotation.createdAt || "",
+    });
+    setIsUpdatingQuotation(true);
+  };
+
+  const loadCustomerDetail = async (customerId: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/Customer/${customerId}`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Errore ${response.status}`);
+      }
+      const data = await response.json();
+      const customer: CustomerData = {
+        id: data.id || customerId,
+        tipologia: data.tipologia || "",
+        ragioneSociale: data.ragioneSociale || "",
+        nome: data.nome || "",
+        cognome: data.cognome || "",
+        email: data.email || "",
+        telefono: data.telefono || "",
+        cap: data.cap || "",
+        indirizzo: data.indirizzo || "",
+        citta: data.citta || "",
+        provincia: data.provincia || "",
+        regione: data.regione || "",
+        fiscalCode: data.fiscalCode || data.codiceFiscale || "",
+        pIva: data.pIva || data.partitaIva || "",
+        emailPec: data.emailPec || "",
+        codiceSdi: data.codiceSdi || "",
+        iban: data.iban || "",
+      };
+
+      setSelectedCustomer(customer);
+      const displayName =
+        customer.ragioneSociale ||
+        `${customer.nome} ${customer.cognome}`.trim();
+      if (displayName) {
+        setSearchQuery(displayName);
+      }
+      setFormData((prev) => ({
+        ...prev,
+        email: customer.email || prev.email,
+        nome: customer.nome || prev.nome,
+        cognome: customer.cognome || prev.cognome,
+        telefono: customer.telefono || prev.telefono,
+        massimocapriLoreti: customer.cap || prev.massimocapriLoreti,
+      }));
+    } catch (error) {
+      console.error("Errore nel caricamento anagrafica cliente:", error);
+    }
+  };
+
+  useEffect(() => {
+    const quotationId = navState.quotationId;
+    const quotationNumericId = navState.quotationNumericId;
+    if (!quotationId && !quotationNumericId) return;
+
+    const fetchQuotation = async () => {
+      try {
+        const endpoint = quotationNumericId
+          ? `${API_URL}/api/quotations/${quotationNumericId}`
+          : `${API_URL}/api/quotations/guid/${quotationId}`;
+        const response = await fetch(endpoint, {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        });
+        if (!response.ok) {
+          throw new Error(`Errore ${response.status}`);
+        }
+        const detail: QuotationDetail = await response.json();
+        setQuotationToEdit(detail);
+        hydrateFormFromQuotation(detail);
+        if (detail.customerId) {
+          await loadCustomerDetail(detail.customerId);
+        }
+      } catch (error) {
+        console.error("Errore nel caricamento del preventivo:", error);
+        alert("Impossibile caricare i dati del preventivo selezionato.");
+      }
+    };
+
+    fetchQuotation();
+  }, [navState.quotationId, navState.quotationNumericId, API_URL]);
+
+  useEffect(() => {
+    if (!quotationToEdit || operators.length === 0) return;
+    const targetCode = quotationToEdit.technicianCode || "";
+    const targetName = (quotationToEdit.technicianName || "").trim();
+    const operator =
+      operators.find(
+        (op) =>
+          op.codiceDipendente === targetCode ||
+          op.internalCode === targetCode ||
+          `${op.firstName} ${op.lastName}`.trim() === targetName
+      ) || null;
+    setSelectedOperator(operator);
+    if (operator) {
+      setFormData((prev) => ({
+        ...prev,
+        assegnataA: `${operator.firstName} ${operator.lastName}`.trim(),
+      }));
+    }
+  }, [quotationToEdit, operators]);
 
   // Effetto per gestire i click fuori dai dropdown (dalla pagina accettazione)
   useEffect(() => {
@@ -1306,6 +1537,10 @@ const PreventiviPage: React.FC = () => {
     }
   };
 
+  const handleGoToRiepilogo = () => {
+    navigate("/ricerca-preventivi");
+  };
+
   return (
     <div className={styles.mainLayout}>
       <Sidebar
@@ -1692,6 +1927,13 @@ const PreventiviPage: React.FC = () => {
                   disabled={isCreatingAccessKey}
                 >
                   {isCreatingAccessKey ? "Generando..." : "Firma"}
+                </button>
+                <button
+                  type="button"
+                  className={styles.btnSummary}
+                  onClick={handleGoToRiepilogo}
+                >
+                  Riepilogo
                 </button>
                 <button
                   type="button"

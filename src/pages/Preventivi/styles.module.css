@@ -327,6 +327,7 @@ textarea.formControl {
 /* Bottoni azione */
 .btnSave,
 .btnPrint,
+.btnSummary,
 .btnSendMail,
 .btnSignature {
   min-width: 140px;
@@ -361,6 +362,15 @@ textarea.formControl {
   transform: translateY(-2px);
 }
 
+.btnSummary {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.btnSummary:hover {
+  background: linear-gradient(135deg, #138496 0%, #0f6f7d 100%);
+  transform: translateY(-2px);
+}
+
 .btnSendMail {
   background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
 }
@@ -381,6 +391,7 @@ textarea.formControl {
 
 .btnSave:active,
 .btnPrint:active,
+.btnSummary:active,
 .btnSendMail:active,
 .btnSignature:active {
   transform: translateY(0);
@@ -476,6 +487,7 @@ textarea.formControl {
 
   .btnSave,
   .btnPrint,
+  .btnSummary,
   .btnSendMail {
     padding: 10px 16px;
     font-size: 0.85rem;

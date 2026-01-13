@@ -68,12 +68,20 @@ const Topbar: React.FC<TopbarProps> = () => {
                     Lista Note di Riparazione
                   </button>
                 </li>
-                 <li>
+                <li>
                   <button
                     className="dropdown-item"
                     onClick={() => navigate("/preventivi")}
                   >
                     Crea Preventivo Riparazione
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/ricerca-preventivi")}
+                  >
+                    Lista Preventivi
                   </button>
                 </li>
                 <li>
