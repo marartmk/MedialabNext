@@ -680,6 +680,17 @@
   box-shadow: 0 6px 16px rgba(23, 162, 184, 0.3);
 }
 
+.btnSignature {
+  background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+  color: white;
+}
+
+.btnSignature:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e67e00 0%, #e65c00 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(230, 126, 0, 0.3);
+}
+
 /* ========== MODALS ========== */
 /* ========== MODALS ========== */
 .modalOverlay {
@@ -757,6 +768,73 @@
 
 .modalBody {
   padding: 24px;
+}
+
+/* QR modal */
+.qrContent {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+.qrBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.qrImage {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+}
+
+.qrPlaceholder {
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.qrInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qrTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.qrText {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.qrLink {
+  font-size: 0.85rem;
+  color: #2c3e50;
+  background: #f4f6f7;
+  border: 1px dashed #bdc3c7;
+  border-radius: 6px;
+  padding: 8px 10px;
+  word-break: break-all;
+}
+
+.qrError {
+  color: #dc3545;
+  font-size: 0.85rem;
 }
 
 .modalFooter {

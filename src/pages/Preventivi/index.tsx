@@ -74,6 +74,7 @@ interface QuotationDetail {
   customerName?: string | null;
   customerEmail?: string | null;
   customerPhone?: string | null;
+  deviceSerialNumber?: string | null;
   deviceType?: string | null;
   deviceBrand?: string | null;
   deviceModel?: string | null;
@@ -210,6 +211,13 @@ const PreventiviPage: React.FC = () => {
     { value: "Other", label: "🔧 Altro" },
   ];
 
+  const QUOTATION_STATUS_OPTIONS = [
+    { code: "0", label: "Emesso", icon: "📝" },
+    { code: "1", label: "Inviato", icon: "📤" },
+    { code: "2", label: "Accettato", icon: "✅" },
+    { code: "3", label: "Rifiutato", icon: "❌" },
+  ];
+
   // Stati del form - CAMPI PREVENTIVO
   const [formData, setFormData] = useState({
     dataOraRilevazione: new Date().toISOString().slice(0, 16),
@@ -231,6 +239,7 @@ const PreventiviPage: React.FC = () => {
     // Prezzo
     prezzoPreventivo: ''
   });
+  const [statusCodeSelection, setStatusCodeSelection] = useState<string>("");
   const [isCreatingQuotation, setIsCreatingQuotation] = useState(false);
   const [isUpdatingQuotation, setIsUpdatingQuotation] = useState(false);
   const [savedQuotation, setSavedQuotation] =
@@ -301,6 +310,26 @@ const PreventiviPage: React.FC = () => {
     )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
+  const getStatusLabelFromCode = (code: string) =>
+    QUOTATION_STATUS_OPTIONS.find((item) => item.code === code)?.label || "";
+
+  const getStatusCodeFromLabel = (label?: string | null) => {
+    const normalized = (label || "").trim().toLowerCase();
+    if (!normalized) return "";
+    if (normalized == "emesso") return "0";
+    if (normalized == "inviato") return "1";
+    if (normalized == "accettato") return "2";
+    if (normalized == "rifiutato") return "3";
+    return "";
+  };
+
+  const getInitialStatusCode = (quotation: QuotationDetail) => {
+    if (typeof quotation.quotationStatusCode === "number") {
+      return String(quotation.quotationStatusCode);
+    }
+    return getStatusCodeFromLabel(quotation.quotationStatus);
+  };
+
   const hydrateFormFromQuotation = (quotation: QuotationDetail) => {
     const customerName = (quotation.customerName || "").trim();
     const { nome, cognome } = splitCustomerName(customerName);
@@ -348,7 +377,7 @@ const PreventiviPage: React.FC = () => {
       cognome,
       massimocapriLoreti: "",
       telefono: quotation.customerPhone || "",
-      numeroSerieIMEI: "",
+      numeroSerieIMEI: quotation.deviceSerialNumber || "",
       dispositivo: quotation.deviceType || prev.dispositivo,
       marca: quotation.deviceBrand || "",
       modello: quotation.deviceModel || "",
@@ -360,6 +389,7 @@ const PreventiviPage: React.FC = () => {
           ? String(quotation.estimatedPrice)
           : "",
     }));
+    setStatusCodeSelection(getInitialStatusCode(quotation));
 
     setSavedQuotation({
       id: quotation.id || 0,
@@ -1183,6 +1213,8 @@ const PreventiviPage: React.FC = () => {
       deviceType: selectedDevice?.deviceType || formData.dispositivo,
       deviceBrand: selectedDevice?.brand || formData.marca || null,
       deviceModel: selectedDevice?.model || formData.modello,
+      deviceSerialNumber:
+        selectedDevice?.serialNumber || formData.numeroSerieIMEI || null,
       deviceColor: null,
 
       // Preventivo
@@ -1267,6 +1299,45 @@ const PreventiviPage: React.FC = () => {
     };
   };
 
+  const updateQuotationStatus = async (
+    quotationId: string,
+    nextStatusCode: number,
+  ) => {
+    const statusLabel = getStatusLabelFromCode(String(nextStatusCode));
+    const payload = {
+      status: statusLabel,
+      statusCode: String(nextStatusCode),
+      notes: "",
+      updatedBy:
+        sessionStorage.getItem("userId") ||
+        sessionStorage.getItem("username") ||
+        sessionStorage.getItem("userName") ||
+        sessionStorage.getItem("userEmail") ||
+        "Sistema",
+    };
+
+    const response = await fetch(
+      `${API_URL}/api/Quotations/${quotationId}/status`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(
+        errText || `Errore ${response.status}: ${response.statusText}`,
+      );
+    }
+
+    return statusLabel;
+  };
+
   const handleSaveOrUpdateQuotation = async () => {
     const errors = validateQuotationForm();
     if (errors.length > 0) {
@@ -1306,10 +1377,21 @@ const PreventiviPage: React.FC = () => {
           result.quotationCode || savedQuotation?.quotationCode || "";
         const quotationStatus =
           result.quotationStatus || savedQuotation?.quotationStatus || "";
+        const nextQuotationId = result.quotationId || currentQuotationId || "";
+        let statusUpdateMessage = "";
+
+        const nextStatusCode = statusCodeSelection
+          ? Number(statusCodeSelection)
+          : Number.NaN;
+        const shouldUpdateStatus =
+          isUpdate &&
+          nextQuotationId &&
+          !Number.isNaN(nextStatusCode) &&
+          String(nextStatusCode) !==
+            (savedQuotation?.quotationStatusCode || "");
         const baseMessage = isUpdate
           ? `Preventivo aggiornato con successo!\n\nCodice: ${quotationCode}\nStato: ${quotationStatus}`
           : `Preventivo creato con successo!\n\nCodice: ${quotationCode}\nStato: ${quotationStatus}`;
-        const nextQuotationId = result.quotationId || currentQuotationId || "";
         if (nextQuotationId) {
           setSavedQuotation({
             ...(savedQuotation || {}),
@@ -1322,7 +1404,34 @@ const PreventiviPage: React.FC = () => {
         } else {
           setSavedQuotation({ ...(savedQuotation || {}), ...result });
         }
-        alert(baseMessage);
+        if (!statusCodeSelection && result.quotationStatusCode) {
+          setStatusCodeSelection(String(result.quotationStatusCode));
+        }
+
+        if (shouldUpdateStatus) {
+          try {
+            const statusLabel = await updateQuotationStatus(
+              nextQuotationId,
+              nextStatusCode,
+            );
+            setSavedQuotation((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    quotationStatus: statusLabel,
+                    quotationStatusCode: String(nextStatusCode),
+                  }
+                : prev,
+            );
+            statusUpdateMessage = `\n\nStato aggiornato a: ${statusLabel}`;
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : "Errore sconosciuto";
+            alert("Aggiornamento stato non riuscito:\n" + message);
+          }
+        }
+
+        alert(baseMessage + statusUpdateMessage);
       } else {
         const errText = await response.text();
         alert(
@@ -1901,6 +2010,23 @@ const PreventiviPage: React.FC = () => {
                       <span className={styles.currency}>Eur</span>
                     </div>
                   </div>
+
+                  <div className={styles.formField}>
+                    <label>Stato preventivo</label>
+                    <select
+                      className={styles.formControl}
+                      value={statusCodeSelection}
+                      onChange={(e) => setStatusCodeSelection(e.target.value)}
+                      disabled={!isUpdatingQuotation}
+                    >
+                      <option value="">-- Seleziona stato --</option>
+                      {QUOTATION_STATUS_OPTIONS.map((option) => (
+                        <option key={option.code} value={option.code}>
+                          {option.icon} {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -1930,17 +2056,17 @@ const PreventiviPage: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  className={styles.btnSummary}
-                  onClick={handleGoToRiepilogo}
-                >
-                  Riepilogo
-                </button>
-                <button
-                  type="button"
                   className={styles.btnSendMail}
                   onClick={handleCreaEmail}
                 >
                   Invia Mail
+                </button>
+                <button
+                  type="button"
+                  className={styles.btnSummary}
+                  onClick={handleGoToRiepilogo}
+                >
+                  Ricerca preventivi
                 </button>
               </div>
             </div>

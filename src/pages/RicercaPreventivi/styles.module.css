@@ -751,6 +751,13 @@
   outline: none !important;
 }
 
+.actionBtn:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.45 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
 .viewBtn {
   background-color: #4a5568 !important;
   color: white !important;
@@ -1199,6 +1206,28 @@
   border: 1px solid #e0e0e0;
 }
 
+.repairActionModal {
+  max-width: 720px;
+  width: 88%;
+  min-height: 440px;
+  display: flex;
+  flex-direction: column;
+}
+
+.repairActionModal .repairDetailBody {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 24px 24px 12px;
+}
+
+.repairActionModal .repairDetailSection {
+  margin: 12px auto 0;
+  width: 100%;
+  max-width: 620px;
+  text-align: center;
+}
+
 .repairDetailHeader {
   display: flex;
   justify-content: space-between;
@@ -1363,12 +1392,28 @@
   word-break: break-word;
 }
 
+.priceCell {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
 .serialNumber {
   font-family: monospace;
   background: #f0f0f0;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 13px !important;
+}
+
+.priceHighlight {
+  background: #fff3e0;
+  border-color: #ffb74d;
+  box-shadow: 0 2px 8px rgba(255, 183, 77, 0.35);
+}
+
+.priceHighlight span {
+  font-weight: 700;
+  color: #e65100;
 }
 
 /* Timeline */
@@ -1410,6 +1455,8 @@
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+  color: #fff;
+  font-weight: 700;
   border-radius: 50%;
   position: relative;
   z-index: 2;
@@ -2122,6 +2169,60 @@
   background: linear-gradient(135deg, #7f8c8d, #95a5a6);
 }
 
+.actionModalText {
+  margin: 0 auto;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+  max-width: 520px;
+}
+
+.actionModalTitle {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  text-align: center;
+  display: block;
+  width: 100%;
+  justify-content: center;
+}
+
+.actionModalWarning {
+  margin: 0;
+  color: #7f1d1d;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.accBtnDanger {
+  background: linear-gradient(135deg, #c62828, #ef5350);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 28px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.accBtnDanger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(198, 40, 40, 0.4);
+  background: linear-gradient(135deg, #ef5350, #c62828);
+}
 /* === STILI STAMPA MIGLIORATI E CORRETTI === */
 @media print {
   /* Reset generale per la stampa */
@@ -2442,6 +2543,11 @@
   .repairDetailModal {
     width: 98%;
     max-height: 95vh;
+  }
+
+  .repairActionModal {
+    width: 96%;
+    min-height: 0;
   }
   
   .repairDetailColumns {

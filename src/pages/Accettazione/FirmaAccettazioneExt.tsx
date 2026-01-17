@@ -3,11 +3,13 @@ import { useSearchParams } from "react-router-dom";
 import logoUrl from "../../assets/logo-black-white.jpg";
 import styles from "./styles.module.css";
 
-interface AccessQuotationResponse {
-  quotationId?: string;
-  quotationCode?: string;
-  quotationStatus?: string;
+interface AccessRepairResponse {
+  repairId?: string;
+  repairGuid?: string;
+  repairCode?: string;
   createdAt?: string;
+  receivedAt?: string;
+  receivedBy?: string;
   customer?: {
     name?: string;
     phone?: string;
@@ -23,22 +25,27 @@ interface AccessQuotationResponse {
     brand?: string;
     model?: string;
     serialNumber?: string;
+    imei?: string | null;
     deviceType?: string;
   };
   technicianName?: string;
-  componentIssue?: string;
+  repairStatus?: string;
+  faultDeclared?: string;
   problemDescription?: string;
-  estimatedPrice?: number | null;
-  notes?: string | null;
+  estimatedLabor?: number | null;
+  estimatedParts?: number | null;
+  estimatedTotal?: number | null;
+  notes?: string;
 }
 
-const FirmaPreventivoExt: React.FC = () => {
+const FirmaAccettazioneExt: React.FC = () => {
   const API_URL = import.meta.env.VITE_API_URL;
   const [searchParams] = useSearchParams();
   const accessKey = searchParams.get("accessKey") || "";
 
-  const [quotationData, setQuotationData] =
-    useState<AccessQuotationResponse | null>(null);
+  const [repairData, setRepairData] = useState<AccessRepairResponse | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,6 +67,32 @@ const FirmaPreventivoExt: React.FC = () => {
   const companyPhone =
     (typeof window !== "undefined" && sessionStorage.getItem("companyPhone")) ||
     "0832 123456";
+  const operatorName =
+    (typeof window !== "undefined" &&
+      (sessionStorage.getItem("userName") ||
+        sessionStorage.getItem("username") ||
+        sessionStorage.getItem("userId"))) ||
+    "N/A";
+
+  const formatDateTime = (value?: string | null) => {
+    if (!value) return "N/A";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "N/A";
+    return `${date.toLocaleDateString("it-IT")} ${date.toLocaleTimeString(
+      "it-IT",
+      { hour: "2-digit", minute: "2-digit" },
+    )}`;
+  };
+
+  const formatCurrency = (value?: number | null) => {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      return "0,00";
+    }
+    return value.toLocaleString("it-IT", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
 
   useEffect(() => {
     if (!accessKey) {
@@ -67,19 +100,21 @@ const FirmaPreventivoExt: React.FC = () => {
       return;
     }
 
-    const fetchQuotation = async () => {
+    const fetchRepair = async () => {
       setLoading(true);
       setError(null);
       try {
         const response = await fetch(
-          `${API_URL}/api/quotations/access/${encodeURIComponent(accessKey)}`
+          `${API_URL}/api/Signature/repair-access/${encodeURIComponent(
+            accessKey,
+          )}`,
         );
         if (!response.ok) {
           const errText = await response.text();
           throw new Error(errText || "Errore nel caricamento dei dati");
         }
         const data = await response.json();
-        setQuotationData(data);
+        setRepairData(data);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Errore inatteso";
         setError(message);
@@ -88,11 +123,11 @@ const FirmaPreventivoExt: React.FC = () => {
       }
     };
 
-    fetchQuotation();
+    fetchRepair();
   }, [API_URL, accessKey]);
 
   const startDrawing = (
-    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
   ) => {
     const canvas = signatureCanvasRef.current;
     if (!canvas) return;
@@ -113,7 +148,7 @@ const FirmaPreventivoExt: React.FC = () => {
   };
 
   const draw = (
-    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
   ) => {
     if (!isDrawing) return;
 
@@ -159,59 +194,27 @@ const FirmaPreventivoExt: React.FC = () => {
     setSignatureData(dataUrl);
     setShowSignatureModal(false);
 
-    if (!quotationData?.quotationId) {
-      alert("Impossibile associare la firma al preventivo.");
+    const repairIdentifier = repairData?.repairGuid || repairData?.repairId;
+    if (!repairIdentifier) {
+      alert("Impossibile associare la firma alla riparazione.");
       return;
     }
 
     try {
-      const companyId =
-        sessionStorage.getItem("IdCompany") ||
-        sessionStorage.getItem("companyId") ||
-        "";
-      const multitenantId =
-        sessionStorage.getItem("IdCompany") ||
-        sessionStorage.getItem("multitenantId") ||
-        "";
-      const signedBy =
-        sessionStorage.getItem("userName") ||
-        sessionStorage.getItem("username") ||
-        sessionStorage.getItem("userId") ||
-        "Sistema";
-      const createdBy =
-        sessionStorage.getItem("userId") ||
-        sessionStorage.getItem("username") ||
-        sessionStorage.getItem("userName") ||
-        signedBy;
-
-      const payload = {
-        serviceId: quotationData.quotationId,
-        areaId: "9b40e7a0-9b87-4c12-9d9c-9f5208f3f3f6",
-        areaName: "Preventivi",
-        companyId,
-        multitenantId,
-        signatureBase64: dataUrl,
-        signedAt: new Date().toISOString(),
-        signedBy,
-        accessKey,
-        notes: "",
-        createdBy,
-      };
-
-      console.log(
-        "Payload firma preventivo:\n",
-        JSON.stringify(payload, null, 2),
-      );
-
       const response = await fetch(
-        `${API_URL}/api/quotations/${quotationData.quotationId}/signature`,
+        `${API_URL}/api/repair/${repairIdentifier}/signature`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(payload),
-        }
+          body: JSON.stringify({
+            repairId: repairData?.repairId,
+            repairGuid: repairData?.repairGuid,
+            accessKey,
+            signatureBase64: dataUrl,
+          }),
+        },
       );
 
       if (!response.ok) {
@@ -240,16 +243,6 @@ const FirmaPreventivoExt: React.FC = () => {
     }, 100);
   };
 
-  const formatCurrency = (value?: number | null) => {
-    if (value === null || value === undefined || Number.isNaN(value)) {
-      return "0,00";
-    }
-    return value.toLocaleString("it-IT", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
-
   if (loading) {
     return <div style={{ padding: "24px" }}>Caricamento...</div>;
   }
@@ -258,7 +251,7 @@ const FirmaPreventivoExt: React.FC = () => {
     return <div style={{ padding: "24px", color: "#dc3545" }}>{error}</div>;
   }
 
-  if (!quotationData) {
+  if (!repairData) {
     return (
       <div style={{ padding: "24px" }}>
         Nessun dato disponibile per la firma.
@@ -286,26 +279,22 @@ const FirmaPreventivoExt: React.FC = () => {
             </div>
 
             <div className="accDocSection">
-              <h1 className="accDocTitle">Preventivo di riparazione</h1>
+              <h1 className="accDocTitle">Autorizzazione al lavoro</h1>
               <div className="accDocInfo">
                 <div>
-                  <strong>Numero Preventivo:</strong>{" "}
-                  {quotationData.quotationCode || ""}
+                  <strong>Tipo di riparazione:</strong> Gestita in clinica
                 </div>
                 <div>
-                  <strong>Stato:</strong> {quotationData.quotationStatus || ""}
+                  <strong>Gestita da dipendente:</strong>{" "}
+                  {repairData.receivedBy || operatorName}
+                </div>
+                <div>
+                  <strong>Numero di Riparazione:</strong>{" "}
+                  {repairData.repairCode || ""}
                 </div>
                 <div>
                   <strong>Data:</strong>{" "}
-                  {new Date(
-                    quotationData.createdAt || ""
-                  ).toLocaleDateString("it-IT")}{" "}
-                  {new Date(
-                    quotationData.createdAt || ""
-                  ).toLocaleTimeString("it-IT", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {formatDateTime(repairData.receivedAt || repairData.createdAt)}
                 </div>
               </div>
             </div>
@@ -318,47 +307,47 @@ const FirmaPreventivoExt: React.FC = () => {
                 <div className="accInfoRow">
                   <span className="accLabel">Cliente:</span>
                   <span className="accValue">
-                    {quotationData.customer?.name || "Non specificato"}
+                    {repairData.customer?.name || "Non specificato"}
                   </span>
                 </div>
                 <div className="accInfoRow">
                   <span className="accLabel">Telefono:</span>
                   <span className="accValue">
-                    {quotationData.customer?.phone || "Non specificato"}
+                    {repairData.customer?.phone || "Non specificato"}
                   </span>
                 </div>
                 <div className="accInfoRow">
                   <span className="accLabel">Email:</span>
                   <span className="accValue">
-                    {quotationData.customer?.email || "Non specificato"}
+                    {repairData.customer?.email || "Non specificato"}
                   </span>
                 </div>
                 <div className="accInfoRow">
                   <span className="accLabel">Indirizzo:</span>
                   <span className="accValue">
                     {[
-                      quotationData.customer?.address,
-                      quotationData.customer?.postalCode,
-                      quotationData.customer?.city,
-                      quotationData.customer?.province,
+                      repairData.customer?.address,
+                      repairData.customer?.postalCode,
+                      repairData.customer?.city,
+                      repairData.customer?.province,
                     ]
                       .filter(Boolean)
                       .join(", ") || "Non specificato"}
                   </span>
                 </div>
-                {quotationData.customer?.fiscalCode && (
+                {repairData.customer?.fiscalCode && (
                   <div className="accInfoRow">
                     <span className="accLabel">Codice Fiscale:</span>
                     <span className="accValue">
-                      {quotationData.customer.fiscalCode}
+                      {repairData.customer.fiscalCode}
                     </span>
                   </div>
                 )}
-                {quotationData.customer?.vatNumber && (
+                {repairData.customer?.vatNumber && (
                   <div className="accInfoRow">
                     <span className="accLabel">P.IVA:</span>
                     <span className="accValue">
-                      {quotationData.customer.vatNumber}
+                      {repairData.customer.vatNumber}
                     </span>
                   </div>
                 )}
@@ -371,27 +360,34 @@ const FirmaPreventivoExt: React.FC = () => {
                 <div className="accInfoRow">
                   <span className="accLabel">Marca e Modello:</span>
                   <span className="accValue">
-                    {quotationData.device?.brand}{" "}
-                    {quotationData.device?.model}
+                    {repairData.device?.brand} {repairData.device?.model}
                   </span>
                 </div>
                 <div className="accInfoRow">
                   <span className="accLabel">Numero Seriale:</span>
                   <span className="accValue">
-                    {quotationData.device?.serialNumber || "Non specificato"}
+                    {repairData.device?.serialNumber ||
+                      repairData.device?.imei ||
+                      "Non specificato"}
                   </span>
                 </div>
                 <div className="accInfoRow">
                   <span className="accLabel">Tipologia:</span>
                   <span className="accValue">
-                    {quotationData.device?.deviceType || "Non specificato"}
+                    {repairData.device?.deviceType || "Non specificato"}
                   </span>
                 </div>
-                {quotationData.technicianName && (
+                <div className="accInfoRow">
+                  <span className="accLabel">Stato:</span>
+                  <span className="accValue">
+                    {repairData.repairStatus || ""}
+                  </span>
+                </div>
+                {repairData.technicianName && (
                   <div className="accInfoRow">
                     <span className="accLabel">Tecnico Assegnato:</span>
                     <span className="accValue">
-                      {quotationData.technicianName}
+                      {repairData.technicianName}
                     </span>
                   </div>
                 )}
@@ -402,11 +398,13 @@ const FirmaPreventivoExt: React.FC = () => {
           <div className="accProblemSection">
             <div className="accSectionTitle">DESCRIZIONE DEL PROBLEMA</div>
             <div className="accProblemText">
-              {quotationData.problemDescription || "Nessuna descrizione fornita"}
+              {repairData.problemDescription ||
+                repairData.faultDeclared ||
+                "Nessuna descrizione fornita"}
             </div>
-            {quotationData.componentIssue && (
+            {repairData.notes && (
               <div className="accNotesText">
-                <strong>Componente:</strong> {quotationData.componentIssue}
+                <strong>Note aggiuntive:</strong> {repairData.notes}
               </div>
             )}
           </div>
@@ -434,32 +432,22 @@ const FirmaPreventivoExt: React.FC = () => {
               <tbody>
                 <tr>
                   <td className="accTableCell">
-                    {quotationData.problemDescription ||
-                      "Diagnosi e preventivo riparazione"}
+                    Diagnosi e preventivo riparazione
                   </td>
-                  <td
-                    className="accTableCell"
-                    style={{ textAlign: "center" }}
-                  >
+                  <td className="accTableCell" style={{ textAlign: "center" }}>
                     1
                   </td>
-                  <td
-                    className="accTableCell"
-                    style={{ textAlign: "right" }}
-                  >
-                    € {formatCurrency(quotationData.estimatedPrice || 0)}
+                  <td className="accTableCell" style={{ textAlign: "right" }}>
+                    EUR {formatCurrency(repairData.estimatedTotal || 0)}
                   </td>
                 </tr>
                 <tr>
                   <td className="accTableCell" colSpan={2}>
                     <strong>TOTALE</strong>
                   </td>
-                  <td
-                    className="accTableCell"
-                    style={{ textAlign: "right" }}
-                  >
+                  <td className="accTableCell" style={{ textAlign: "right" }}>
                     <strong>
-                      € {formatCurrency(quotationData.estimatedPrice || 0)}
+                      EUR {formatCurrency(repairData.estimatedTotal || 0)}
                     </strong>
                   </td>
                 </tr>
@@ -556,7 +544,7 @@ const FirmaPreventivoExt: React.FC = () => {
           <div className="accFooter">
             <div className="accFooterText">
               Documento generato automaticamente dal sistema di gestione
-              preventivi - {companyName}
+              riparazioni - {companyName}
             </div>
           </div>
         </div>
@@ -680,4 +668,4 @@ const FirmaPreventivoExt: React.FC = () => {
   );
 };
 
-export default FirmaPreventivoExt;
+export default FirmaAccettazioneExt;

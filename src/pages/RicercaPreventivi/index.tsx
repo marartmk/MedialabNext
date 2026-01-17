@@ -31,6 +31,9 @@ interface Quotation {
   deviceType?: string;
   deviceBrand?: string;
   deviceModel?: string;
+  deviceSerialNumber?: string;
+  serialNumber?: string;
+  imei?: string;
   technicianId?: string;
   technicianCode?: string;
   technicianName?: string;
@@ -45,7 +48,6 @@ interface Quotation {
   updatedAt?: string;
   isConverted?: boolean;
 }
-
 
 // Interfaccia per il filtro temporale
 interface DateFilter {
@@ -88,6 +90,14 @@ const RicercaPreventivi: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
 
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [actionQuotation, setActionQuotation] = useState<Quotation | null>(
+    null,
+  );
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
   // --- RIEPILOGO STATI (per donut + cards) ---
   const COLORS = [
     "#ffa726",
@@ -99,25 +109,121 @@ const RicercaPreventivi: React.FC = () => {
     "#78909c",
   ];
 
+  const STATUS_DEFINITIONS = [
+    {
+      code: 0,
+      label: "Emesso",
+      classKey: "statusPendente",
+      badgeClass: styles.statusPendente,
+      icon: "\uD83D\uDCDD",
+    },
+    {
+      code: 1,
+      label: "Inviato",
+      classKey: "statusInCorso",
+      badgeClass: styles.statusInCorso,
+      icon: "\uD83D\uDCE4",
+    },
+    {
+      code: 2,
+      label: "Accettato",
+      classKey: "statusConfermata",
+      badgeClass: styles.statusConfermata,
+      icon: "\u2705",
+    },
+    {
+      code: 3,
+      label: "Rifiutato",
+      classKey: "statusAnnullata",
+      badgeClass: styles.statusAnnullata,
+      icon: "\u274C",
+    },
+  ];
+
+  const getStatusDefinition = (
+    status?: string,
+    statusCode?: number,
+  ): (typeof STATUS_DEFINITIONS)[number] | undefined => {
+    if (typeof statusCode === "number") {
+      return STATUS_DEFINITIONS.find((item) => item.code === statusCode);
+    }
+    const normalized = status?.toLowerCase();
+    if (!normalized) return undefined;
+    if (normalized === "emesso") return STATUS_DEFINITIONS[0];
+    if (normalized === "inviato") return STATUS_DEFINITIONS[1];
+    if (normalized === "accettato") return STATUS_DEFINITIONS[2];
+    if (normalized === "rifiutato") return STATUS_DEFINITIONS[3];
+    if (normalized === "confermata") return STATUS_DEFINITIONS[2];
+    if (normalized === "pendente") return STATUS_DEFINITIONS[0];
+    if (normalized === "completata") return STATUS_DEFINITIONS[2];
+    if (normalized === "annullata") return STATUS_DEFINITIONS[3];
+    if (normalized === "in corso") return STATUS_DEFINITIONS[1];
+    if (normalized === "prenotata") return STATUS_DEFINITIONS[0];
+    if (normalized === "in attesa") return STATUS_DEFINITIONS[0];
+    if (normalized === "non pervenuta") return STATUS_DEFINITIONS[3];
+    return undefined;
+  };
+
+  const getStatusFromFilter = (
+    filterValue: string,
+  ): (typeof STATUS_DEFINITIONS)[number] | undefined => {
+    const parsed = Number(filterValue);
+    if (!Number.isNaN(parsed)) {
+      return getStatusDefinition(undefined, parsed);
+    }
+    return getStatusDefinition(filterValue, undefined);
+  };
+
+  const getStatusLabel = (status?: string, statusCode?: number): string => {
+    const def = getStatusDefinition(status, statusCode);
+    return def?.label || status || "Senza stato";
+  };
+
+  const getStatusClass = (status?: string, statusCode?: number): string => {
+    const def = getStatusDefinition(status, statusCode);
+    return def?.classKey || "statusDefault";
+  };
+
+  const getStatusIcon = (status?: string, statusCode?: number): string => {
+    const def = getStatusDefinition(status, statusCode);
+    return def?.icon || "\u2753";
+  };
+
+  const getStatusBadgeClass = (
+    status?: string,
+    statusCode?: number,
+  ): string => {
+    const def = getStatusDefinition(status, statusCode);
+    return def?.badgeClass || styles.statusDefault;
+  };
+
+  const getStatusFilterLabel = (filterValue: string): string => {
+    const def = getStatusFromFilter(filterValue);
+    return def?.label || filterValue;
+  };
+
   const statusChartData = React.useMemo(() => {
     const counts = new Map<string, number>();
     (filteredData || []).forEach((b) => {
-      const key = (b.quotationStatus || "Senza stato").trim();
+      const key = getStatusLabel(
+        b.quotationStatus,
+        b.quotationStatusCode,
+      ).trim();
       counts.set(key, (counts.get(key) || 0) + 1);
     });
     return Array.from(counts, ([name, value]) => ({ name, value })).sort(
-      (a, b) => b.value - a.value
+      (a, b) => b.value - a.value,
     );
   }, [filteredData]);
 
   const totalQuotations = React.useMemo(
     () => filteredData?.length ?? 0,
-    [filteredData]
+    [filteredData],
   );
 
   const topStatusForCards = React.useMemo(
     () => statusChartData.slice(0, 4),
-    [statusChartData]
+    [statusChartData],
   );
 
   // Definisci le colonne usando createColumnHelper
@@ -137,10 +243,22 @@ const RicercaPreventivi: React.FC = () => {
       cell: (info) => (
         <div
           className={`${styles.statusBadge} ${
-            styles[getStatusClass(info.getValue())]
+            styles[
+              getStatusClass(
+                info.row.original.quotationStatus,
+                info.row.original.quotationStatusCode,
+              )
+            ]
           }`}
         >
-          {getStatusIcon(info.getValue())} {info.getValue()}
+          {getStatusIcon(
+            info.row.original.quotationStatus,
+            info.row.original.quotationStatusCode,
+          )}{" "}
+          {getStatusLabel(
+            info.row.original.quotationStatus,
+            info.row.original.quotationStatusCode,
+          )}
         </div>
       ),
     }),
@@ -157,11 +275,23 @@ const RicercaPreventivi: React.FC = () => {
         </div>
       ),
     }),
-    columnHelper.accessor("customerEmail", {
-      header: "Email",
-      cell: (info) => (
-        <div className={styles.emailCell}>{info.getValue() || "N/A"}</div>
-      ),
+    columnHelper.display({
+      id: "quotationPrice",
+      header: "Prezzo",
+      cell: (info) => {
+        const { finalPrice, estimatedPrice } = info.row.original;
+        const price =
+          typeof finalPrice === "number"
+            ? finalPrice
+            : typeof estimatedPrice === "number"
+              ? estimatedPrice
+              : null;
+        return (
+          <div className={styles.priceCell}>
+            {price == null ? "N/A" : `EUR ${price.toFixed(2)}`}
+          </div>
+        );
+      },
     }),
     columnHelper.display({
       id: "device",
@@ -178,6 +308,12 @@ const RicercaPreventivi: React.FC = () => {
               .join(" ") || "N/A"}
           </div>
         </div>
+      ),
+    }),
+    columnHelper.accessor("deviceSerialNumber", {
+      header: "IMEI",
+      cell: (info) => (
+        <div className={styles.deviceSerial}>{info.getValue() || "N/A"}</div>
       ),
     }),
     columnHelper.accessor("quotationDateTime", {
@@ -197,23 +333,6 @@ const RicercaPreventivi: React.FC = () => {
         );
       },
     }),
-    columnHelper.display({
-      id: "quotationTime",
-      header: "Ora",
-      cell: (info) => {
-        const value = info.row.original.quotationDateTime;
-        return (
-          <div className={styles.timeCell}>
-            {value
-              ? new Date(value).toLocaleTimeString("it-IT", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "N/A"}
-          </div>
-        );
-      },
-    }),
     columnHelper.accessor("technicianName", {
       header: "Tecnico",
       cell: (info) => (
@@ -224,55 +343,62 @@ const RicercaPreventivi: React.FC = () => {
         </div>
       ),
     }),
-    columnHelper.accessor("createdAt", {
-      header: "Data Creazione",
-      cell: (info) => (
-        <div className={styles.dateCell}>
-          {new Date(info.getValue()).toLocaleDateString("it-IT", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </div>
-      ),
-    }),
     columnHelper.display({
       id: "actions",
       header: "Azioni",
-      cell: (info) => (
-        <div className={styles.actionButtons}>
-          <button
-            className={`${styles.actionBtn} ${styles.viewBtn}`}
-            onClick={() => handleViewQuotation(info.row.original)}
-            title="Visualizza dettagli"
-          >
-            <i className="fa-solid fa-eye"></i>
-          </button>
-          <button
-            className={`${styles.actionBtn} ${styles.editBtn}`}
-            onClick={() => handleEditQuotation(info.row.original)}
-            title="Modifica preventivo"
-          >
-            <i className="fa-solid fa-edit"></i>
-          </button>
-          <button
-            className={`${styles.actionBtn} ${styles.completeBtn}`}
-            onClick={() => handleConvertToRepair(info.row.original)}
-            title="Converti in riparazione"
-          >
-            <i className="fa-solid fa-check-circle"></i>
-          </button>
-          <button
-            className={`${styles.actionBtn} ${styles.cancelBtn}`}
-            onClick={() => handleCancelQuotation(info.row.original)}
-            title="Annulla preventivo"
-          >
-            <i className="fa-solid fa-times-circle"></i>
-          </button>
-        </div>
-      ),
+      cell: (info) => {
+        const statusDef = getStatusDefinition(
+          info.row.original.quotationStatus,
+          info.row.original.quotationStatusCode,
+        );
+        const isFinalized =
+          statusDef?.code === 2 ||
+          statusDef?.code === 3 ||
+          info.row.original.quotationStatus?.toLowerCase() === "accettato" ||
+          info.row.original.quotationStatus?.toLowerCase() === "rifiutato";
+        const disabledMessage = isFinalized
+          ? "Preventivo già accettato o rifiutato"
+          : undefined;
+
+        return (
+          <div className={styles.actionButtons}>
+            <button
+              className={`${styles.actionBtn} ${styles.viewBtn}`}
+              onClick={() => handleViewQuotation(info.row.original)}
+              title="Visualizza dettagli"
+            >
+              <i className="fa-solid fa-eye"></i>
+            </button>
+            <button
+              className={`${styles.actionBtn} ${styles.editBtn}`}
+              onClick={() => handleEditQuotation(info.row.original)}
+              title="Modifica preventivo"
+            >
+              <i className="fa-solid fa-edit"></i>
+            </button>
+            <button
+              className={`${styles.actionBtn} ${styles.completeBtn}`}
+              onClick={() =>
+                !isFinalized && openAcceptModal(info.row.original)
+              }
+              title={disabledMessage || "Accetta preventivo"}
+              disabled={isFinalized}
+            >
+              <i className="fa-solid fa-check-circle"></i>
+            </button>
+            <button
+              className={`${styles.actionBtn} ${styles.cancelBtn}`}
+              onClick={() =>
+                !isFinalized && openRejectModal(info.row.original)
+              }
+              title={disabledMessage || "Rifiuta preventivo"}
+              disabled={isFinalized}
+            >
+              <i className="fa-solid fa-times-circle"></i>
+            </button>
+          </div>
+        );
+      },
     }),
   ];
 
@@ -300,14 +426,25 @@ const RicercaPreventivi: React.FC = () => {
   const applyLocalFilters = () => {
     console.log("🔍 Applicando filtri locali...");
     let filtered = [...allData];
-
     // Filtro per stato
     if (statusFilter) {
-      filtered = filtered.filter((item) =>
-        item.quotationStatus?.toLowerCase().includes(statusFilter.toLowerCase())
-      );
+      const filterDef = getStatusFromFilter(statusFilter);
+      filtered = filtered.filter((item) => {
+        if (filterDef?.code !== undefined && item.quotationStatusCode != null) {
+          return item.quotationStatusCode === filterDef.code;
+        }
+        if (filterDef?.label) {
+          return (
+            getStatusLabel(item.quotationStatus, item.quotationStatusCode) ===
+            filterDef.label
+          );
+        }
+        return item.quotationStatus
+          ?.toLowerCase()
+          .includes(statusFilter.toLowerCase());
+      });
       console.log(
-        `🏷️ Filtro stato '${statusFilter}': ${filtered.length} risultati`
+        `Filtro stato '${statusFilter}': ${filtered.length} risultati`,
       );
     }
 
@@ -322,10 +459,10 @@ const RicercaPreventivi: React.FC = () => {
           item.customerPhone?.toLowerCase().includes(searchTerm) ||
           item.deviceType?.toLowerCase().includes(searchTerm) ||
           item.deviceBrand?.toLowerCase().includes(searchTerm) ||
-          item.deviceModel?.toLowerCase().includes(searchTerm)
+          item.deviceModel?.toLowerCase().includes(searchTerm),
       );
       console.log(
-        `🔍 Filtro ricerca '${globalFilter}': ${filtered.length} risultati`
+        `🔍 Filtro ricerca '${globalFilter}': ${filtered.length} risultati`,
       );
     }
 
@@ -358,13 +495,13 @@ const RicercaPreventivi: React.FC = () => {
           return date >= startDate! && date <= endDate!;
         });
         console.log(
-          `📅 Filtro data ${startDate} - ${endDate}: ${filtered.length} risultati`
+          `📅 Filtro data ${startDate} - ${endDate}: ${filtered.length} risultati`,
         );
       }
     }
 
     console.log(
-      `✅ Filtro completato: ${filtered.length}/${allData.length} risultati`
+      `✅ Filtro completato: ${filtered.length}/${allData.length} risultati`,
     );
     setFilteredData(filtered);
   };
@@ -387,7 +524,7 @@ const RicercaPreventivi: React.FC = () => {
 
   // Funzione per calcolare le date basate sul tipo di filtro
   const calculateDateRange = (
-    filterType: string
+    filterType: string,
   ): { startDate: string; endDate: string } | null => {
     const now = new Date();
     let startDate: Date;
@@ -401,7 +538,7 @@ const RicercaPreventivi: React.FC = () => {
           now.getDate(),
           0,
           0,
-          0
+          0,
         );
         endDate = new Date(
           now.getFullYear(),
@@ -409,7 +546,7 @@ const RicercaPreventivi: React.FC = () => {
           now.getDate(),
           23,
           59,
-          59
+          59,
         );
         break;
       case "week": {
@@ -430,7 +567,7 @@ const RicercaPreventivi: React.FC = () => {
           0,
           23,
           59,
-          59
+          59,
         );
         break;
       case "year":
@@ -568,11 +705,14 @@ const RicercaPreventivi: React.FC = () => {
     setShowDetailModal(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/quotations/${quotation.id}`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+      const response = await fetch(
+        `${API_URL}/api/quotations/${quotation.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
         },
-      });
+      );
 
       if (response.ok) {
         const detailData = await response.json();
@@ -606,23 +746,6 @@ const RicercaPreventivi: React.FC = () => {
     });
   };
 
-  const getStatusBadgeClass = (status: string): string => {
-    switch (status?.toLowerCase()) {
-      case "prenotata":
-        return styles.statusConfermata;
-      case "in attesa":
-        return styles.statusPendente;
-      case "completata":
-        return styles.statusCompletata;
-      case "annullata":
-        return styles.statusAnnullata;
-      case "non pervenuta":
-        return styles.statusInCorso;
-      default:
-        return styles.statusDefault;
-    }
-  };
-
   const handleEditQuotation = (quotation: Quotation) => {
     navigate("/preventivi", {
       state: {
@@ -632,18 +755,153 @@ const RicercaPreventivi: React.FC = () => {
     });
   };
 
-  // 🆕 Handler per completare la riparazione
-  const handleConvertToRepair = (quotation: Quotation) => {
-    console.log("Converti in riparazione:", quotation);
-    alert("Conversione in riparazione non disponibile da questa schermata.");
+  const openAcceptModal = (quotation: Quotation) => {
+    setActionQuotation(quotation);
+    setActionError(null);
+    setActionLoading(false);
+    setShowRejectModal(false);
+    setShowAcceptModal(true);
   };
 
-  // 🆕 Handler per segnare come non pervenuta
-  const handleCancelQuotation = (quotation: Quotation) => {
-    console.log("Annulla preventivo:", quotation);
-    alert("Annullamento preventivo non disponibile da questa schermata.");
+  const openRejectModal = (quotation: Quotation) => {
+    setActionQuotation(quotation);
+    setActionError(null);
+    setActionLoading(false);
+    setShowAcceptModal(false);
+    setShowRejectModal(true);
   };
 
+  const closeAcceptModal = () => {
+    setShowAcceptModal(false);
+    setActionQuotation(null);
+    setActionError(null);
+  };
+
+  const closeRejectModal = () => {
+    setShowRejectModal(false);
+    setActionQuotation(null);
+    setActionError(null);
+  };
+
+  const updateQuotationInState = (updated: Quotation) => {
+    setAllData((prev) =>
+      prev.map((item) =>
+        item.id === updated.id ? { ...item, ...updated } : item,
+      ),
+    );
+    setFilteredData((prev) =>
+      prev.map((item) =>
+        item.id === updated.id ? { ...item, ...updated } : item,
+      ),
+    );
+    setSelectedQuotationDetail((prev) =>
+      prev && prev.id === updated.id ? { ...prev, ...updated } : prev,
+    );
+  };
+
+  const updateQuotationStatus = async (
+    quotation: Quotation,
+    nextStatusCode: number,
+  ) => {
+    const nextStatusLabel = getStatusLabel(undefined, nextStatusCode);
+    const payload = {
+      status: nextStatusLabel,
+      statusCode: String(nextStatusCode),
+      notes: "",
+      updatedBy:
+        sessionStorage.getItem("userId") ||
+        sessionStorage.getItem("username") ||
+        sessionStorage.getItem("userName") ||
+        sessionStorage.getItem("userEmail") ||
+        "Sistema",
+    };
+
+    console.log(
+      "Aggiornamento stato preventivo:\n",
+      JSON.stringify(payload, null, 2),
+    );
+    
+    const token = sessionStorage.getItem("token");
+    console.log("token", token)
+
+    const response = await fetch(
+      `${API_URL}/api/Quotations/${quotation.quotationId}/status`,
+      {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      },
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(
+        errText || `Errore ${response.status}: ${response.statusText}`,
+      );
+    }
+
+    let updatedQuotation: Quotation = {
+      ...quotation,
+      quotationStatus: nextStatusLabel,
+      quotationStatusCode: nextStatusCode,
+    };
+    try {
+      const data = await response.json();
+      if (data) {
+        updatedQuotation = { ...updatedQuotation, ...data };
+      }
+    } catch (err) {
+      // Response without body, keep payload
+    }
+
+    updateQuotationInState(updatedQuotation);
+    return updatedQuotation;
+  };
+
+  const handleConfirmAccept = async () => {
+    if (!actionQuotation) return;
+    setActionLoading(true);
+    setActionError(null);
+
+    try {
+      const updated = await updateQuotationStatus(actionQuotation, 2);
+      closeAcceptModal();
+      const targetId =
+        updated.quotationId ||
+        actionQuotation.quotationId ||
+        String(updated.id || "");
+      const query = targetId
+        ? `?quotationId=${encodeURIComponent(targetId)}`
+        : "";
+      window.location.href = `/accettazione${query}`;
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Errore sconosciuto",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleConfirmReject = async () => {
+    if (!actionQuotation) return;
+    setActionLoading(true);
+    setActionError(null);
+
+    try {
+      await updateQuotationStatus(actionQuotation, 3);
+      closeRejectModal();
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Errore sconosciuto",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
   // Funzione per caricare dati più vecchi
   const loadMoreData = async () => {
     try {
@@ -691,7 +949,7 @@ const RicercaPreventivi: React.FC = () => {
       const data = await response.json();
       const quotations = data.items || data;
       console.log(
-        `✅ Caricate ${quotations.length} preventivi estesi (3 anni)`
+        `✅ Caricate ${quotations.length} preventivi estesi (3 anni)`,
       );
 
       setAllData(quotations);
@@ -720,41 +978,8 @@ const RicercaPreventivi: React.FC = () => {
     });
 
   // Funzioni di utilità
-  const getStatusClass = (status: string): string => {
-    switch (status?.toLowerCase()) {
-      case "confermata":
-        return "statusConfermata";
-      case "pendente":
-        return "statusPendente";
-      case "completata":
-        return "statusCompletata";
-      case "annullata":
-        return "statusAnnullata";
-      case "in corso":
-        return "statusInCorso";
-      default:
-        return "statusDefault";
-    }
-  };
 
-  const getStatusIcon = (status: string): string => {
-    switch (status?.toLowerCase()) {
-      case "confermata":
-        return "✅";
-      case "pendente":
-        return "⌛";
-      case "completata":
-        return "🎉";
-      case "annullata":
-        return "❌";
-      case "in corso":
-        return "🔧";
-      default:
-        return "📋";
-    }
-  };
-
-  const getDeviceIcon = (deviceType: string): string => {
+  const getDeviceIcon = (deviceType?: string): string => {
     switch (deviceType?.toLowerCase()) {
       case "smartphone":
         return "📱";
@@ -784,9 +1009,7 @@ const RicercaPreventivi: React.FC = () => {
           <div className={styles.breadcrumb}>
             <span className={styles.breadcrumbItem}>Gestione Preventivi</span>
             <span className={styles.breadcrumbSeparator}> &gt; </span>
-            <span className={styles.breadcrumbCurrent}>
-              Ricerca Preventivi
-            </span>
+            <span className={styles.breadcrumbCurrent}>Ricerca Preventivi</span>
           </div>
         </div>
 
@@ -924,11 +1147,18 @@ const RicercaPreventivi: React.FC = () => {
                   }}
                 >
                   <option value="">Tutti gli stati</option>
-                  <option value="Confermata">✅ Confermata</option>
-                  <option value="Pendente">⌛ Pendente</option>
-                  <option value="Completata">🎉 Completata</option>
-                  <option value="Annullata">❌ Annullata</option>
-                  <option value="In Corso">🔧 In Corso</option>
+                  <option value="0">
+                    {getStatusIcon(undefined, 0)} Emesso
+                  </option>
+                  <option value="1">
+                    {getStatusIcon(undefined, 1)} Inviato
+                  </option>
+                  <option value="2">
+                    {getStatusIcon(undefined, 2)} Accettato
+                  </option>
+                  <option value="3">
+                    {getStatusIcon(undefined, 3)} Rifiutato
+                  </option>
                 </select>
 
                 {/* Filtro Temporale */}
@@ -1025,7 +1255,7 @@ const RicercaPreventivi: React.FC = () => {
                 <div className={styles.activeFilterTags}>
                   {statusFilter && (
                     <div className={styles.filterTag}>
-                      <span>Stato: {statusFilter}</span>
+                      <span>Stato: {getStatusFilterLabel(statusFilter)}</span>
                       <button onClick={() => setStatusFilter("")}>×</button>
                     </div>
                   )}
@@ -1111,7 +1341,7 @@ const RicercaPreventivi: React.FC = () => {
                                 ? null
                                 : flexRender(
                                     header.column.columnDef.header,
-                                    header.getContext()
+                                    header.getContext(),
                                   )}
                               <span className={styles.sortIndicator}>
                                 {{
@@ -1132,7 +1362,7 @@ const RicercaPreventivi: React.FC = () => {
                           <td key={cell.id}>
                             {flexRender(
                               cell.column.columnDef.cell,
-                              cell.getContext()
+                              cell.getContext(),
                             )}
                           </td>
                         ))}
@@ -1155,7 +1385,7 @@ const RicercaPreventivi: React.FC = () => {
                       {Math.min(
                         (table.getState().pagination.pageIndex + 1) *
                           table.getState().pagination.pageSize,
-                        table.getFilteredRowModel().rows.length
+                        table.getFilteredRowModel().rows.length,
                       )}
                     </strong>{" "}
                     di <strong>{filteredData.length}</strong> preventivi
@@ -1230,11 +1460,18 @@ const RicercaPreventivi: React.FC = () => {
                     </span>
                     <span
                       className={`${styles.statusBadge} ${getStatusBadgeClass(
-                        selectedQuotationDetail.quotationStatus
+                        selectedQuotationDetail.quotationStatus,
+                        selectedQuotationDetail.quotationStatusCode,
                       )}`}
                     >
-                      {getStatusIcon(selectedQuotationDetail.quotationStatus)}{" "}
-                      {selectedQuotationDetail.quotationStatus}
+                      {getStatusIcon(
+                        selectedQuotationDetail.quotationStatus,
+                        selectedQuotationDetail.quotationStatusCode,
+                      )}{" "}
+                      {getStatusLabel(
+                        selectedQuotationDetail.quotationStatus,
+                        selectedQuotationDetail.quotationStatusCode,
+                      )}
                     </span>
                   </div>
                 )}
@@ -1275,7 +1512,9 @@ const RicercaPreventivi: React.FC = () => {
                         <div className={styles.timelineContent}>
                           <strong>Creazione</strong>
                           <span>
-                            {formatDetailDate(selectedQuotationDetail.createdAt)}
+                            {formatDetailDate(
+                              selectedQuotationDetail.createdAt,
+                            )}
                           </span>
                         </div>
                       </div>
@@ -1286,7 +1525,7 @@ const RicercaPreventivi: React.FC = () => {
                           <strong>Data Preventivo</strong>
                           <span>
                             {formatDetailDate(
-                              selectedQuotationDetail.quotationDateTime
+                              selectedQuotationDetail.quotationDateTime,
                             )}
                           </span>
                         </div>
@@ -1332,15 +1571,30 @@ const RicercaPreventivi: React.FC = () => {
                         <div className={styles.repairDetailGrid}>
                           <div className={styles.repairDetailField}>
                             <label>Tipo:</label>
-                            <span>{selectedQuotationDetail.deviceType || "N/A"}</span>
+                            <span>
+                              {selectedQuotationDetail.deviceType || "N/A"}
+                            </span>
                           </div>
                           <div className={styles.repairDetailField}>
                             <label>Marca:</label>
-                            <span>{selectedQuotationDetail.deviceBrand || "N/A"}</span>
+                            <span>
+                              {selectedQuotationDetail.deviceBrand || "N/A"}
+                            </span>
                           </div>
                           <div className={styles.repairDetailField}>
                             <label>Modello:</label>
-                            <span>{selectedQuotationDetail.deviceModel || "N/A"}</span>
+                            <span>
+                              {selectedQuotationDetail.deviceModel || "N/A"}
+                            </span>
+                          </div>
+                          <div className={styles.repairDetailField}>
+                            <label>Seriale / IMEI:</label>
+                            <span className={styles.serialNumber}>
+                              {selectedQuotationDetail.deviceSerialNumber ||
+                                selectedQuotationDetail.serialNumber ||
+                                selectedQuotationDetail.imei ||
+                                "N/A"}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1354,36 +1608,61 @@ const RicercaPreventivi: React.FC = () => {
                         <div className={styles.repairDetailGrid}>
                           <div className={styles.repairDetailField}>
                             <label>Stato:</label>
-                            <span>{selectedQuotationDetail.quotationStatus}</span>
+                            <span>
+                              {getStatusLabel(
+                                selectedQuotationDetail.quotationStatus,
+                                selectedQuotationDetail.quotationStatusCode,
+                              )}
+                            </span>
                           </div>
                           {selectedQuotationDetail.technicianName && (
                             <div className={styles.repairDetailField}>
                               <label>Tecnico Assegnato:</label>
-                              <span>{selectedQuotationDetail.technicianName}</span>
+                              <span>
+                                {selectedQuotationDetail.technicianName}
+                              </span>
                             </div>
                           )}
                           {selectedQuotationDetail.componentIssue && (
                             <div className={styles.repairDetailField}>
                               <label>Componente:</label>
-                              <span>{selectedQuotationDetail.componentIssue}</span>
+                              <span>
+                                {selectedQuotationDetail.componentIssue}
+                              </span>
                             </div>
                           )}
                           {selectedQuotationDetail.problemDescription && (
                             <div className={styles.repairDetailField}>
                               <label>Descrizione:</label>
-                              <span>{selectedQuotationDetail.problemDescription}</span>
+                              <span>
+                                {selectedQuotationDetail.problemDescription}
+                              </span>
                             </div>
                           )}
-                          {typeof selectedQuotationDetail.estimatedPrice === "number" && (
-                            <div className={styles.repairDetailField}>
+                          {typeof selectedQuotationDetail.estimatedPrice ===
+                            "number" && (
+                            <div
+                              className={`${styles.repairDetailField} ${styles.priceHighlight}`}
+                            >
                               <label>Prezzo Stimato:</label>
-                              <span>EUR {selectedQuotationDetail.estimatedPrice.toFixed(2)}</span>
+                              <span>
+                                EUR{" "}
+                                {selectedQuotationDetail.estimatedPrice.toFixed(
+                                  2,
+                                )}
+                              </span>
                             </div>
                           )}
-                          {typeof selectedQuotationDetail.finalPrice === "number" && (
-                            <div className={styles.repairDetailField}>
+                          {typeof selectedQuotationDetail.finalPrice ===
+                            "number" && (
+                            <div
+                              className={`${styles.repairDetailField} ${styles.priceHighlight}`}
+                            >
                               <label>Prezzo Finale:</label>
-                              <span>EUR {selectedQuotationDetail.finalPrice.toFixed(2)}</span>
+                              <span>
+                                EUR{" "}
+                                {selectedQuotationDetail.finalPrice.toFixed(2)}
+                              </span>
                             </div>
                           )}
                           {selectedQuotationDetail.paymentType && (
@@ -1395,7 +1674,11 @@ const RicercaPreventivi: React.FC = () => {
                           {selectedQuotationDetail.validUntil && (
                             <div className={styles.repairDetailField}>
                               <label>Valido fino al:</label>
-                              <span>{formatDetailDate(selectedQuotationDetail.validUntil)}</span>
+                              <span>
+                                {formatDetailDate(
+                                  selectedQuotationDetail.validUntil,
+                                )}
+                              </span>
                             </div>
                           )}
                           {selectedQuotationDetail.notes && (
@@ -1419,6 +1702,129 @@ const RicercaPreventivi: React.FC = () => {
                 onClick={closeDetailModal}
               >
                 Chiudi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showAcceptModal && actionQuotation && (
+        <div className={styles.modalOverlay} onClick={closeAcceptModal}>
+          <div
+            className={`${styles.repairDetailModal} ${styles.repairActionModal}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.repairDetailHeader}>
+              <div className={styles.repairDetailTitleSection}>
+                <h2>Accetta preventivo</h2>
+                <div className={styles.repairDetailCodeAndStatus}>
+                  <span className={styles.repairDetailCode}>
+                    {actionQuotation.quotationCode ||
+                      actionQuotation.quotationId}
+                  </span>
+                </div>
+              </div>
+              <button
+                className={styles.repairDetailCloseBtn}
+                onClick={closeAcceptModal}
+                title="Chiudi"
+              >
+                x
+              </button>
+            </div>
+            <div className={styles.repairDetailBody}>
+              {actionError && (
+                <div className={styles.repairDetailError}>
+                  <i className="fa-solid fa-exclamation-triangle"></i>
+                  <span>{actionError}</span>
+                </div>
+              )}
+              <div className={styles.repairDetailSection}>
+                {" "}
+                <h3 className={styles.actionModalTitle}>
+                  Confermi di accettare il preventivo?
+                </h3>{" "}
+                <p className={styles.actionModalText}>
+                  {" "}
+                  Accettando il preventivo, verrai reindirizzato alla pagina di
+                  accettazione con i dati già precompilati per procedere con la
+                  riparazione.{" "}
+                </p>{" "}
+              </div>
+            </div>
+            <div className={styles.repairDetailFooter}>
+              <button
+                className={styles.accBtnSecondary}
+                onClick={closeAcceptModal}
+                disabled={actionLoading}
+              >
+                Annulla
+              </button>
+              <button
+                className={styles.accBtnPrimary}
+                onClick={handleConfirmAccept}
+                disabled={actionLoading}
+              >
+                {actionLoading
+                  ? "Salvataggio..."
+                  : "Accetta e vai in accettazione"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRejectModal && actionQuotation && (
+        <div className={styles.modalOverlay} onClick={closeRejectModal}>
+          <div
+            className={`${styles.repairDetailModal} ${styles.repairActionModal}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.repairDetailHeader}>
+              <div className={styles.repairDetailTitleSection}>
+                <h2>Rifiuta preventivo</h2>
+                <div className={styles.repairDetailCodeAndStatus}>
+                  <span className={styles.repairDetailCode}>
+                    {actionQuotation.quotationCode ||
+                      actionQuotation.quotationId}
+                  </span>
+                </div>
+              </div>
+              <button
+                className={styles.repairDetailCloseBtn}
+                onClick={closeRejectModal}
+                title="Chiudi"
+              >
+                x
+              </button>
+            </div>
+            <div className={styles.repairDetailBody}>
+              {actionError && (
+                <div className={styles.repairDetailError}>
+                  <i className="fa-solid fa-exclamation-triangle"></i>
+                  <span>{actionError}</span>
+                </div>
+              )}
+              <div className={styles.repairDetailSection}>
+                <p className={styles.actionModalWarning}>
+                  Vuoi confermare il rifiuto del preventivo? Questa azione
+                  aggiornerà lo stato in Rifiutato.
+                </p>
+              </div>
+            </div>
+            <div className={styles.repairDetailFooter}>
+              <button
+                className={styles.accBtnSecondary}
+                onClick={closeRejectModal}
+                disabled={actionLoading}
+              >
+                Annulla
+              </button>
+              <button
+                className={styles.accBtnDanger}
+                onClick={handleConfirmReject}
+                disabled={actionLoading}
+              >
+                {actionLoading ? "Salvataggio..." : "Conferma rifiuto"}
               </button>
             </div>
           </div>

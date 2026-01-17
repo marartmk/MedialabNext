@@ -88,12 +88,14 @@ const Accettazione: React.FC = () => {
   const [searchParams] = useSearchParams();
   const noteIdFromQuery = searchParams.get("noteId");
   const bookingIdFromQuery = searchParams.get("bookingId");
+  const quotationIdFromQuery = searchParams.get("quotationId");
 
   // 🆕 Stato per sapere se stiamo caricando i dati da una nota
   const [isLoadingFromNote, setIsLoadingFromNote] = useState(false);
 
   // 🆕 Stato per sapere se stiamo caricando i dati da un booking
   const [isLoadingFromBooking, setIsLoadingFromBooking] = useState(false);
+  const [isLoadingFromQuotation, setIsLoadingFromQuotation] = useState(false);
 
   // Stati per la ricerca cliente
   const [searchQuery, setSearchQuery] = useState("");
@@ -141,6 +143,15 @@ const Accettazione: React.FC = () => {
   const [signatureData, setSignatureData] = useState<string | null>(null);
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [showSignatureQrModal, setShowSignatureQrModal] = useState(false);
+  const [signatureAccessKey, setSignatureAccessKey] = useState<string | null>(
+    null,
+  );
+  const [signatureAccessUrl, setSignatureAccessUrl] = useState<string | null>(
+    null,
+  );
+  const [isCreatingAccessKey, setIsCreatingAccessKey] = useState(false);
+  const [accessKeyError, setAccessKeyError] = useState<string | null>(null);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -541,6 +552,13 @@ const Accettazione: React.FC = () => {
     }
   }, [bookingIdFromQuery]);
 
+  useEffect(() => {
+    if (quotationIdFromQuery && !isLoadingFromQuotation) {
+      console.log("Caricamento preventivo con ID:", quotationIdFromQuery);
+      loadQuotationDataForRepair(quotationIdFromQuery);
+    }
+  }, [quotationIdFromQuery]);
+
   // Funzioni per la gestione della firma digitale
   const startDrawing = (
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
@@ -629,6 +647,75 @@ const Accettazione: React.FC = () => {
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }, 100);
+  };
+
+  const handleOpenSignatureQr = async () => {
+    if (!repairGuid) {
+      alert("Salva prima l'accettazione per poter firmare.");
+      return;
+    }
+
+    if (isCreatingAccessKey) return;
+    setIsCreatingAccessKey(true);
+    setAccessKeyError(null);
+
+    try {
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const createdBy = sessionStorage.getItem("userId") || "";
+      const response = await fetch(`${API_URL}/api/Signature/generateKey`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceId: repairGuid,
+          areaId: "9b40e7a0-9b87-4c12-9d9c-9f5208f3f3f6",
+          areaName: "Accettazione",
+          createdBy,
+          expiresAt: expiresAt.toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || "Errore nella creazione access key");
+      }
+
+      const data = await response.json();
+      const accessKey = data?.accessKey || data?.key || data?.token;
+      if (!accessKey) {
+        throw new Error("Access key non disponibile nella risposta");
+      }
+
+      const accessUrl = `${window.location.origin}/firma-accettazione-ext?accessKey=${encodeURIComponent(
+        accessKey,
+      )}`;
+      setSignatureAccessKey(accessKey);
+      setSignatureAccessUrl(accessUrl);
+      setShowSignatureQrModal(true);
+    } catch (error) {
+      console.error("Errore creazione access key:", error);
+      const message =
+        error instanceof Error ? error.message : "Errore nella richiesta";
+      setAccessKeyError(message);
+      alert(
+        "Errore nella creazione della chiave di accesso.\n" + message,
+      );
+    } finally {
+      setIsCreatingAccessKey(false);
+    }
+  };
+
+  const handleCopySignatureLink = async () => {
+    if (!signatureAccessUrl) return;
+    try {
+      await navigator.clipboard.writeText(signatureAccessUrl);
+      alert("Link copiato negli appunti.");
+    } catch (error) {
+      console.error("Errore copia link:", error);
+      alert("Impossibile copiare il link. Copialo manualmente.");
+    }
   };
 
   // Funzione per la ricerca telefono di cortesia con debouncing
@@ -910,6 +997,47 @@ const Accettazione: React.FC = () => {
     }
   };
 
+  const loadQuotationDataForRepair = async (quotationGuid: string) => {
+    setIsLoadingFromQuotation(true);
+
+    try {
+      const token = sessionStorage.getItem("token");
+
+      console.log("Chiamata API per preventivo:", quotationGuid);
+
+      const response = await fetch(
+        `${API_URL}/api/quotations/guid/${quotationGuid}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Errore ${response.status}: impossibile caricare il preventivo`
+        );
+      }
+
+      const quotationData = await response.json();
+      console.log("Dati preventivo caricati:", quotationData);
+
+      await prePopulateFormFromQuotation(quotationData);
+
+      alert(
+        "Dati del preventivo caricati con successo!\n\nControlla i campi pre-compilati."
+      );
+    } catch (error) {
+      console.error("Errore durante il caricamento preventivo:", error);
+      alert(
+        "Impossibile caricare i dati del preventivo.\n\nVerifica che il preventivo esista."
+      );
+    } finally {
+      setIsLoadingFromQuotation(false);
+    }
+  };
+
   // 🆕 Funzione per pre-compilare il form con i dati della nota
   interface QuickNoteData {
     customerId?: string;
@@ -950,6 +1078,25 @@ const Accettazione: React.FC = () => {
     bookingStatus: string;
     bookingStatusCode: string;
     notes: string;
+    [key: string]: unknown;
+  }
+
+  interface QuickQuotationData {
+    customerId?: string;
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    deviceType?: string;
+    deviceBrand?: string;
+    deviceModel?: string;
+    componentIssue?: string;
+    problemDescription?: string;
+    estimatedPrice?: number | string | null;
+    finalPrice?: number | string | null;
+    price?: number | string | null;
+    quotationPrice?: number | string | null;
+    paymentType?: string;
+    billingInfo?: string;
     [key: string]: unknown;
   }
 
@@ -1086,6 +1233,80 @@ const Accettazione: React.FC = () => {
   };
 
   // 🆕 Carica e seleziona automaticamente un cliente esistente
+  const prePopulateFormFromQuotation = async (
+    quotationData: QuickQuotationData
+  ) => {
+    console.log("Pre-compilazione form da preventivo:", quotationData);
+
+    // ==================== CLIENTE ====================
+    if (quotationData.customerId) {
+      console.log("Caricamento cliente con ID:", quotationData.customerId);
+      await loadAndSelectCustomer(quotationData.customerId);
+    } else {
+      console.log("Inserimento dati cliente come testo (nessun ID)");
+
+      const fullName = `${quotationData.customerName || ""}`.trim();
+      setSearchQuery(fullName);
+
+      const [nome, ...cognomeParts] = fullName.split(" ").filter(Boolean);
+      const cognome = cognomeParts.join(" ");
+
+      setClienteData({
+        email: (quotationData.customerEmail as string) || "",
+        nome: nome || "",
+        cognome: cognome || "",
+        telefono: (quotationData.customerPhone as string) || "",
+        cap: "",
+      });
+    }
+
+    // ==================== DISPOSITIVO ====================
+    const deviceName = `${quotationData.deviceBrand || ""} ${
+      quotationData.deviceModel || ""
+    }`.trim();
+    setDeviceSearchQuery(deviceName);
+
+    setDispositivoData({
+      serialNumber: "",
+      brand: (quotationData.deviceBrand as string) || "",
+      model: (quotationData.deviceModel as string) || "",
+      deviceType: (quotationData.deviceType as string) || "Mobile",
+      color: "",
+      unlockCode: "",
+      courtesyPhone: "",
+    });
+
+    // ==================== RIPARAZIONE ====================
+    const normalizePrice = (value: unknown) => {
+      if (typeof value === "number") return value;
+      if (typeof value === "string") {
+        const parsed = Number(value.replace(",", "."));
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+      return 0;
+    };
+
+    const rawPrice =
+      quotationData.estimatedPrice ??
+      quotationData.finalPrice ??
+      quotationData.price ??
+      quotationData.quotationPrice ??
+      0;
+
+    setRepairData({
+      ...repairData,
+      faultDeclared:
+        (quotationData.problemDescription as string) ||
+        (quotationData.componentIssue as string) ||
+        "",
+      estimatedPrice: normalizePrice(rawPrice),
+      paymentType: (quotationData.paymentType as string) || "",
+      billingInfo: (quotationData.billingInfo as string) || "",
+    });
+
+    console.log("Pre-compilazione completata");
+  };
+
   const loadAndSelectCustomer = async (customerId: string) => {
     try {
       const token = sessionStorage.getItem("token");
@@ -3194,6 +3415,13 @@ const Accettazione: React.FC = () => {
                   >
                     🖨️ Stampa Accettazione
                   </button>
+                  <button
+                    className={`${styles.btn} ${styles.btnSignature}`}
+                    onClick={handleOpenSignatureQr}
+                    disabled={isCreatingAccessKey}
+                  >
+                    {isCreatingAccessKey ? "Generando..." : "Firma"}
+                  </button>
                 </>
               )}
             </div>
@@ -3201,6 +3429,90 @@ const Accettazione: React.FC = () => {
         </div>
         <BottomBar />
       </div>
+
+
+      {/* Modal QR Firma Accettazione */}
+      {showSignatureQrModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowSignatureQrModal(false)}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h4>Firma da Tablet</h4>
+              <button
+                type="button"
+                className={styles.modalCloseButton}
+                onClick={() => setShowSignatureQrModal(false)}
+              >
+                x
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div className={styles.qrContent}>
+                <div className={styles.qrBox}>
+                  {signatureAccessUrl ? (
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+                        signatureAccessUrl
+                      )}`}
+                      alt="QR firma accettazione"
+                      className={styles.qrImage}
+                    />
+                  ) : (
+                    <div className={styles.qrPlaceholder}>QR non disponibile</div>
+                  )}
+                </div>
+                <div className={styles.qrInfo}>
+                  <div className={styles.qrTitle}>
+                    Scansiona il QR con il tablet
+                  </div>
+                  <div className={styles.qrText}>
+                    Apri la pagina di firma esterna per l'accettazione.
+                  </div>
+                  <div className={styles.qrLink}>
+                    {signatureAccessUrl || "Link non disponibile"}
+                  </div>
+                  {accessKeyError && (
+                    <div className={styles.qrError}>{accessKeyError}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => setShowSignatureQrModal(false)}
+              >
+                Chiudi
+              </button>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={handleCopySignatureLink}
+                disabled={!signatureAccessUrl}
+              >
+                Copia Link
+              </button>
+              {signatureAccessUrl && (
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  onClick={() => window.open(signatureAccessUrl, "_blank")}
+                >
+                  Apri Link
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal per inserimento nuovo cliente */}
       {showNewClientModal && (
