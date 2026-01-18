@@ -22,6 +22,27 @@ const Dashboard: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<string>("");
   const [isAiTyping, setIsAiTyping] = useState<boolean>(false);
   const [aiError, setAiError] = useState<string>("");
+  const [paymentTotals, setPaymentTotals] = useState({
+    year: 0,
+    month: 0,
+    day: 0,
+  });
+  const [repairStats, setRepairStats] = useState({
+    total: 0,
+    breakdown: {
+      RECEIVED: 0,
+      DELIVERED: 0,
+      IN_PROGRESS: 0,
+      PENDING: 0,
+      COMPLETED: 0,
+    },
+  });
+  const [customerTotal, setCustomerTotal] = useState(0);
+  const [salesByCondition, setSalesByCondition] = useState({
+    total: 0,
+    used: 0,
+    new: 0,
+  });
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -60,6 +81,211 @@ const Dashboard: React.FC = () => {
       setMenuState("closed");
     }
   }, []);
+
+  useEffect(() => {
+    const fetchPaymentTotals = async () => {
+      const token = sessionStorage.getItem("token");
+      const companyId =
+        sessionStorage.getItem("IdCompanyAdmin") ||
+        sessionStorage.getItem("IdCompany");
+
+      if (!token || !companyId) return;
+
+      const formatDate = (date: Date) => {
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        const yyyy = date.getFullYear();
+        return `${mm}/${dd}/${yyyy}`;
+      };
+
+      const fetchStats = async (start: Date, end: Date) => {
+        const url = `${API_URL}/api/RepairPayments/statistics?startDate=${formatDate(
+          start
+        )}&endDate=${formatDate(end)}&IdCompany=${companyId}`;
+        const resp = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!resp.ok) {
+          throw new Error(await resp.text());
+        }
+        const json = await resp.json();
+        return Number(json?.TotalRevenue ?? 0);
+      };
+
+      try {
+        const now = new Date();
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        const yearEnd = new Date(now.getFullYear(), 11, 31);
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const dayStart = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
+        const dayEnd = dayStart;
+
+        const [year, month, day] = await Promise.all([
+          fetchStats(yearStart, yearEnd),
+          fetchStats(monthStart, monthEnd),
+          fetchStats(dayStart, dayEnd),
+        ]);
+
+        setPaymentTotals({ year, month, day });
+      } catch (err) {
+        console.error("Errore nel caricamento totali pagamenti:", err);
+      }
+    };
+
+    fetchPaymentTotals();
+  }, [API_URL]);
+
+  useEffect(() => {
+    const fetchRepairStats = async () => {
+      const token = sessionStorage.getItem("token");
+      const companyId =
+        sessionStorage.getItem("IdCompanyAdmin") ||
+        sessionStorage.getItem("IdCompany");
+
+      if (!token || !companyId) return;
+
+      const formatDate = (date: Date) => {
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        const yyyy = date.getFullYear();
+        return `${mm}/${dd}/${yyyy}`;
+      };
+
+      try {
+        const now = new Date();
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        const yearEnd = new Date(now.getFullYear(), 11, 31);
+        const url = `${API_URL}/api/Repair/stats?idCompany=${companyId}&startDate=${encodeURIComponent(
+          formatDate(yearStart)
+        )}&endDate=${encodeURIComponent(formatDate(yearEnd))}`;
+
+        const resp = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!resp.ok) {
+          throw new Error(await resp.text());
+        }
+        const json = await resp.json();
+        setRepairStats({
+          total: Number(json?.totalRepairs ?? 0),
+          breakdown: {
+            RECEIVED: Number(json?.breakdown?.RECEIVED ?? 0),
+            DELIVERED: Number(json?.breakdown?.DELIVERED ?? 0),
+            IN_PROGRESS: Number(json?.breakdown?.IN_PROGRESS ?? 0),
+            PENDING: Number(json?.breakdown?.PENDING ?? 0),
+            COMPLETED: Number(json?.breakdown?.COMPLETED ?? 0),
+          },
+        });
+      } catch (err) {
+        console.error("Errore nel caricamento statistiche riparazioni:", err);
+      }
+    };
+
+    fetchRepairStats();
+  }, [API_URL]);
+
+  useEffect(() => {
+    const fetchCustomerStats = async () => {
+      const token = sessionStorage.getItem("token");
+      const companyId =
+        sessionStorage.getItem("IdCompanyAdmin") ||
+        sessionStorage.getItem("IdCompany");
+
+      if (!token || !companyId) return;
+
+      try {
+        const url = `${API_URL}/api/Customer/stats?idCompany=${companyId}`;
+        const resp = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!resp.ok) {
+          throw new Error(await resp.text());
+        }
+        const json = await resp.json();
+        setCustomerTotal(Number(json?.totalCustomers ?? 0));
+      } catch (err) {
+        console.error("Errore nel caricamento totali clienti:", err);
+      }
+    };
+
+    fetchCustomerStats();
+  }, [API_URL]);
+
+  useEffect(() => {
+    const fetchSalesByCondition = async () => {
+      const token = sessionStorage.getItem("token");
+      const companyId =
+        sessionStorage.getItem("IdCompanyAdmin") ||
+        sessionStorage.getItem("IdCompany");
+
+      if (!token || !companyId) return;
+
+      const formatDate = (date: Date) => {
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        const yyyy = date.getFullYear();
+        return `${mm}/${dd}/${yyyy}`;
+      };
+
+      try {
+        const now = new Date();
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        const yearEnd = new Date(now.getFullYear(), 11, 31);
+        const url = `${API_URL}/api/Sale/statistics?multitenantId=${companyId}&fromDate=${encodeURIComponent(
+          formatDate(yearStart)
+        )}&toDate=${encodeURIComponent(formatDate(yearEnd))}`;
+
+        const resp = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!resp.ok) {
+          throw new Error(await resp.text());
+        }
+        const json = await resp.json();
+        const condition = Array.isArray(json?.salesByCondition)
+          ? json.salesByCondition[0]
+          : null;
+        setSalesByCondition({
+          total: Number(condition?.total ?? 0),
+          used: Number(condition?.used ?? 0),
+          new: Number(condition?.new ?? 0),
+        });
+      } catch (err) {
+        console.error("Errore nel caricamento vendite per condizione:", err);
+      }
+    };
+
+    fetchSalesByCondition();
+  }, [API_URL]);
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("it-IT", {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 2,
+    }).format(value);
+
+  const successRate =
+    repairStats.total > 0
+      ? Math.round((repairStats.breakdown.COMPLETED / repairStats.total) * 100)
+      : 0;
 
   // Gestione del toggle del menu
   const toggleMenu = () => {
@@ -424,23 +650,28 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
               <div className="box purple">
                 <i className="fa-solid fa-sack-dollar icon"></i>
                 <div className="text">
-                  <span>Totale</span>
-                  <span>Mese</span>
-                  <span>Oggi</span>
+                  <span>Anno: {formatCurrency(paymentTotals.year)}</span>
+                  <span>Mese: {formatCurrency(paymentTotals.month)}</span>
+                  <span>Oggi: {formatCurrency(paymentTotals.day)}</span>
                 </div>
               </div>
               <div className="box dark">
                 <i className="fa-solid fa-screwdriver icon"></i>
                 <div className="text">
-                  <span>Riparazioni</span>
+                  <span>Riparazioni: {repairStats.total}</span>
+                  <span>Ricevute: {repairStats.breakdown.RECEIVED}</span>
+                  <span>In lavorazione: {repairStats.breakdown.IN_PROGRESS}</span>
+                  <span>In attesa: {repairStats.breakdown.PENDING}</span>
+                  <span>Completate: {repairStats.breakdown.COMPLETED}</span>
+                  <span>Consegnate: {repairStats.breakdown.DELIVERED}</span>
                 </div>
               </div>
               <div className="box dark">
                 <i className="fa-solid fa-mobile-screen-button icon"></i>
                 <div className="text">
-                  <span>Vendite Dispositivi</span>
-                  <span>Usato</span>
-                  <span>Nuovo</span>
+                  <span>Vendite Dispositivi: {salesByCondition.total}</span>
+                  <span>Usato: {salesByCondition.used}</span>
+                  <span>Nuovo: {salesByCondition.new}</span>
                 </div>
               </div>
               <div className="box grey">
@@ -480,7 +711,7 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
                   <i className="fa-solid fa-user"></i>
                 </div>
                 <span>
-                  <strong>1240</strong> Clienti
+                  <strong>{customerTotal}</strong> Clienti
                 </span>
               </div>
 
@@ -489,13 +720,13 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
                   <i className="fa-solid fa-screwdriver-wrench icon-large"></i>
                 </div>
                 <span>
-                  <strong>2950</strong> Riparazioni
+                  <strong>{repairStats.total}</strong> Riparazioni
                 </span>
               </div>
 
               <div className="stats-box-dashboard">
                 <span className="success-rate">
-                  <strong className="big-number">98%</strong>
+                  <strong className="big-number">{successRate}%</strong>
                   <span className="small-text">Rip. svolte con successo</span>
                 </span>
               </div>

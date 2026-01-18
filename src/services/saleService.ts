@@ -7,6 +7,7 @@ export interface CreateSaleRequest {
   deviceId?: string;
   deviceRegistryId?: number;
   accessoryId?: number;
+  deviceCondition?: string;
   brand: string;
   model: string;
   serialNumber?: string;

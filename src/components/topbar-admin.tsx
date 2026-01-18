@@ -513,6 +513,13 @@ const Topbar: React.FC<TopbarProps> = () => {
             >
               <i className="fa-solid fa-chart-bar"></i>
             </button>
+            <button
+              className="topbar-icon-button"
+              onClick={() => navigate("/impostazioni")}
+              title="Impostazioni"
+            >
+              <i className="fa-solid fa-gear"></i>
+            </button>
             <button 
               className="topbar-icon-button"
               onClick={confirmLogout}

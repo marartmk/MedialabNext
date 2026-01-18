@@ -650,15 +650,16 @@ const Vendite: React.FC = () => {
       const remainingAmount = totalAmount;
 
       // Prepara i dati per la chiamata API
-      const saleData: CreateSaleRequest = {
-        saleType: "Device", // Vendita di dispositivo
-        deviceId: selectedDevice?.deviceId,
-        deviceRegistryId: selectedDevice?.id
-          ? (typeof selectedDevice.id === "string"
-              ? parseInt(selectedDevice.id, 10)
-              : Number(selectedDevice.id))
-          : undefined,
-        brand: dispositivoData.brand,
+        const saleData: CreateSaleRequest = {
+          saleType: "Device", // Vendita di dispositivo
+          deviceId: selectedDevice?.deviceId,
+          deviceRegistryId: selectedDevice?.id
+            ? (typeof selectedDevice.id === "string"
+                ? parseInt(selectedDevice.id, 10)
+                : Number(selectedDevice.id))
+            : undefined,
+          deviceCondition: dispositivoData.condizione,
+          brand: dispositivoData.brand,
         model: dispositivoData.model,
         serialNumber: dispositivoData.serialNumber || undefined,
         imei: selectedDevice?.imei || undefined,

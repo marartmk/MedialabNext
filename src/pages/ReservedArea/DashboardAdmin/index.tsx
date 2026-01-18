@@ -68,6 +68,11 @@ const DashboardAdmin: React.FC = () => {
   );
   const [accounts, setAccounts] = useState<UserAccount[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [paymentTotals, setPaymentTotals] = useState({
+    year: 0,
+    month: 0,
+    day: 0,
+  });
 
   // 🔹 Config base API (opzionale: meglio da .env)
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
@@ -279,6 +284,74 @@ const DashboardAdmin: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const fetchPaymentTotals = async () => {
+      const token = sessionStorage.getItem("token");
+      const companyId =
+        sessionStorage.getItem("IdCompanyAdmin") ||
+        sessionStorage.getItem("IdCompany");
+
+      if (!token || !companyId) return;
+
+      const formatDate = (date: Date) => {
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        const yyyy = date.getFullYear();
+        return `${mm}/${dd}/${yyyy}`;
+      };
+
+      const fetchStats = async (start: Date, end: Date) => {
+        const url = `${API_URL}/api/RepairPayments/statistics?startDate=${formatDate(
+          start
+        )}&endDate=${formatDate(end)}&IdCompany=${companyId}`;
+        const resp = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!resp.ok) {
+          throw new Error(await resp.text());
+        }
+        const json = await resp.json();
+        return Number(json?.TotalRevenue ?? 0);
+      };
+
+      try {
+        const now = new Date();
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        const yearEnd = new Date(now.getFullYear(), 11, 31);
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const dayStart = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
+        const dayEnd = dayStart;
+
+        const [year, month, day] = await Promise.all([
+          fetchStats(yearStart, yearEnd),
+          fetchStats(monthStart, monthEnd),
+          fetchStats(dayStart, dayEnd),
+        ]);
+
+        setPaymentTotals({ year, month, day });
+      } catch (err) {
+        console.error("Errore nel caricamento totali pagamenti:", err);
+      }
+    };
+
+    fetchPaymentTotals();
+  }, [API_URL]);
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("it-IT", {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 2,
+    }).format(value);
+
   // Gestione del toggle del menu
   const toggleMenu = () => {
     const newState = menuState === "open" ? "closed" : "open";
@@ -347,9 +420,9 @@ const DashboardAdmin: React.FC = () => {
             <div className="box purple">
               <i className="fa-solid fa-sack-dollar icon"></i>
               <div className="text">
-                <span>Totale</span>
-                <span>Mese</span>
-                <span>Oggi</span>
+                <span>Anno: {formatCurrency(paymentTotals.year)}</span>
+                <span>Mese: {formatCurrency(paymentTotals.month)}</span>
+                <span>Oggi: {formatCurrency(paymentTotals.day)}</span>
               </div>
             </div>
             <div className="box dark">

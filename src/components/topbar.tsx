@@ -145,22 +145,6 @@ const Topbar: React.FC<TopbarProps> = () => {
                 <li>
                   <button
                     className="dropdown-item"
-                    onClick={() => navigate("/vendite/dispositivo-usato")}
-                  >
-                    Dispositivo Usato
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => navigate("/vendite/dispositivo-nuovo")}
-                  >
-                    Dispositivo Nuovo
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="dropdown-item"
                     onClick={() => navigate("/ricerca-vendite")}
                   >
                     Ricerca Vendite
@@ -299,6 +283,13 @@ const Topbar: React.FC<TopbarProps> = () => {
               aria-label={`Profilo: ${currentUserName}`}
             >
               <i className="fa-solid fa-user"></i>
+            </button>
+            <button
+              className="topbar-icon-button"
+              onClick={() => navigate("/impostazioni")}
+              title="Impostazioni"
+            >
+              <i className="fa-solid fa-gear"></i>
             </button>
             <button
               className="topbar-icon-button"
