@@ -18,6 +18,7 @@ import Modifica from "./pages/Modifica";
 import Magazzino from "./pages/Magazzino";
 import Logistica from "./pages/Logistica";
 import Operators from "./pages/ReservedArea/AnagraficaOperatori";
+import UserProfile from "./pages/User";
 import ConsegnaCliente from "./pages/ConsegnaCliente";
 import NotaRiparazione from "./pages/NotaRiparazione";
 import RicercaNote from "./pages/RicercaNote";
@@ -179,6 +180,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Operators />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user"
+        element={
+          <ProtectedRoute>
+            <UserProfile />
           </ProtectedRoute>
         }
       />

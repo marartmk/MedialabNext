@@ -201,7 +201,7 @@ const AffiliateManagement: React.FC = () => {
   // Stato per fullscreen della mappa
   const [isMapFullscreen, setIsMapFullscreen] = useState<boolean>(false);
 
-  const GOOGLE_MAPS_API_KEY = "AIzaSyBdIcimFZ-qXj-7YzYX0kbCGGxIpAnOA0I";
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   // Definisci le colonne usando createColumnHelper
   const columnHelper = createColumnHelper<CustomerData>();
@@ -274,6 +274,11 @@ const AffiliateManagement: React.FC = () => {
 
   // Carica Google Maps
   useEffect(() => {
+    if (!GOOGLE_MAPS_API_KEY) {
+      console.error("VITE_GOOGLE_MAPS_API_KEY non configurata");
+      return;
+    }
+
     const ready = () => !!window.google && !!window.google.maps;
 
     if (ready()) {

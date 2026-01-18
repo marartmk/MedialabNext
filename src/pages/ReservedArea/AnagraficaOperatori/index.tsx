@@ -84,6 +84,7 @@ const Operators: React.FC = () => {
 
   const [operatorUsers, setOperatorUsers] = useState<UserDetail[]>([]);
   const [selectedOpUserId, setSelectedOpUserId] = useState<string | null>(null);
+  const [isAccountEnabled, setIsAccountEnabled] = useState(false);
   const [accountForm, setAccountForm] = useState({
     username: "",
     email: "",
@@ -94,6 +95,7 @@ const Operators: React.FC = () => {
     isAdmin: false,
   });
   const [isSavingAccount, setIsSavingAccount] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // Dati aziendali per la stampa
   const companyName =
@@ -155,11 +157,11 @@ const Operators: React.FC = () => {
         ? [json]
         : [];
 
-      // Teniamo solo gli utenti legati all'operatore (idWhr === opId)
+      // Teniamo solo gli utenti legati all'operatore (idOperator === opId)
       const filtered = listRaw.filter(
         (u) =>
-          (u.idWhr || u.IdWhr || u.idwhr) &&
-          String(u.idWhr || u.IdWhr || u.idwhr).toLowerCase() ===
+          (u.idOperator || u.IdOperator || u.idoperator) &&
+          String(u.idOperator || u.IdOperator || u.idoperator).toLowerCase() ===
             opId.toLowerCase()
       );
 
@@ -176,6 +178,7 @@ const Operators: React.FC = () => {
 
       const first = list[0] ?? null;
       setSelectedOpUserId(first?.id ?? null);
+      setIsAccountEnabled(!!first);
       setAccountForm((p) =>
         first
           ? {
@@ -226,7 +229,8 @@ const Operators: React.FC = () => {
         idCompany: companyId, // <- richiesto dallo Swagger
         isAdmin: !!accountForm.isAdmin,
         accessLevel: accountForm.accessLevel || null,
-        idWhr: opId, // <- usiamo questo per legare l’utente all’operatore
+          idOperator: opId,
+        idWhr: null,
       };
 
       const resp = await fetch(`${API_URL}/api/Auth/create-user`, {
@@ -259,6 +263,7 @@ const Operators: React.FC = () => {
         isEnabled: accountForm.isEnabled,
         isAdmin: accountForm.isAdmin,
         accessLevel: accountForm.accessLevel || null,
+          idOperator: opId,
       };
       const resp = await fetch(`${API_URL}/api/Auth/update-user/${userId}`, {
         method: "PUT",
@@ -281,13 +286,10 @@ const Operators: React.FC = () => {
   };
 
   const changeOperatorPassword = async (userId: string) => {
-    if (!accountForm.password.trim())
-      return alert("Inserisci la nuova password.");
-    if (
-      accountForm.confirmPassword &&
-      accountForm.confirmPassword !== accountForm.password
-    )
-      return alert("La conferma password non coincide.");
+    if (!accountForm.password.trim() || !accountForm.confirmPassword.trim())
+      return setPasswordError("Inserisci la nuova password in entrambi i campi.");
+    if (accountForm.confirmPassword !== accountForm.password)
+      return setPasswordError("La conferma password non coincide.");
 
     setIsSavingAccount(true);
     try {
@@ -307,12 +309,32 @@ const Operators: React.FC = () => {
         }
       );
       const text = await resp.text();
-      if (!resp.ok) throw new Error(text || "Errore cambio password");
+      if (!resp.ok) {
+        let errorMessage = text || "Errore cambio password";
+        try {
+          const parsed = JSON.parse(text || "{}");
+          if (parsed?.errors && typeof parsed.errors === "object") {
+            errorMessage = Object.entries(parsed.errors)
+              .map(([field, errors]) => {
+                const list = Array.isArray(errors) ? errors.join(", ") : errors;
+                return `${field}: ${list}`;
+              })
+              .join("\n");
+          } else if (parsed?.message) {
+            errorMessage = parsed.message;
+          } else if (parsed?.title) {
+            errorMessage = parsed.title;
+          }
+        } catch {
+          // keep text as fallback
+        }
+        throw new Error(errorMessage);
+      }
       setAccountForm((p) => ({ ...p, password: "", confirmPassword: "" }));
       alert("Password aggiornata.");
     } catch (e: any) {
       console.error("changeOperatorPassword error:", e);
-      alert(e.message || "Errore cambio password.");
+      setPasswordError(e.message || "Errore cambio password.");
     } finally {
       setIsSavingAccount(false);
     }
@@ -332,6 +354,16 @@ const Operators: React.FC = () => {
       const text = await resp.text();
       if (!resp.ok) throw new Error(text || "Errore cambio stato");
       await loadOperatorUsers(opId);
+      setOperators((prev) =>
+        prev.map((op) =>
+          op.id === opId ? { ...op, active: !op.active } : op
+        )
+      );
+      setFilteredOperators((prev) =>
+        prev.map((op) =>
+          op.id === opId ? { ...op, active: !op.active } : op
+        )
+      );
       alert("Stato utente aggiornato.");
     } catch (e: any) {
       console.error("toggleOperatorUserStatus error:", e);
@@ -358,9 +390,64 @@ const Operators: React.FC = () => {
       }
 
       const data: Operator[] = await response.json();
+      const normalizeActive = (value: unknown): boolean => {
+        if (typeof value === "boolean") return value;
+        if (typeof value === "number") return value === 1;
+        if (typeof value === "string") {
+          const normalized = value.trim().toUpperCase();
+          return ["1", "TRUE", "ATTIVO", "ACTIVE", "ENABLED", "SI", "YES", "S", "Y", "ON"].includes(
+            normalized
+          );
+        }
+        return false;
+      };
+      let authUsersByOperatorId = new Map<string, any>();
+      try {
+        const companyIdRaw =
+          sessionStorage.getItem("IdCompanyAdmin") ||
+          sessionStorage.getItem("IdCompany");
+        if (companyIdRaw) {
+          const respUsers = await fetch(`${API_URL}/api/Auth/users/${companyIdRaw}`, {
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+              "Content-Type": "application/json",
+            },
+          });
+          if (respUsers.ok) {
+            const json = await respUsers.json();
+            const listRaw: any[] = Array.isArray(json?.users)
+              ? json.users
+              : Array.isArray(json)
+              ? json
+              : json && typeof json === "object"
+              ? [json]
+              : [];
+            listRaw.forEach((u) => {
+              const idOperator = u.idOperator || u.IdOperator || u.idoperator;
+              if (idOperator) authUsersByOperatorId.set(String(idOperator), u);
+            });
+          }
+        }
+      } catch {
+        // ignore users fetch errors, fallback to operator status
+      }
+
+      const normalizedData = (data || []).map((op: any) => {
+        const user = authUsersByOperatorId.get(String(op.id));
+        const userActive = user
+          ? normalizeActive(user.isEnabled ?? user.enabled ?? user.status)
+          : null;
+        return {
+          ...op,
+          active:
+            userActive !== null
+              ? userActive
+              : normalizeActive(op.active ?? op.isEnabled ?? op.enabled ?? op.status),
+        };
+      });
 
       // mostra solo gli operatori della company loggata
-      const filtered = (data || []).filter((o) => {
+      const filtered = normalizedData.filter((o) => {
         const mt = (o.multiTenantId || "").toLowerCase();
         const ic = (o.idcompany || "").toLowerCase();
         return mt === companyId || ic === companyId;
@@ -530,6 +617,75 @@ const Operators: React.FC = () => {
           : "Operatore creato con successo!";
         alert(message);
         closeModal();
+        if (!operatorId) {
+          let createdId: string | null = null;
+          try {
+            const created = await response.json();
+            if (created?.id) {
+              createdId = created.id;
+              setOperatorId(createdId);
+              setFormData((prev) => ({
+                ...prev,
+                userName: created.userName ?? prev.userName,
+                email: created.email ?? prev.email,
+                firstName: created.firstName ?? prev.firstName,
+                lastName: created.lastName ?? prev.lastName,
+                phoneNumber: created.phoneNumber ?? prev.phoneNumber,
+                regione: created.regione ?? prev.regione,
+                provincia: created.provincia ?? prev.provincia,
+                citta: created.citta ?? prev.citta,
+                cap: created.cap ?? prev.cap,
+                indirizzo: created.indirizzo ?? prev.indirizzo,
+                codiceDipendente: created.codiceDipendente ?? prev.codiceDipendente,
+                codiceFiscale: created.codiceFiscale ?? prev.codiceFiscale,
+                dataNascita: created.dataNascita
+                  ? created.dataNascita.split("T")[0]
+                  : prev.dataNascita,
+                comuneNascita: created.comuneNascita ?? prev.comuneNascita,
+                prNascita: created.prNascita ?? prev.prNascita,
+                iban: created.iban ?? prev.iban,
+                matricola: created.matricola ?? prev.matricola,
+                qualificaImpiegato: created.qualificaImpiegato ?? prev.qualificaImpiegato,
+                descriQualifica: created.descriQualifica ?? prev.descriQualifica,
+              }));
+              loadOperatorUsers(createdId, created.idcompany || undefined);
+            }
+          } catch {
+            // response body may be empty
+          }
+          if (!createdId) {
+            try {
+              const respList = await fetch(`${API_URL}/api/operator`, {
+                headers: {
+                  Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+                  "Content-Type": "application/json",
+                },
+              });
+              if (respList.ok) {
+                const list: Operator[] = await respList.json();
+                const normalized = (value: string) => value.trim().toLowerCase();
+                const targetUser = normalized(formData.userName || "");
+                const targetEmail = normalized(formData.email || "");
+                const targetCode = normalized(formData.codiceDipendente || "");
+                const matched = (list || []).find((op) => {
+                  if (targetUser && op.userName)
+                    return normalized(op.userName) === targetUser;
+                  if (targetEmail && op.email)
+                    return normalized(op.email) === targetEmail;
+                  if (targetCode && op.codiceDipendente)
+                    return normalized(op.codiceDipendente) === targetCode;
+                  return false;
+                });
+                if (matched?.id) {
+                  setOperatorId(matched.id);
+                  loadOperatorUsers(matched.id, matched.idcompany || undefined);
+                }
+              }
+            } catch {
+              // ignore fallback errors
+            }
+          }
+        }
         loadOperators();
       } else {
         const errText = await response.text();
@@ -564,6 +720,17 @@ const Operators: React.FC = () => {
       qualificaImpiegato: "",
       descriQualifica: "",
     });
+    setAccountForm({
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      accessLevel: "User",
+      isEnabled: true,
+      isAdmin: false,
+    });
+    setSelectedOpUserId(null);
+    setIsAccountEnabled(false);
   };
 
   // Paginazione
@@ -576,6 +743,11 @@ const Operators: React.FC = () => {
   const totalPages = Math.ceil(filteredOperators.length / itemsPerPage);
 
   console.log(currentItems, totalPages);
+
+  const accountSwitchChecked = selectedOpUserId
+    ? accountForm.isEnabled
+    : isAccountEnabled;
+  const accountFieldsEnabled = accountSwitchChecked;
 
   // const goToPage = (page: number) => {
   //   setCurrentPage(page);
@@ -780,7 +952,7 @@ const Operators: React.FC = () => {
               >
                 <div className={styles.inlineEditorHeader}>
                   <h3>
-                    {operatorId ? "Modifica operatore" : "Nuovo operatore"}
+                    {operatorId ? "Anagrafica Operatore" : "Nuovo operatore"}
                   </h3>
                   <button
                     className={styles.inlineCloseBtn}
@@ -918,16 +1090,70 @@ const Operators: React.FC = () => {
                   {/* eventuale sezione “Account utente dell’operatore”, riutilizzando il tuo stato:
           selectedOpUserId, accountForm, isSavingAccount, ecc. */}
 
-                  <div className={styles.sectionTitle}>Account di accesso</div>
+                <div className={styles.sectionTitle}>Account di accesso</div>
+                <div className={styles.accountPanel}>
+                  <div className={styles.accountHeader}>
+                    <h4 className={styles.accountTitle}>Accesso utente</h4>
+                  <label className={styles.accountToggle}>
+                    <input
+                      type="checkbox"
+                      checked={accountSwitchChecked}
+                      onChange={(e) => {
+                        const enabled = e.target.checked;
+                        if (selectedOpUserId && operatorId) {
+                          setAccountForm((prev) => ({
+                            ...prev,
+                            isEnabled: enabled,
+                          }));
+                          toggleOperatorUserStatus(selectedOpUserId, operatorId);
+                          return;
+                        }
+                        if (
+                          enabled &&
+                          !selectedOpUserId &&
+                          (!formData.userName.trim() || !formData.email.trim())
+                        ) {
+                            setPasswordError(
+                              "Compila Username ed Email nell'anagrafica prima di abilitare l'accesso."
+                            );
+                            return;
+                          }
+
+                          setIsAccountEnabled(enabled);
+                          if (
+                            enabled &&
+                            !selectedOpUserId &&
+                            !accountForm.username.trim() &&
+                            !accountForm.email.trim()
+                          ) {
+                            setAccountForm((prev) => ({
+                              ...prev,
+                              username: formData.userName || prev.username,
+                            email: formData.email || prev.email,
+                          }));
+                        }
+                      }}
+                    />
+                      <span
+                        className={styles.toggleSlider}
+                        title={
+                          isAccountEnabled
+                            ? "Disabilita Accesso Utente"
+                            : "Abilita Accesso Utente"
+                        }
+                      ></span>
+                    </label>
+                  </div>
                   <div className={styles.row}>
                     <div className={styles.fieldGroup}>
                       <label>Username</label>
-                      <input
-                        className={styles.formControl}
-                        value={accountForm.username}
-                        onChange={(e) =>
-                          setAccountForm({
-                            ...accountForm,
+                    <input
+                      className={styles.formControl}
+                      value={accountForm.username}
+                      disabled={!accountFieldsEnabled}
+                      onChange={(e) =>
+                        setAccountForm({
+                          ...accountForm,
                             username: e.target.value,
                           })
                         }
@@ -935,13 +1161,14 @@ const Operators: React.FC = () => {
                     </div>
                     <div className={styles.fieldGroup}>
                       <label>Email</label>
-                      <input
-                        className={styles.formControl}
-                        type="email"
-                        value={accountForm.email ?? ""}
-                        onChange={(e) =>
-                          setAccountForm({
-                            ...accountForm,
+                    <input
+                      className={styles.formControl}
+                      type="email"
+                      value={accountForm.email ?? ""}
+                      disabled={!accountFieldsEnabled}
+                      onChange={(e) =>
+                        setAccountForm({
+                          ...accountForm,
                             email: e.target.value,
                           })
                         }
@@ -952,13 +1179,14 @@ const Operators: React.FC = () => {
                   <div className={styles.row}>
                     <div className={styles.fieldGroup}>
                       <label>Password</label>
-                      <input
-                        className={styles.formControl}
-                        type="password"
-                        value={accountForm.password}
-                        onChange={(e) =>
-                          setAccountForm({
-                            ...accountForm,
+                    <input
+                      className={styles.formControl}
+                      type="password"
+                      value={accountForm.password}
+                      disabled={!accountFieldsEnabled}
+                      onChange={(e) =>
+                        setAccountForm({
+                          ...accountForm,
                             password: e.target.value,
                           })
                         }
@@ -966,81 +1194,115 @@ const Operators: React.FC = () => {
                     </div>
                     <div className={styles.fieldGroup}>
                       <label>Conferma Password</label>
-                      <input
-                        className={styles.formControl}
-                        type="password"
-                        value={accountForm.confirmPassword}
-                        onChange={(e) =>
-                          setAccountForm({
-                            ...accountForm,
+                    <input
+                      className={styles.formControl}
+                      type="password"
+                      value={accountForm.confirmPassword}
+                      disabled={!accountFieldsEnabled}
+                      onChange={(e) =>
+                        setAccountForm({
+                          ...accountForm,
                             confirmPassword: e.target.value,
                           })
                         }
                       />
                     </div>
                   </div>
-                </div>
-                {/* Azioni account operatore */}
-                <div className={styles.accountActions}>
-                  <button
-                    className={`${styles.btn} ${styles.btnPrimary}`}
-                    onClick={() =>
-                      selectedOpUserId
-                        ? updateOperatorUser(selectedOpUserId, operatorId!)
-                        : createOperatorAccount(operatorId!)
-                    }
-                    disabled={isSavingAccount || !operatorId}
-                  >
+
+                  <div className={styles.inlineEditorFooter}>
+                    <button
+                      className={`${styles.btn} ${styles.btnPrimary}`}
+                      onClick={() =>
+                        selectedOpUserId
+                          ? updateOperatorUser(selectedOpUserId, operatorId!)
+                          : createOperatorAccount(operatorId!)
+                      }
+                      disabled={isSavingAccount || !operatorId || !isAccountEnabled}
+                    >
                     {selectedOpUserId ? "Aggiorna account" : "Crea account"}
                   </button>
 
-                  {selectedOpUserId && (
-                    <>
-                      <button
-                        className={`${styles.btn} ${styles.btnSecondary}`}
-                        onClick={() => changeOperatorPassword(selectedOpUserId)}
-                        disabled={isSavingAccount || !accountForm.password}
-                      >
-                        Cambia password
-                      </button>
+                    {selectedOpUserId && (
+                      <>
+                        <button
+                          className={`${styles.btn} ${styles.btnSecondary}`}
+                          onClick={() => changeOperatorPassword(selectedOpUserId)}
+                          disabled={isSavingAccount}
+                        >
+                          Cambia password
+                        </button>
 
-                      <button
-                        className={`${styles.btn} ${styles.btnDanger}`}
-                        onClick={() =>
-                          toggleOperatorUserStatus(
-                            selectedOpUserId,
-                            operatorId!
-                          )
-                        }
-                        disabled={isSavingAccount}
-                      >
-                        {accountForm.isEnabled ? "Disattiva" : "Attiva"} utente
-                      </button>
-                    </>
-                  )}
+                        <button
+                          className={`${styles.btn} ${styles.btnDanger}`}
+                          onClick={() =>
+                            toggleOperatorUserStatus(
+                              selectedOpUserId,
+                              operatorId!
+                            )
+                          }
+                          disabled={isSavingAccount}
+                        >
+                          {accountForm.isEnabled ? "Disattiva" : "Attiva"} utente
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-
-                <div className={styles.inlineEditorFooter}>
-                  <button
-                    className={`${styles.btn} ${styles.btnPrimary}`}
-                    onClick={handleSaveOperator}
-                  >
-                    SALVA
-                  </button>
-                  <button
-                    className={`${styles.btn} ${styles.btnSecondary}`}
-                    onClick={resetForm}
-                  >
-                    NUOVO
-                  </button>
-                </div>
-              </section>
-            )}
+              </div>
+              <div className={styles.inlineEditorFooter}>
+                <button
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  onClick={handleSaveOperator}
+                >
+                  SALVA
+                </button>
+                <button
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                  onClick={resetForm}
+                >
+                  NUOVO
+                </button>
+              </div>
+            </section>
+          )}
           </div>
         </div>
       </div>
+      {passwordError && (
+        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
+          <div className={styles.modalCard}>
+            <div className={styles.modalHeader}>
+              <span>Errore cambio password</span>
+              <button
+                type="button"
+                className={styles.modalCloseBtn}
+                onClick={() => setPasswordError(null)}
+                aria-label="Chiudi"
+              >
+                <i className="fa-solid fa-times"></i>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {passwordError.split("\n").map((line, index) => (
+                <p key={`${line}-${index}`}>{line}</p>
+              ))}
+            </div>
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={() => setPasswordError(null)}
+              >
+                Chiudi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
 
 export default Operators;
+
+

@@ -1,7 +1,7 @@
 // src/components/Topbar.tsx
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./topbar.css";
+import "./topbar-admin.css";
 import logo from "../assets/LogoBaseBlack_300.png";
 
 interface TopbarProps {
@@ -10,15 +10,29 @@ interface TopbarProps {
 
 const Topbar: React.FC<TopbarProps> = () => {
   const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const currentUserName =
+    sessionStorage.getItem("userId") ||
+    sessionStorage.getItem("fullName") ||
+    "Utente";
 
   const logout = () => {
-  sessionStorage.clear();
-  window.location.href = "/login-admin";
-};
+    sessionStorage.clear();
+    window.location.href = "/login-admin";
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+  };
 
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
+    <>
+      <nav className="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
       <div className="container-fluid">
         {/* Logo */}
         <div className="logo-container">
@@ -487,7 +501,9 @@ const Topbar: React.FC<TopbarProps> = () => {
             </button>
             <button 
               className="topbar-icon-button"
-              onClick={() => navigate('/profilo')}
+              onClick={() => navigate("/user")}
+              title={currentUserName}
+              aria-label={`Profilo: ${currentUserName}`}
             >
               <i className="fa-solid fa-user"></i>
             </button>
@@ -499,14 +515,52 @@ const Topbar: React.FC<TopbarProps> = () => {
             </button>
             <button 
               className="topbar-icon-button"
-              onClick={() => logout()}
+              onClick={confirmLogout}
+              title="Logout"
             >
-              <i className="fa-solid fa-cog"></i>
+              <i className="fa-solid fa-right-from-bracket"></i>
             </button>
           </div>
         </div>
       </div>
-    </nav>
+      </nav>
+      {showLogoutModal && (
+      <div className="topbar-modal-backdrop" role="dialog" aria-modal="true">
+        <div className="topbar-modal">
+          <div className="topbar-modal-header">
+            <span>Conferma logout</span>
+            <button
+              type="button"
+              className="topbar-modal-close"
+              onClick={cancelLogout}
+              aria-label="Chiudi"
+            >
+              <i className="fa-solid fa-times"></i>
+            </button>
+          </div>
+          <div className="topbar-modal-body">
+            Sei sicuro di voler uscire dal portale?
+          </div>
+          <div className="topbar-modal-actions">
+            <button
+              type="button"
+              className="topbar-modal-btn secondary"
+              onClick={cancelLogout}
+            >
+              Annulla
+            </button>
+            <button
+              type="button"
+              className="topbar-modal-btn primary"
+              onClick={logout}
+            >
+              Conferma
+            </button>
+          </div>
+        </div>
+      </div>
+      )}
+    </>
   );
 };
 

@@ -121,6 +121,7 @@ const CompanyMaster: React.FC = () => {
   });
 
   const API_URL = import.meta.env.VITE_API_URL;
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   const authHeaders = () => ({
     Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -959,8 +960,13 @@ const CompanyMaster: React.FC = () => {
         return;
       }
 
+      if (!GOOGLE_MAPS_API_KEY) {
+        reject(new Error("VITE_GOOGLE_MAPS_API_KEY non configurata"));
+        return;
+      }
+
       const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBdIcimFZ-qXj-7YzYX0kbCGGxIpAnOA0I&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
       script.async = true;
       script.defer = true;
 
