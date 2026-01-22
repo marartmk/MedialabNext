@@ -8,6 +8,8 @@ interface AccessQuotationResponse {
   quotationCode?: string;
   quotationStatus?: string;
   createdAt?: string;
+  companyId?: string;
+  multitenantId?: string;
   customer?: {
     name?: string;
     phone?: string;
@@ -91,6 +93,64 @@ const FirmaPreventivoExt: React.FC = () => {
     fetchQuotation();
   }, [API_URL, accessKey]);
 
+  useEffect(() => {
+    if (!quotationData?.quotationId) return;
+
+    const controller = new AbortController();
+    const fetchSignature = async () => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/Signature/service/${quotationData.quotationId}`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok) {
+          if (response.status === 404) return;
+          const errText = await response.text();
+          throw new Error(errText || "Errore nel caricamento della firma");
+        }
+
+        const data = await response.json();
+        if (data?.signatureBase64) {
+          setSignatureData(data.signatureBase64);
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        console.warn("Errore nel recupero della firma:", err);
+      }
+    };
+
+    fetchSignature();
+
+    return () => controller.abort();
+  }, [API_URL, quotationData?.quotationId]);
+
+  const drawSignatureOnCanvas = (dataUrl: string) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const scale = Math.min(
+        canvas.width / img.width,
+        canvas.height / img.height
+      );
+      const width = img.width * scale;
+      const height = img.height * scale;
+      const x = (canvas.width - width) / 2;
+      const y = (canvas.height - height) / 2;
+
+      ctx.drawImage(img, x, y, width, height);
+    };
+    img.src = dataUrl;
+  };
+
   const startDrawing = (
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
   ) => {
@@ -165,14 +225,8 @@ const FirmaPreventivoExt: React.FC = () => {
     }
 
     try {
-      const companyId =
-        sessionStorage.getItem("IdCompany") ||
-        sessionStorage.getItem("companyId") ||
-        "";
-      const multitenantId =
-        sessionStorage.getItem("IdCompany") ||
-        sessionStorage.getItem("multitenantId") ||
-        "";
+      const companyId = quotationData?.companyId || null;
+      const multitenantId = quotationData?.multitenantId || null;
       const signedBy =
         sessionStorage.getItem("userName") ||
         sessionStorage.getItem("username") ||
@@ -183,6 +237,11 @@ const FirmaPreventivoExt: React.FC = () => {
         sessionStorage.getItem("username") ||
         sessionStorage.getItem("userName") ||
         signedBy;
+
+      if (!companyId || !multitenantId) {
+        alert("Mancano CompanyId o MultitenantId per salvare la firma.");
+        return;
+      }
 
       const payload = {
         serviceId: quotationData.quotationId,
@@ -228,17 +287,24 @@ const FirmaPreventivoExt: React.FC = () => {
 
   const openSignatureModal = () => {
     setShowSignatureModal(true);
-    setTimeout(() => {
-      const canvas = signatureCanvasRef.current;
-      if (!canvas) return;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }, 100);
   };
+
+  useEffect(() => {
+    if (!showSignatureModal) return;
+
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (signatureData) {
+      drawSignatureOnCanvas(signatureData);
+    }
+  }, [showSignatureModal, signatureData]);
 
   const formatCurrency = (value?: number | null) => {
     if (value === null || value === undefined || Number.isNaN(value)) {

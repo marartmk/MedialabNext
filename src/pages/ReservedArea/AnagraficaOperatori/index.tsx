@@ -648,7 +648,9 @@ const Operators: React.FC = () => {
                 qualificaImpiegato: created.qualificaImpiegato ?? prev.qualificaImpiegato,
                 descriQualifica: created.descriQualifica ?? prev.descriQualifica,
               }));
-              loadOperatorUsers(createdId, created.idcompany || undefined);
+              if (createdId) {
+                loadOperatorUsers(createdId, created.idcompany || undefined);
+              }
             }
           } catch {
             // response body may be empty

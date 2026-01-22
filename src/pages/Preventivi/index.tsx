@@ -286,6 +286,46 @@ const PreventiviPage: React.FC = () => {
     loadOperators();
   }, []);
 
+  useEffect(() => {
+    const quotationId = printQuotation?.quotationId;
+    if (!quotationId || !showPrintModal) return;
+
+    setSignatureData(null);
+    const controller = new AbortController();
+
+    const fetchSignature = async () => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/Signature/service/${quotationId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            },
+            signal: controller.signal,
+          }
+        );
+
+        if (!response.ok) {
+          if (response.status === 404) return;
+          const errText = await response.text();
+          throw new Error(errText || "Errore nel caricamento della firma");
+        }
+
+        const data = await response.json();
+        if (data?.signatureBase64) {
+          setSignatureData(data.signatureBase64);
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        console.warn("Errore nel recupero della firma:", err);
+      }
+    };
+
+    fetchSignature();
+
+    return () => controller.abort();
+  }, [API_URL, printQuotation?.quotationId, showPrintModal]);
+
   const splitCustomerName = (fullName: string) => {
     const normalized = fullName.trim();
     if (!normalized) {
@@ -802,6 +842,32 @@ const PreventiviPage: React.FC = () => {
   };
 
   // Funzioni per la gestione della firma digitale (stampa preventivo)
+  const drawSignatureOnCanvas = (dataUrl: string) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const scale = Math.min(
+        canvas.width / img.width,
+        canvas.height / img.height
+      );
+      const width = img.width * scale;
+      const height = img.height * scale;
+      const x = (canvas.width - width) / 2;
+      const y = (canvas.height - height) / 2;
+
+      ctx.drawImage(img, x, y, width, height);
+    };
+    img.src = dataUrl;
+  };
+
   const startDrawing = (
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
   ) => {
@@ -875,18 +941,24 @@ const PreventiviPage: React.FC = () => {
 
   const openSignatureModal = () => {
     setShowSignatureModal(true);
-
-    setTimeout(() => {
-      const canvas = signatureCanvasRef.current;
-      if (!canvas) return;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }, 100);
   };
+
+  useEffect(() => {
+    if (!showSignatureModal) return;
+
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (signatureData) {
+      drawSignatureOnCanvas(signatureData);
+    }
+  }, [showSignatureModal, signatureData]);
 
   // Funzione per aprire il modal di nuovo cliente
   const openNewClientModal = () => {
@@ -1486,23 +1558,33 @@ const PreventiviPage: React.FC = () => {
     setIsCreatingAccessKey(true);
     setAccessKeyError(null);
 
-    try {
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      const createdBy = sessionStorage.getItem("userId") || "";
-      const response = await fetch(`${API_URL}/api/Signature/generateKey`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          serviceId: savedQuotation.quotationId,
-          areaId: "9b40e7a0-9b87-4c12-9d9c-9f5208f3f3f6",
-          areaName: "Preventivi",
-          createdBy,
-          expiresAt: expiresAt.toISOString(),
-        }),
-      });
+      try {
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const createdBy = sessionStorage.getItem("userId") || "";
+        const companyId =
+          sessionStorage.getItem("IdCompany") ||
+          sessionStorage.getItem("companyId") ||
+          "";
+        const multitenantId =
+          sessionStorage.getItem("IdCompany") ||
+          sessionStorage.getItem("multitenantId") ||
+          "";
+        const response = await fetch(`${API_URL}/api/Signature/generateKey`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            serviceId: savedQuotation.quotationId,
+            areaId: "9b40e7a0-9b87-4c12-9d9c-9f5208f3f3f6",
+            areaName: "Preventivi",
+            createdBy,
+            expiresAt: expiresAt.toISOString(),
+            companyId,
+            multitenantId,
+          }),
+        });
 
       if (!response.ok) {
         const errText = await response.text();

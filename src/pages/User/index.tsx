@@ -66,7 +66,7 @@ const UserProfile: React.FC = () => {
     phoneNumber: "",
     codiceDipendente: "",
   });
-  const [isSaving, setIsSaving] = useState(false);
+  //const [isSaving, setIsSaving] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
@@ -85,6 +85,8 @@ const UserProfile: React.FC = () => {
   const toggleMenu = () => {
     setMenuState(menuState === "open" ? "closed" : "open");
   };
+
+  console.log("operatorId:", operatorId);
 
   useEffect(() => {
     loadCurrentUser();
@@ -227,77 +229,77 @@ const UserProfile: React.FC = () => {
     }
   };
 
-  const handleSaveProfile = async () => {
-    if (!operatorId) return;
+  // const handleSaveProfile = async () => {
+  //   if (!operatorId) return;
 
-    if (!formData.firstName) {
-      alert("Inserire il nome");
-      return;
-    }
-    if (!formData.lastName) {
-      alert("Inserire il cognome");
-      return;
-    }
-    if (!formData.email) {
-      alert("Inserire un'email");
-      return;
-    }
-    if (!formData.userName) {
-      alert("Inserire un username");
-      return;
-    }
-    if (!formData.phoneNumber) {
-      alert("Inserire un numero di telefono");
-      return;
-    }
+  //   if (!formData.firstName) {
+  //     alert("Inserire il nome");
+  //     return;
+  //   }
+  //   if (!formData.lastName) {
+  //     alert("Inserire il cognome");
+  //     return;
+  //   }
+  //   if (!formData.email) {
+  //     alert("Inserire un'email");
+  //     return;
+  //   }
+  //   if (!formData.userName) {
+  //     alert("Inserire un username");
+  //     return;
+  //   }
+  //   if (!formData.phoneNumber) {
+  //     alert("Inserire un numero di telefono");
+  //     return;
+  //   }
 
-    const companyId =
-      sessionStorage.getItem("IdCompany") ||
-      sessionStorage.getItem("IdCompanyAdmin") ||
-      null;
-    const payload = {
-      id: operatorId,
-      userName: formData.userName,
-      email: formData.email,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      phoneNumber: formData.phoneNumber,
-      codiceDipendente: formData.codiceDipendente,
-      idcompany: companyId,
-      multiTenantId: companyId,
-      active: 1,
-      isEmployee: 1,
-      dataModifica: new Date().toISOString(),
-      isDeleted: false,
-    };
+  //   const companyId =
+  //     sessionStorage.getItem("IdCompany") ||
+  //     sessionStorage.getItem("IdCompanyAdmin") ||
+  //     null;
+  //   const payload = {
+  //     id: operatorId,
+  //     userName: formData.userName,
+  //     email: formData.email,
+  //     firstName: formData.firstName,
+  //     lastName: formData.lastName,
+  //     phoneNumber: formData.phoneNumber,
+  //     codiceDipendente: formData.codiceDipendente,
+  //     idcompany: companyId,
+  //     multiTenantId: companyId,
+  //     active: 1,
+  //     isEmployee: 1,
+  //     dataModifica: new Date().toISOString(),
+  //     isDeleted: false,
+  //   };
 
-    setIsSaving(true);
-    try {
-      const resp = await fetch(`${API_URL}/api/operator/${operatorId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+  //   setIsSaving(true);
+  //   try {
+  //     const resp = await fetch(`${API_URL}/api/operator/${operatorId}`, {
+  //       method: "PUT",
+  //       headers: {
+  //         Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(payload),
+  //     });
 
-      if (!resp.ok) {
-        const text = await resp.text();
-        throw new Error(text || "Errore durante il salvataggio.");
-      }
+  //     if (!resp.ok) {
+  //       const text = await resp.text();
+  //       throw new Error(text || "Errore durante il salvataggio.");
+  //     }
 
-      alert("Dati utente aggiornati.");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        alert(err.message || "Errore durante il salvataggio.");
-      } else {
-        alert("Errore durante il salvataggio.");
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  //     alert("Dati utente aggiornati.");
+  //   } catch (err: unknown) {
+  //     if (err instanceof Error) {
+  //       alert(err.message || "Errore durante il salvataggio.");
+  //     } else {
+  //       alert("Errore durante il salvataggio.");
+  //     }
+  //   } finally {
+  //     setIsSaving(false);
+  //   }
+  // };
 
   const changePassword = async () => {
     if (!authUserId) {

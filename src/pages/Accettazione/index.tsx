@@ -153,6 +153,8 @@ const Accettazione: React.FC = () => {
   const [isCreatingAccessKey, setIsCreatingAccessKey] = useState(false);
   const [accessKeyError, setAccessKeyError] = useState<string | null>(null);
 
+  console.log("signatureAccessKey",signatureAccessKey)
+
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Tipo per i dati della riparazione (per la stampa)
