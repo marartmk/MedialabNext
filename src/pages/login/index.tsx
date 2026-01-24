@@ -132,6 +132,7 @@ const Login: FC = () => {
       sessionStorage.setItem("token", result.token);
       sessionStorage.setItem("isAuthenticated", "true");
       sessionStorage.setItem("IdCompany", result.idCompany || "");
+      sessionStorage.setItem("multitenantId", result.idCompany || "");      
       sessionStorage.setItem("fullName", result.companyName || "");
 
       // Decodifica JWT (se valido)

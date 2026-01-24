@@ -139,15 +139,31 @@ const Topbar: React.FC<TopbarProps> = () => {
                     className="dropdown-item"
                     onClick={() => navigate("/vendite-apparati")}
                   >
-                    Crea Vendita
+                    Crea Vendita Apparati
                   </button>
-                </li>
+                </li>               
                 <li>
                   <button
                     className="dropdown-item"
                     onClick={() => navigate("/ricerca-vendite")}
                   >
-                    Ricerca Vendite
+                    Ricerca Vendite Apparati
+                  </button>
+                </li>
+                 <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/vendita-accessori")}
+                  >
+                    Crea Vendita Accessori
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/ricerca-vendita-accessori")}
+                  >
+                    Ricerca Vendita Accessori
                   </button>
                 </li>
               </ul>

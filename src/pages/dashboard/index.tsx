@@ -474,8 +474,8 @@ const Dashboard: React.FC = () => {
 
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("isAuthenticated");
+          sessionStorage.removeItem("token");
+          sessionStorage.removeItem("isAuthenticated");
           throw new Error("Sessione scaduta. Effettua nuovamente il login.");
         }
         throw new Error(`Errore nel recupero dell'API key: ${response.status}`);

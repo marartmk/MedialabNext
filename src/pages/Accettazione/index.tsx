@@ -144,16 +144,13 @@ const Accettazione: React.FC = () => {
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [showSignatureQrModal, setShowSignatureQrModal] = useState(false);
-  const [signatureAccessKey, setSignatureAccessKey] = useState<string | null>(
-    null,
-  );
   const [signatureAccessUrl, setSignatureAccessUrl] = useState<string | null>(
     null,
   );
   const [isCreatingAccessKey, setIsCreatingAccessKey] = useState(false);
   const [accessKeyError, setAccessKeyError] = useState<string | null>(null);
 
-  console.log("signatureAccessKey",signatureAccessKey)
+  //console.log("signatureAccessKey",signatureAccessKey)
 
   const API_URL = import.meta.env.VITE_API_URL;
 

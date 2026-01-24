@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
 import BottomBar from "../../components/BottomBar";
@@ -13,95 +13,87 @@ import {
   Download,
   AlertTriangle,
 } from "lucide-react";
-import deviceInventoryService, {
-  type DeviceInventoryItem,
-  type DeviceInventoryStats,
-  type DeviceInventorySupplier,
-  type CreateDeviceInventoryDto,
-  type UpdateDeviceInventoryDto,
-  type DeviceInventorySearchParams,
-} from "../../services/deviceInventoryService";
-import styles from "./magapp.styles.module.css";
+import accessoryInventoryService, {
+  type AccessoryInventoryItem,
+  type AccessoryInventoryStats,
+  type AccessoryInventorySupplier,
+  type AccessoryInventorySearchParams,
+  type CreateAccessoryInventoryDto,
+  type UpdateAccessoryInventoryDto,
+} from "../../services/accessoryInventoryService";
+import styles from "./magazzino-accessori.module.css";
 
-const MagazzinoApparati: React.FC = () => {
+type AccessoryType = AccessoryInventoryItem["accessoryType"];
+type AccessoryCondition = AccessoryInventoryItem["accessoryCondition"];
+type AccessoryStatus = AccessoryInventoryItem["accessoryStatus"];
+
+const MagazzinoAccessori: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
 
-  // Stati per i dati
-  const [devices, setDevices] = useState<DeviceInventoryItem[]>([]);
-  const [filteredDevices, setFilteredDevices] = useState<DeviceInventoryItem[]>(
-    []
-  );
-  const [suppliers, setSuppliers] = useState<DeviceInventorySupplier[]>([]);
-  const [stats, setStats] = useState<DeviceInventoryStats>({
-    totalDevices: 0,
-    availableDevices: 0,
-    loanedDevices: 0,
-    soldDevices: 0,
-    courtesyDevices: 0,
-    smartphones: 0,
-    tablets: 0,
+  const [accessories, setAccessories] = useState<AccessoryInventoryItem[]>([]);
+  const [suppliers, setSuppliers] = useState<AccessoryInventorySupplier[]>([]);
+  const [stats, setStats] = useState<AccessoryInventoryStats>({
+    totalAccessories: 0,
+    availableAccessories: 0,
+    loanedAccessories: 0,
+    soldAccessories: 0,
+    courtesyAccessories: 0,
+    lowStockAccessories: 0,
+    outOfStockAccessories: 0,
     totalPurchaseValue: 0,
     totalSellingValue: 0,
     potentialProfit: 0,
-    newDevices: 0,
-    usedDevices: 0,
-    refurbishedDevices: 0,
+    newAccessories: 0,
+    usedAccessories: 0,
+    refurbishedAccessories: 0,
   });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Stati per la paginazione
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const pageSize = 20;
-
-  // Stati per i filtri
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [selectedBrand, setSelectedBrand] = useState("");
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [selectedCondition, setSelectedCondition] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [showCourtesyOnly, setShowCourtesyOnly] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
 
-  // Stati per il modal
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit" | "view">("add");
-  const [selectedDevice, setSelectedDevice] =
-    useState<DeviceInventoryItem | null>(null);
+  const [selectedAccessory, setSelectedAccessory] =
+    useState<AccessoryInventoryItem | null>(null);
 
-  // Stati per il form
   const [formData, setFormData] = useState({
     code: "",
-    deviceType: "smartphone" as "smartphone" | "tablet",
+    accessoryType: "power-cables" as AccessoryType,
     brand: "",
     model: "",
-    imei: "",
     esn: "",
     color: "",
-    deviceCondition: "new" as "new" | "used" | "refurbished",
-    isCourtesyDevice: false,
-    deviceStatus: "available" as
-      | "available"
-      | "loaned"
-      | "sold"
-      | "unavailable",
+    accessoryCondition: "new" as AccessoryCondition,
+    isCourtesyAccessory: false,
+    accessoryStatus: "available" as AccessoryStatus,
     supplierId: "",
     purchasePrice: 0,
     sellingPrice: 0,
+    quantityInStock: 0,
+    minimumStock: 0,
     location: "",
     notes: "",
   });
+
+  const pageSize = 20;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     loadInitialData();
   }, []);
 
   useEffect(() => {
-    loadDeviceData();
+    loadAccessoryData();
   }, [
     searchQuery,
     selectedType,
@@ -109,23 +101,19 @@ const MagazzinoApparati: React.FC = () => {
     selectedSupplier,
     selectedCondition,
     selectedStatus,
-    showCourtesyOnly,
     currentPage,
   ]);
 
-  // Funzioni per il caricamento dei dati
   const loadInitialData = async () => {
     try {
       setLoading(true);
 
-      // Imposta il multitenantId (dovresti prenderlo dal contesto/auth)
       const multitenantId = sessionStorage.getItem("multitenantId");
       if (multitenantId) {
-        deviceInventoryService.setMultitenantId(multitenantId);
+        accessoryInventoryService.setMultitenantId(multitenantId);
       }
 
-      // Carica fornitori
-      const suppliersData = await deviceInventoryService.getSuppliers();
+      const suppliersData = await accessoryInventoryService.getSuppliers();
       setSuppliers(suppliersData);
     } catch (err) {
       console.error("Errore nel caricamento dati iniziali:", err);
@@ -135,29 +123,27 @@ const MagazzinoApparati: React.FC = () => {
     }
   };
 
-  const loadDeviceData = useCallback(async () => {
+  const loadAccessoryData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const searchParams: DeviceInventorySearchParams = {
+      const searchParams: AccessoryInventorySearchParams = {
         searchQuery: searchQuery.trim() || undefined,
-        deviceType: selectedType || undefined,
+        accessoryType: selectedType || undefined,
         brand: selectedBrand || undefined,
         supplierId: selectedSupplier || undefined,
-        deviceCondition: selectedCondition || undefined,
-        deviceStatus: selectedStatus || undefined,
-        isCourtesyDevice: showCourtesyOnly ? true : undefined,
+        accessoryCondition: selectedCondition || undefined,
+        accessoryStatus: selectedStatus || undefined,
         page: currentPage,
         pageSize: pageSize,
         sortBy: "code",
         sortDescending: false,
       };
 
-      const response = await deviceInventoryService.searchItems(searchParams);
+      const response = await accessoryInventoryService.searchItems(searchParams);
 
-      setDevices(response.items);
-      setFilteredDevices(response.items);
+      setAccessories(response.items);
       setStats(response.stats);
       setCurrentPage(response.page);
       setTotalPages(response.totalPages);
@@ -166,12 +152,11 @@ const MagazzinoApparati: React.FC = () => {
       const errorMessage = handleApiError(
         err,
         "Errore nel caricamento dei dati",
-        "loadDeviceData"
+        "loadAccessoryData"
       );
-      console.error("Errore nel caricamento apparati:", err);
+      console.error("Errore nel caricamento accessori:", err);
       setError(errorMessage || "Errore nel caricamento dei dati");
-      setDevices([]);
-      setFilteredDevices([]);
+      setAccessories([]);
     } finally {
       setLoading(false);
     }
@@ -182,35 +167,34 @@ const MagazzinoApparati: React.FC = () => {
     selectedSupplier,
     selectedCondition,
     selectedStatus,
-    showCourtesyOnly,
     currentPage,
   ]);
 
-  // Funzioni per la gestione del modal
   const openModal = (
     mode: "add" | "edit" | "view",
-    device?: DeviceInventoryItem
+    accessory?: AccessoryInventoryItem
   ) => {
     setModalMode(mode);
-    setSelectedDevice(device || null);
+    setSelectedAccessory(accessory || null);
 
-    if (device && (mode === "edit" || mode === "view")) {
+    if (accessory && (mode === "edit" || mode === "view")) {
       setFormData({
-        code: device.code,
-        deviceType: device.deviceType,
-        brand: device.brand,
-        model: device.model,
-        imei: device.imei,
-        esn: device.esn || "",
-        color: device.color,
-        deviceCondition: device.deviceCondition,
-        isCourtesyDevice: device.isCourtesyDevice,
-        deviceStatus: device.deviceStatus,
-        supplierId: device.supplierId,
-        purchasePrice: device.purchasePrice,
-        sellingPrice: device.sellingPrice,
-        location: device.location || "",
-        notes: device.notes || "",
+        code: accessory.code,
+        accessoryType: accessory.accessoryType,
+        brand: accessory.brand,
+        model: accessory.model,
+        esn: accessory.esn || "",
+        color: accessory.color,
+        accessoryCondition: accessory.accessoryCondition,
+        isCourtesyAccessory: accessory.isCourtesyAccessory,
+        accessoryStatus: accessory.accessoryStatus,
+        supplierId: accessory.supplierId,
+        purchasePrice: accessory.purchasePrice,
+        sellingPrice: accessory.sellingPrice,
+        quantityInStock: accessory.quantityInStock,
+        minimumStock: accessory.minimumStock,
+        location: accessory.location || "",
+        notes: accessory.notes || "",
       });
     } else {
       resetForm();
@@ -221,38 +205,37 @@ const MagazzinoApparati: React.FC = () => {
 
   const closeModal = () => {
     setShowModal(false);
-    setSelectedDevice(null);
+    setSelectedAccessory(null);
     resetForm();
   };
 
   const resetForm = () => {
     setFormData({
       code: "",
-      deviceType: "smartphone",
+      accessoryType: "power-cables",
       brand: "",
       model: "",
-      imei: "",
       esn: "",
       color: "",
-      deviceCondition: "new",
-      isCourtesyDevice: false,
-      deviceStatus: "available",
+      accessoryCondition: "new",
+      isCourtesyAccessory: false,
+      accessoryStatus: "available",
       supplierId: "",
       purchasePrice: 0,
       sellingPrice: 0,
+      quantityInStock: 0,
+      minimumStock: 0,
       location: "",
       notes: "",
     });
   };
 
-  const handleSaveDevice = async () => {
+  const handleSaveAccessory = async () => {
     try {
-      // Validazione
       if (
         !formData.code.trim() ||
         !formData.brand.trim() ||
         !formData.model.trim() ||
-        !formData.imei.trim() ||
         !formData.supplierId
       ) {
         alert("Compila tutti i campi obbligatori (contrassegnati con *)");
@@ -261,87 +244,92 @@ const MagazzinoApparati: React.FC = () => {
 
       setLoading(true);
 
-      const multitenantId = deviceInventoryService.getMultitenantId() || "";
+      const multitenantId = accessoryInventoryService.getMultitenantId() || "";
 
       if (modalMode === "add") {
-        const newDeviceData: CreateDeviceInventoryDto = {
+        const newAccessoryData: CreateAccessoryInventoryDto = {
           code: formData.code.trim(),
-          deviceType: formData.deviceType,
+          accessoryType: formData.accessoryType,
           brand: formData.brand.trim(),
           model: formData.model.trim(),
-          imei: formData.imei.trim(),
           esn: formData.esn.trim() || undefined,
           color: formData.color.trim(),
-          deviceCondition: formData.deviceCondition,
-          isCourtesyDevice: formData.isCourtesyDevice,
-          deviceStatus: formData.deviceStatus,
+          accessoryCondition: formData.accessoryCondition,
+          isCourtesyAccessory: formData.isCourtesyAccessory,
+          accessoryStatus: formData.accessoryStatus,
           supplierId: formData.supplierId,
           purchasePrice: formData.purchasePrice,
           sellingPrice: formData.sellingPrice,
+          quantityInStock: formData.quantityInStock,
+          minimumStock: formData.minimumStock,
           location: formData.location.trim() || undefined,
           notes: formData.notes.trim() || undefined,
           multitenantId: multitenantId,
         };
 
-        await deviceInventoryService.createItem(newDeviceData);
-        alert("Apparato aggiunto con successo!");
-      } else if (modalMode === "edit" && selectedDevice) {
-        const updateData: UpdateDeviceInventoryDto = {
+        await accessoryInventoryService.createItem(newAccessoryData);
+        alert("Accessorio aggiunto con successo!");
+      } else if (modalMode === "edit" && selectedAccessory) {
+        const updateData: UpdateAccessoryInventoryDto = {
           code: formData.code.trim(),
-          deviceType: formData.deviceType,
+          accessoryType: formData.accessoryType,
           brand: formData.brand.trim(),
           model: formData.model.trim(),
-          imei: formData.imei.trim(),
           esn: formData.esn.trim() || undefined,
           color: formData.color.trim(),
-          deviceCondition: formData.deviceCondition,
-          isCourtesyDevice: formData.isCourtesyDevice,
-          deviceStatus: formData.deviceStatus,
+          accessoryCondition: formData.accessoryCondition,
+          isCourtesyAccessory: formData.isCourtesyAccessory,
+          accessoryStatus: formData.accessoryStatus,
           supplierId: formData.supplierId,
           purchasePrice: formData.purchasePrice,
           sellingPrice: formData.sellingPrice,
+          quantityInStock: formData.quantityInStock,
+          minimumStock: formData.minimumStock,
           location: formData.location.trim() || undefined,
           notes: formData.notes.trim() || undefined,
         };
 
-        await deviceInventoryService.updateItem(selectedDevice.id, updateData);
-        alert("Apparato modificato con successo!");
+        await accessoryInventoryService.updateItem(
+          selectedAccessory.id,
+          updateData
+        );
+        alert("Accessorio modificato con successo!");
       }
 
       closeModal();
-      await loadDeviceData();
+      await loadAccessoryData();
     } catch (err) {
       const errorMessage = handleApiError(
         err,
-        "Errore nel caricamento dei dati",
-        "loadDeviceData"
+        "Errore nel salvataggio dei dati",
+        "handleSaveAccessory"
       );
       console.error("Errore nel salvataggio:", err);
-      alert(errorMessage || "Errore durante il salvataggio dell'apparato");
+      alert(errorMessage || "Errore durante il salvataggio dell'accessorio");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteDevice = async (device: DeviceInventoryItem) => {
+  const handleDeleteAccessory = async (accessory: AccessoryInventoryItem) => {
     if (
       confirm(
-        `Sei sicuro di voler eliminare l'apparato "${device.brand} ${device.model}"?`
+        `Sei sicuro di voler eliminare "${accessory.brand} ${accessory.model}"?`
       )
     ) {
       try {
         setLoading(true);
-        await deviceInventoryService.deleteItem(device.id);
-        alert("Apparato eliminato con successo!");
-        await loadDeviceData();
+        await accessoryInventoryService.deleteItem(accessory.id);
+        alert("Accessorio eliminato con successo!");
+        await loadAccessoryData();
       } catch (err) {
         const errorMessage = handleApiError(
           err,
-          "Errore nel caricamento dei dati",
-          "loadDeviceData"
+          "Errore nell'eliminazione dei dati",
+          "handleDeleteAccessory"
         );
         console.error("Errore nell'eliminazione:", err);
-        alert(errorMessage || "Errore durante l'eliminazione dell'apparato");
+        alert(errorMessage || "Errore durante l'eliminazione dell'accessorio");
       } finally {
         setLoading(false);
       }
@@ -351,14 +339,14 @@ const MagazzinoApparati: React.FC = () => {
   const handleExportCsv = async () => {
     try {
       setLoading(true);
-      const blob = await deviceInventoryService.exportToCsv();
-      deviceInventoryService.downloadCsvFile(blob);
+      const blob = await accessoryInventoryService.exportToCsv();
+      accessoryInventoryService.downloadCsvFile(blob);
       alert("Export completato con successo!");
     } catch (err) {
       const errorMessage = handleApiError(
         err,
-        "Errore nel caricamento dei dati",
-        "loadDeviceData"
+        "Errore nell'export dei dati",
+        "handleExportCsv"
       );
       console.error("Errore nell'export:", err);
       alert(errorMessage || "Errore durante l'export dei dati");
@@ -372,7 +360,7 @@ const MagazzinoApparati: React.FC = () => {
   };
 
   const getBrands = (): string[] => {
-    const brands = new Set(devices.map((d) => d.brand));
+    const brands = new Set(accessories.map((d) => d.brand));
     return Array.from(brands).sort();
   };
 
@@ -432,43 +420,27 @@ const MagazzinoApparati: React.FC = () => {
     }
   };
 
-  // Handlers per filtri
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
+  const getTypeLabel = (type: AccessoryType) => {
+    switch (type) {
+      case "power-cables":
+        return "🔌 Alimentazione & Cavi";
+      case "audio":
+        return "🎧 Audio";
+      case "protection":
+        return "🛡️ Protezione";
+      case "auto-mobility":
+        return "🚗 Auto & Mobilità";
+      case "stands":
+        return "🧲 Supporti & Stand";
+      case "wearables-extra":
+        return "⌚ Wearable & Extra";
+      case "other-services":
+        return "🧰 Altri / Servizi";
+      default:
+        return "🧰 Altri / Servizi";
+    }
   };
 
-  const handleTypeChange = (value: string) => {
-    setSelectedType(value);
-    setCurrentPage(1);
-  };
-
-  const handleBrandChange = (value: string) => {
-    setSelectedBrand(value);
-    setCurrentPage(1);
-  };
-
-  const handleSupplierChange = (value: string) => {
-    setSelectedSupplier(value);
-    setCurrentPage(1);
-  };
-
-  const handleConditionChange = (value: string) => {
-    setSelectedCondition(value);
-    setCurrentPage(1);
-  };
-
-  const handleStatusChange = (value: string) => {
-    setSelectedStatus(value);
-    setCurrentPage(1);
-  };
-
-  const handleCourtesyChange = (checked: boolean) => {
-    setShowCourtesyOnly(checked);
-    setCurrentPage(1);
-  };
-
-  // Paginazione
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -481,8 +453,7 @@ const MagazzinoApparati: React.FC = () => {
     }
   };
 
-  // Rendering condizionale per loading e errori
-  if (loading && devices.length === 0) {
+  if (loading && accessories.length === 0) {
     return (
       <div className={styles.mainLayout}>
         <Sidebar menuState={menuState} toggleMenu={toggleMenu} />
@@ -490,7 +461,7 @@ const MagazzinoApparati: React.FC = () => {
           <Topbar toggleMenu={toggleMenu} />
           <div className={styles.loadingContainer}>
             <div className={styles.loadingSpinner}></div>
-            <span>Caricamento magazzino apparati...</span>
+            <span>Caricamento magazzino accessori...</span>
           </div>
           <BottomBar />
         </div>
@@ -498,7 +469,7 @@ const MagazzinoApparati: React.FC = () => {
     );
   }
 
-  if (error && devices.length === 0) {
+  if (error && accessories.length === 0) {
     return (
       <div className={styles.mainLayout}>
         <Sidebar menuState={menuState} toggleMenu={toggleMenu} />
@@ -511,7 +482,7 @@ const MagazzinoApparati: React.FC = () => {
             <p>{error}</p>
             <button
               className={`${styles.btn} ${styles.btnPrimary}`}
-              onClick={loadDeviceData}
+              onClick={loadAccessoryData}
             >
               Riprova
             </button>
@@ -528,23 +499,20 @@ const MagazzinoApparati: React.FC = () => {
       <div className={styles.contentArea}>
         <Topbar toggleMenu={toggleMenu} />
 
-        {/* Header */}
         <div className={styles.schedaHeader}>
           <div className={styles.leftBlock}>
             <div className={styles.warehouseIconBtn}>
               <Smartphone className={styles.warehouseIcon} />
             </div>
             <div className={styles.warehouseInfo}>
-              <h2 className={styles.warehouseTitle}>Gestione Apparati</h2>
-              <p className={styles.warehouseSubtitle}>
-                Centro Assistenza Mobile
-              </p>
+              <h2 className={styles.warehouseTitle}>Gestione Accessori</h2>
+              <p className={styles.warehouseSubtitle}>Centro Assistenza Mobile</p>
             </div>
             <div className={styles.statsBox}>
               <BarChart3 className={styles.statsIcon} />
               <div className={styles.statsText}>
-                <span>{stats.totalDevices} Apparati Totali</span>
-                <span>€ {stats.totalPurchaseValue.toFixed(2)} Valore</span>
+                <span>{stats.totalAccessories} Accessori Totali</span>
+                <span>EUR {stats.totalPurchaseValue.toFixed(2)} Valore</span>
               </div>
             </div>
           </div>
@@ -552,50 +520,46 @@ const MagazzinoApparati: React.FC = () => {
           <div className={styles.breadcrumb}>
             <span className={styles.breadcrumbItem}>Roma - Next srl</span>
             <span className={styles.breadcrumbSeparator}> &gt; </span>
-            <span className={styles.breadcrumbCurrent}>Magazzino Apparati</span>
+            <span className={styles.breadcrumbCurrent}>Magazzino Accessori</span>
           </div>
         </div>
 
         <div className={styles.pageBody}>
           <div className={styles.warehouseContainer}>
-            {/* Header della pagina */}
             <div className={styles.pageTitle}>
               <h1>
                 <Smartphone style={{ width: "32px", height: "32px" }} />
-                Magazzino Apparati
+                Magazzino Accessori
               </h1>
-              <p>Gestione smartphone e tablet per il centro assistenza</p>
+              <p>Gestione accessori per il centro assistenza</p>
             </div>
 
-            {/* Statistiche rapide */}
             <div className={styles.quickStats}>
               <div className={styles.statCard}>
-                <h3 className={styles.statNumber}>{stats.availableDevices}</h3>
+                <h3 className={styles.statNumber}>{stats.availableAccessories}</h3>
                 <p className={styles.statLabel}>Disponibili</p>
               </div>
               <div className={styles.statCard}>
                 <h3 className={styles.statNumber} style={{ color: "#ffc107" }}>
-                  {stats.loanedDevices}
+                  {stats.lowStockAccessories}
                 </h3>
-                <p className={styles.statLabel}>In Prestito</p>
+                <p className={styles.statLabel}>In Esaurimento</p>
               </div>
               <div className={styles.statCard}>
                 <h3 className={styles.statNumber} style={{ color: "#17a2b8" }}>
-                  {stats.courtesyDevices}
+                  {stats.outOfStockAccessories}
                 </h3>
-                <p className={styles.statLabel}>Cortesia Disponibili</p>
+                <p className={styles.statLabel}>Esauriti</p>
               </div>
               <div className={styles.statCard}>
                 <h3 className={styles.statNumber} style={{ color: "#28a745" }}>
-                  € {stats.totalPurchaseValue.toFixed(0)}
+                  EUR {stats.totalPurchaseValue.toFixed(0)}
                 </h3>
                 <p className={styles.statLabel}>Valore Totale</p>
               </div>
             </div>
 
-            {/* Layout principale */}
             <div className={styles.warehouseLayout}>
-              {/* Sidebar filtri */}
               <div className={styles.filtersSidebar}>
                 <div className={styles.filterSection}>
                   <h3>Ricerca</h3>
@@ -603,24 +567,35 @@ const MagazzinoApparati: React.FC = () => {
                     <input
                       type="text"
                       className={styles.formControl}
-                      placeholder="Cerca per codice, marca, IMEI..."
+                      placeholder="Cerca per codice, marca, modello..."
                       value={searchQuery}
-                      onChange={(e) => handleSearchChange(e.target.value)}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setCurrentPage(1);
+                      }}
                     />
                   </div>
                 </div>
 
                 <div className={styles.filterSection}>
-                  <h3>Tipo Apparato</h3>
+                  <h3>Tipo Accessorio</h3>
                   <div className={styles.formGroup}>
                     <select
                       className={styles.formControl}
                       value={selectedType}
-                      onChange={(e) => handleTypeChange(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedType(e.target.value);
+                        setCurrentPage(1);
+                      }}
                     >
                       <option value="">Tutti i tipi</option>
-                      <option value="smartphone">📱 Smartphone</option>
-                      <option value="tablet">📋 Tablet</option>
+                      <option value="power-cables">🔌 Alimentazione & Cavi</option>
+                      <option value="audio">🎧 Audio</option>
+                      <option value="protection">🛡️ Protezione</option>
+                      <option value="auto-mobility">🚗 Auto & Mobilità</option>
+                      <option value="stands">🧲 Supporti & Stand</option>
+                      <option value="wearables-extra">⌚ Wearable & Extra</option>
+                      <option value="other-services">🧰 Altri / Servizi</option>
                     </select>
                   </div>
                 </div>
@@ -631,7 +606,10 @@ const MagazzinoApparati: React.FC = () => {
                     <select
                       className={styles.formControl}
                       value={selectedBrand}
-                      onChange={(e) => handleBrandChange(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedBrand(e.target.value);
+                        setCurrentPage(1);
+                      }}
                     >
                       <option value="">Tutte le marche</option>
                       {getBrands().map((brand) => (
@@ -649,14 +627,14 @@ const MagazzinoApparati: React.FC = () => {
                     <select
                       className={styles.formControl}
                       value={selectedSupplier}
-                      onChange={(e) => handleSupplierChange(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedSupplier(e.target.value);
+                        setCurrentPage(1);
+                      }}
                     >
                       <option value="">Tutti i fornitori</option>
                       {suppliers.map((supplier) => (
-                        <option
-                          key={supplier.supplierId}
-                          value={supplier.supplierId}
-                        >
+                        <option key={supplier.supplierId} value={supplier.supplierId}>
                           {supplier.name}
                         </option>
                       ))}
@@ -670,7 +648,10 @@ const MagazzinoApparati: React.FC = () => {
                     <select
                       className={styles.formControl}
                       value={selectedCondition}
-                      onChange={(e) => handleConditionChange(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedCondition(e.target.value);
+                        setCurrentPage(1);
+                      }}
                     >
                       <option value="">Tutte le condizioni</option>
                       <option value="new">Nuovo</option>
@@ -686,48 +667,37 @@ const MagazzinoApparati: React.FC = () => {
                     <select
                       className={styles.formControl}
                       value={selectedStatus}
-                      onChange={(e) => handleStatusChange(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedStatus(e.target.value);
+                        setCurrentPage(1);
+                      }}
                     >
                       <option value="">Tutti gli stati</option>
                       <option value="available">Disponibile</option>
-                      <option value="loaned">In Prestito</option>
                       <option value="sold">Venduto</option>
                       <option value="unavailable">Non Disponibile</option>
                     </select>
                   </div>
                 </div>
 
-                <div className={styles.filterSection}>
-                  <h3>Cortesia</h3>
-                  <div className={styles.formGroup}>
-                    <label className={styles.checkboxLabel}>
-                      <input
-                        type="checkbox"
-                        checked={showCourtesyOnly}
-                        onChange={(e) => handleCourtesyChange(e.target.checked)}
-                      />
-                      <span>Solo apparati di cortesia</span>
-                    </label>
-                  </div>
-                </div>
               </div>
 
-              {/* Area principale */}
-              <div className={styles.mainArea}>
-                {/* Toolbar */}
+              <div className={styles.warehouseMain}>
                 <div className={styles.warehouseToolbar}>
                   <div className={styles.searchBar}>
                     <Search className={styles.searchIcon} />
                     <input
                       type="text"
                       className={styles.searchInput}
-                      placeholder="Ricerca rapida nel magazzino apparati..."
+                      placeholder="Ricerca rapida nel magazzino accessori..."
                       value={searchQuery}
-                      onChange={(e) => handleSearchChange(e.target.value)}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setCurrentPage(1);
+                      }}
                     />
                   </div>
 
-                  {/* Selettore visualizzazione */}
                   <div className={styles.viewSelector}>
                     <button
                       className={`${styles.viewBtn} ${
@@ -753,110 +723,81 @@ const MagazzinoApparati: React.FC = () => {
                     <button
                       className={`${styles.btn} ${styles.btnSecondary}`}
                       onClick={handleExportCsv}
-                      disabled={loading}
-                      title="Esporta CSV"
                     >
-                      <Download
-                        style={{
-                          width: "16px",
-                          height: "16px",
-                          marginRight: "4px",
-                        }}
-                      />
+                      <Download size={16} className={styles.btnIcon} />
                       Export CSV
                     </button>
                     <button
                       className={`${styles.btn} ${styles.btnSuccess}`}
                       onClick={() => openModal("add")}
-                      disabled={loading}
                     >
-                      Aggiungi Apparato
+                      Aggiungi Accessorio
                     </button>
                   </div>
                 </div>
 
-                {/* Loading overlay per operazioni */}
-                {loading && devices.length > 0 && (
-                  <div className={styles.loadingOverlay}>
-                    <div className={styles.loadingSpinner}></div>
-                  </div>
-                )}
-
-                {/* Area contenuto - Vista condizionale */}
                 {viewMode === "grid" ? (
-                  /* Griglia apparati */
                   <div className={styles.itemsGrid}>
-                    {filteredDevices.map((device) => {
+                    {accessories.map((item) => {
                       const supplierInfo = suppliers.find(
-                        (s) => s.supplierId === device.supplierId
+                        (s) => s.supplierId === item.supplierId
                       );
 
                       return (
-                        <div key={device.id} className={styles.itemCard}>
+                        <div key={item.id} className={styles.itemCard}>
                           <div className={styles.itemHeader}>
                             <div
-                              className={`${styles.itemIcon} ${
-                                styles[device.deviceType]
-                              }`}
+                              className={`${styles.itemIcon} ${styles.accessory}`}
                             >
-                              {device.deviceType === "smartphone" ? "📱" : "📋"}
+                              🧩
                             </div>
                             <div className={styles.itemInfo}>
-                              <div className={styles.itemCode}>
-                                {device.code}
-                              </div>
+                              <div className={styles.itemCode}>{item.code}</div>
                               <h4 className={styles.itemName}>
-                                {device.brand} {device.model}
+                                {item.brand} {item.model}
                               </h4>
                               <p className={styles.itemDescription}>
-                                {device.color} •{" "}
-                                {getConditionText(device.deviceCondition)}
+                                {getTypeLabel(item.accessoryType)} • {item.color}
                               </p>
                             </div>
                             <div className={styles.tableStatus}>
                               <span
-                                className={`${
-                                  styles.statusBadge
-                                } ${getStatusBadgeClass(device.deviceStatus)}`}
+                                className={`${styles.statusBadge} ${getStatusBadgeClass(
+                                  item.accessoryStatus
+                                )}`}
                               >
-                                {getStatusText(device.deviceStatus)}
+                                {getStatusText(item.accessoryStatus)}
                               </span>
                             </div>
                           </div>
 
-                          {device.isCourtesyDevice && (
-                            <div className={styles.courtesyBadge}>
-                              🤝 Dispositivo di Cortesia
-                            </div>
-                          )}
-
                           <div className={styles.itemDetails}>
-                            <div className={styles.itemRow}>
-                              <span className={styles.itemLabel}>IMEI:</span>
-                              <span
-                                className={`${styles.itemValue} ${styles.itemImei}`}
-                              >
-                                {device.imei}
-                              </span>
-                            </div>
                             <div className={styles.itemRow}>
                               <span className={styles.itemLabel}>ESN:</span>
                               <span className={styles.itemValue}>
-                                {device.esn || "-"}
+                                {item.esn || "-"}
                               </span>
                             </div>
                             <div className={styles.itemRow}>
-                              <span className={styles.itemLabel}>
-                                Condizione:
-                              </span>
+                              <span className={styles.itemLabel}>Condizione:</span>
                               <span
-                                className={`${
-                                  styles.conditionBadge
-                                } ${getConditionBadgeClass(
-                                  device.deviceCondition
+                                className={`${styles.conditionBadge} ${getConditionBadgeClass(
+                                  item.accessoryCondition
                                 )}`}
                               >
-                                {getConditionText(device.deviceCondition)}
+                                {getConditionText(item.accessoryCondition)}
+                              </span>
+                            </div>
+                            <div className={styles.itemRow}>
+                              <span className={styles.itemLabel}>Quantita:</span>
+                              <span className={styles.itemValue}>
+                                {item.quantityInStock}
+                              </span>
+                            </div>
+                            <div className={styles.itemRow}>
+                              <span className={styles.itemLabel}>Scorta Minima:</span>
+                              <span className={styles.itemValue}>
+                                {item.minimumStock}
                               </span>
                             </div>
                             <div className={styles.itemRow}>
@@ -864,7 +805,7 @@ const MagazzinoApparati: React.FC = () => {
                                 Prezzo Acquisto:
                               </span>
                               <span className={styles.priceValue}>
-                                € {device.purchasePrice.toFixed(2)}
+                                EUR {item.purchasePrice.toFixed(2)}
                               </span>
                             </div>
                             <div className={styles.itemRow}>
@@ -872,21 +813,11 @@ const MagazzinoApparati: React.FC = () => {
                                 Prezzo Vendita:
                               </span>
                               <span className={styles.priceValue}>
-                                € {device.sellingPrice.toFixed(2)}
+                                EUR {item.sellingPrice.toFixed(2)}
                               </span>
                             </div>
                             <div className={styles.itemRow}>
-                              <span className={styles.itemLabel}>
-                                Ubicazione:
-                              </span>
-                              <span className={styles.itemValue}>
-                                {device.location || "Non specificata"}
-                              </span>
-                            </div>
-                            <div className={styles.itemRow}>
-                              <span className={styles.itemLabel}>
-                                Fornitore:
-                              </span>
+                              <span className={styles.itemLabel}>Fornitore:</span>
                               <span className={styles.itemValue}>
                                 {supplierInfo?.name || "Sconosciuto"}
                               </span>
@@ -906,7 +837,7 @@ const MagazzinoApparati: React.FC = () => {
                                   padding: "6px 12px",
                                   fontSize: "0.75rem",
                                 }}
-                                onClick={() => openModal("edit", device)}
+                                onClick={() => openModal("edit", item)}
                               >
                                 Modifica
                               </button>
@@ -916,7 +847,7 @@ const MagazzinoApparati: React.FC = () => {
                                   padding: "6px 12px",
                                   fontSize: "0.75rem",
                                 }}
-                                onClick={() => handleDeleteDevice(device)}
+                                onClick={() => handleDeleteAccessory(item)}
                               >
                                 Elimina
                               </button>
@@ -927,136 +858,86 @@ const MagazzinoApparati: React.FC = () => {
                     })}
                   </div>
                 ) : (
-                  /* Vista Lista */
                   <div className={styles.itemsTableContainer}>
                     <table className={styles.itemsTable}>
                       <thead>
                         <tr>
                           <th className={styles.colCode}>Codice</th>
                           <th>Tipo</th>
-                          <th>Marca/Modello</th>
-                          <th>IMEI</th>
+                          <th>Marca</th>
+                          <th>Modello</th>
                           <th>ESN</th>
                           <th>Colore</th>
                           <th>Condizione</th>
                           <th>Stato</th>
-                          <th>Cortesia</th>
-                          <th>Prezzo Acq.</th>
-                          <th>Prezzo Vend.</th>
+                          <th>Prezzo Acquisto</th>
+                          <th>Prezzo Vendita</th>
                           <th>Azioni</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredDevices.map((device) => {
-                          return (
-                            <tr key={device.id} className={styles.tableRow}>
-                              <td className={styles.tableCode}>
-                                {device.code}
-                              </td>
-                              <td>
-                                <span className={styles.typeBadge}>
-                                  {device.deviceType === "smartphone"
-                                    ? "📱"
-                                    : "📋"}
-                                </span>
-                              </td>
-                              <td className={styles.tableName}>
-                                <div className={styles.nameWithIcon}>
-                                  <div
-                                    className={`${styles.tableIcon} ${
-                                      styles[device.deviceType]
-                                    }`}
-                                  >
-                                    {device.deviceType === "smartphone"
-                                      ? "📱"
-                                      : "📋"}
-                                  </div>
-                                  <div>
-                                    <div className={styles.tableItemName}>
-                                      {device.brand} {device.model}
-                                    </div>
-                                    <div className={styles.tableItemDesc}>
-                                      {device.color}
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td>
-                                <span className={styles.imeiText}>
-                                  {device.imei}
-                                </span>
-                              </td>
-                              <td>{device.esn || "-"}</td>
-                              <td>{device.color}</td>
-                              <td>
-                                <span
-                                  className={`${
-                                    styles.conditionBadge
-                                  } ${getConditionBadgeClass(
-                                    device.deviceCondition
-                                  )}`}
-                                >
-                                  {getConditionText(device.deviceCondition)}
-                                </span>
-                              </td>
-                              <td className={styles.tableStatus}>
-                                <span
-                                  className={`${
-                                    styles.statusBadge
-                                  } ${getStatusBadgeClass(
-                                    device.deviceStatus
-                                  )}`}
-                                >
-                                  {getStatusText(device.deviceStatus)}
-                                </span>
-                              </td>
-                              <td>
-                                {device.isCourtesyDevice ? (
-                                  <span className={styles.courtesyIndicator}>
-                                    🤝
-                                  </span>
-                                ) : (
-                                  <span className={styles.noCourtesy}>-</span>
-                                )}
-                              </td>
-                              <td className={styles.tablePrice}>
-                                € {device.purchasePrice.toFixed(2)}
-                              </td>
-                              <td className={styles.tablePrice}>
-                                € {device.sellingPrice.toFixed(2)}
-                              </td>
-                              <td className={styles.tableActions}>
-                                <button
-                                  className={`${styles.actionBtn} ${styles.btnView}`}
-                                  onClick={() => openModal("view", device)}
-                                  title="Visualizza dettagli"
-                                >
-                                  👁️
-                                </button>
-                                <button
-                                  className={`${styles.actionBtn} ${styles.btnEdit}`}
-                                  onClick={() => openModal("edit", device)}
-                                  title="Modifica apparato"
-                                >
-                                  ✏️
-                                </button>
-                                <button
-                                  className={`${styles.actionBtn} ${styles.btnDelete}`}
-                                  onClick={() => handleDeleteDevice(device)}
-                                  title="Elimina apparato"
-                                >
-                                  🗑️
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
+                        {accessories.map((item) => (
+                          <tr key={item.id}>
+                            <td className={styles.tableCode}>{item.code}</td>
+                            <td>{getTypeLabel(item.accessoryType)}</td>
+                            <td>{item.brand}</td>
+                            <td>{item.model}</td>
+                            <td>{item.esn || "-"}</td>
+                            <td>{item.color}</td>
+                            <td>
+                              <span
+                                className={`${styles.conditionBadge} ${getConditionBadgeClass(
+                                  item.accessoryCondition
+                                )}`}
+                              >
+                                {getConditionText(item.accessoryCondition)}
+                              </span>
+                            </td>
+                            <td className={styles.tableStatus}>
+                              <span
+                                className={`${styles.statusBadge} ${getStatusBadgeClass(
+                                  item.accessoryStatus
+                                )}`}
+                              >
+                                {getStatusText(item.accessoryStatus)}
+                              </span>
+                            </td>
+                            <td className={styles.tablePrice}>
+                              EUR {item.purchasePrice.toFixed(2)}
+                            </td>
+                            <td className={styles.tablePrice}>
+                              EUR {item.sellingPrice.toFixed(2)}
+                            </td>
+                            <td className={styles.tableActions}>
+                              <button
+                                className={`${styles.actionBtn} ${styles.btnView}`}
+                                onClick={() => openModal("view", item)}
+                                title="Visualizza dettagli"
+                              >
+                                V
+                              </button>
+                              <button
+                                className={`${styles.actionBtn} ${styles.btnEdit}`}
+                                onClick={() => openModal("edit", item)}
+                                title="Modifica accessorio"
+                              >
+                                M
+                              </button>
+                              <button
+                                className={`${styles.actionBtn} ${styles.btnDelete}`}
+                                onClick={() => handleDeleteAccessory(item)}
+                                title="Elimina accessorio"
+                              >
+                                X
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
                 )}
 
-                {/* Paginazione */}
                 {totalPages > 1 && (
                   <div className={styles.pagination}>
                     <button
@@ -1068,8 +949,7 @@ const MagazzinoApparati: React.FC = () => {
                     </button>
 
                     <span className={styles.paginationInfo}>
-                      Pagina {currentPage} di {totalPages} ({totalCount}{" "}
-                      apparati totali)
+                      Pagina {currentPage} di {totalPages} ({totalCount} accessori)
                     </span>
 
                     <button
@@ -1082,19 +962,17 @@ const MagazzinoApparati: React.FC = () => {
                   </div>
                 )}
 
-                {/* Messaggio se non ci sono risultati */}
-                {filteredDevices.length === 0 && !loading && (
+                {accessories.length === 0 && !loading && (
                   <div className={styles.errorContainer}>
-                    <h2>📱 Nessun apparato trovato</h2>
-                    <p>
-                      Modifica i filtri di ricerca o aggiungi nuovi apparati al
-                      magazzino
-                    </p>
+                    <h2>
+                      <AlertTriangle /> Nessun accessorio trovato
+                    </h2>
+                    <p>Modifica i filtri di ricerca o aggiungi nuovi accessori</p>
                     <button
                       className={`${styles.btn} ${styles.btnSuccess}`}
                       onClick={() => openModal("add")}
                     >
-                      Aggiungi Primo Apparato
+                      Aggiungi Primo Accessorio
                     </button>
                   </div>
                 )}
@@ -1103,7 +981,6 @@ const MagazzinoApparati: React.FC = () => {
           </div>
         </div>
 
-        {/* Modal per gestione apparati */}
         {showModal && (
           <div
             className={styles.modalOverlay}
@@ -1112,9 +989,9 @@ const MagazzinoApparati: React.FC = () => {
             <div className={styles.modalContent}>
               <div className={styles.modalHeader}>
                 <h3 className={styles.modalTitle}>
-                  {modalMode === "add" && "Aggiungi Nuovo Apparato"}
-                  {modalMode === "edit" && "Modifica Apparato"}
-                  {modalMode === "view" && "Dettagli Apparato"}
+                  {modalMode === "add" && "Aggiungi Nuovo Accessorio"}
+                  {modalMode === "edit" && "Modifica Accessorio"}
+                  {modalMode === "view" && "Dettagli Accessorio"}
                 </h3>
                 <button className={styles.modalClose} onClick={closeModal}>
                   <X />
@@ -1123,7 +1000,7 @@ const MagazzinoApparati: React.FC = () => {
 
               <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
                 <div className={styles.formGroup}>
-                  <label>Codice Apparato *</label>
+                  <label>Codice Accessorio *</label>
                   <input
                     type="text"
                     className={styles.formControl}
@@ -1131,7 +1008,7 @@ const MagazzinoApparati: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, code: e.target.value })
                     }
-                    placeholder="Es: IPH14-001"
+                    placeholder="Es: ACC-001"
                     readOnly={modalMode === "view"}
                   />
                 </div>
@@ -1144,20 +1021,25 @@ const MagazzinoApparati: React.FC = () => {
                   }}
                 >
                   <div className={styles.formGroup}>
-                    <label>Tipo Apparato *</label>
+                    <label>Tipo Accessorio *</label>
                     <select
                       className={styles.formControl}
-                      value={formData.deviceType}
+                      value={formData.accessoryType}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          deviceType: e.target.value as "smartphone" | "tablet",
+                          accessoryType: e.target.value as AccessoryType,
                         })
                       }
                       disabled={modalMode === "view"}
                     >
-                      <option value="smartphone">📱 Smartphone</option>
-                      <option value="tablet">📋 Tablet</option>
+                      <option value="power-cables">🔌 Alimentazione & Cavi</option>
+                      <option value="audio">🎧 Audio</option>
+                      <option value="protection">🛡️ Protezione</option>
+                      <option value="auto-mobility">🚗 Auto & Mobilità</option>
+                      <option value="stands">🧲 Supporti & Stand</option>
+                      <option value="wearables-extra">⌚ Wearable & Extra</option>
+                      <option value="other-services">🧰 Altri / Servizi</option>
                     </select>
                   </div>
 
@@ -1185,7 +1067,7 @@ const MagazzinoApparati: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, model: e.target.value })
                     }
-                    placeholder="Es: iPhone 14 Pro"
+                    placeholder="Es: Cover iPhone 14 Pro"
                     readOnly={modalMode === "view"}
                   />
                 </div>
@@ -1197,20 +1079,6 @@ const MagazzinoApparati: React.FC = () => {
                     gap: "16px",
                   }}
                 >
-                  <div className={styles.formGroup}>
-                    <label>IMEI *</label>
-                    <input
-                      type="text"
-                      className={styles.formControl}
-                      value={formData.imei}
-                      onChange={(e) =>
-                        setFormData({ ...formData, imei: e.target.value })
-                      }
-                      placeholder="Es: 353456789012345"
-                      readOnly={modalMode === "view"}
-                    />
-                  </div>
-
                   <div className={styles.formGroup}>
                     <label>ESN</label>
                     <input
@@ -1224,20 +1092,20 @@ const MagazzinoApparati: React.FC = () => {
                       readOnly={modalMode === "view"}
                     />
                   </div>
-                </div>
 
-                <div className={styles.formGroup}>
-                  <label>Colore *</label>
-                  <input
-                    type="text"
-                    className={styles.formControl}
-                    value={formData.color}
-                    onChange={(e) =>
-                      setFormData({ ...formData, color: e.target.value })
-                    }
-                    placeholder="Es: Space Black"
-                    readOnly={modalMode === "view"}
-                  />
+                  <div className={styles.formGroup}>
+                    <label>Colore *</label>
+                    <input
+                      type="text"
+                      className={styles.formControl}
+                      value={formData.color}
+                      onChange={(e) =>
+                        setFormData({ ...formData, color: e.target.value })
+                      }
+                      placeholder="Es: Nero"
+                      readOnly={modalMode === "view"}
+                    />
+                  </div>
                 </div>
 
                 <div
@@ -1251,14 +1119,11 @@ const MagazzinoApparati: React.FC = () => {
                     <label>Condizione *</label>
                     <select
                       className={styles.formControl}
-                      value={formData.deviceCondition}
+                      value={formData.accessoryCondition}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          deviceCondition: e.target.value as
-                            | "new"
-                            | "used"
-                            | "refurbished",
+                          accessoryCondition: e.target.value as AccessoryCondition,
                         })
                       }
                       disabled={modalMode === "view"}
@@ -1273,42 +1138,20 @@ const MagazzinoApparati: React.FC = () => {
                     <label>Stato *</label>
                     <select
                       className={styles.formControl}
-                      value={formData.deviceStatus}
+                      value={formData.accessoryStatus}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          deviceStatus: e.target.value as
-                            | "available"
-                            | "loaned"
-                            | "sold"
-                            | "unavailable",
+                          accessoryStatus: e.target.value as AccessoryStatus,
                         })
                       }
                       disabled={modalMode === "view"}
                     >
                       <option value="available">Disponibile</option>
-                      <option value="loaned">In Prestito</option>
                       <option value="sold">Venduto</option>
                       <option value="unavailable">Non Disponibile</option>
                     </select>
                   </div>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
-                      checked={formData.isCourtesyDevice}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          isCourtesyDevice: e.target.checked,
-                        })
-                      }
-                      disabled={modalMode === "view"}
-                    />
-                    <span>🤝 Dispositivo di Cortesia</span>
-                  </label>
                 </div>
 
                 <div className={styles.formGroup}>
@@ -1323,10 +1166,7 @@ const MagazzinoApparati: React.FC = () => {
                   >
                     <option value="">Seleziona fornitore</option>
                     {suppliers.map((supplier) => (
-                      <option
-                        key={supplier.supplierId}
-                        value={supplier.supplierId}
-                      >
+                      <option key={supplier.supplierId} value={supplier.supplierId}>
                         {supplier.name}
                       </option>
                     ))}
@@ -1341,7 +1181,49 @@ const MagazzinoApparati: React.FC = () => {
                   }}
                 >
                   <div className={styles.formGroup}>
-                    <label>Prezzo Acquisto € *</label>
+                    <label>Quantita in Stock *</label>
+                    <input
+                      type="number"
+                      className={styles.formControl}
+                      value={formData.quantityInStock}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          quantityInStock: parseInt(e.target.value, 10) || 0,
+                        })
+                      }
+                      min="0"
+                      readOnly={modalMode === "view"}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Scorta Minima *</label>
+                    <input
+                      type="number"
+                      className={styles.formControl}
+                      value={formData.minimumStock}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          minimumStock: parseInt(e.target.value, 10) || 0,
+                        })
+                      }
+                      min="0"
+                      readOnly={modalMode === "view"}
+                    />
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "16px",
+                  }}
+                >
+                  <div className={styles.formGroup}>
+                    <label>Prezzo Acquisto EUR *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -1359,7 +1241,7 @@ const MagazzinoApparati: React.FC = () => {
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label>Prezzo Vendita € *</label>
+                    <label>Prezzo Vendita EUR *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -1405,8 +1287,7 @@ const MagazzinoApparati: React.FC = () => {
                   />
                 </div>
 
-                {/* Informazioni aggiuntive in modalità view */}
-                {modalMode === "view" && selectedDevice && (
+                {modalMode === "view" && selectedAccessory && (
                   <>
                     <hr />
                     <div
@@ -1422,19 +1303,19 @@ const MagazzinoApparati: React.FC = () => {
                           type="text"
                           className={styles.formControl}
                           value={new Date(
-                            selectedDevice.createdAt
+                            selectedAccessory.createdAt
                           ).toLocaleDateString("it-IT")}
                           readOnly
                         />
                       </div>
-                      {selectedDevice.updatedAt && (
+                      {selectedAccessory.updatedAt && (
                         <div className={styles.formGroup}>
                           <label>Modificato il</label>
                           <input
                             type="text"
                             className={styles.formControl}
                             value={new Date(
-                              selectedDevice.updatedAt
+                              selectedAccessory.updatedAt
                             ).toLocaleDateString("it-IT")}
                             readOnly
                           />
@@ -1449,21 +1330,15 @@ const MagazzinoApparati: React.FC = () => {
                 <button
                   className={`${styles.btn} ${styles.btnSecondary}`}
                   onClick={closeModal}
-                  disabled={loading}
                 >
                   {modalMode === "view" ? "Chiudi" : "Annulla"}
                 </button>
                 {modalMode !== "view" && (
                   <button
                     className={`${styles.btn} ${styles.btnPrimary}`}
-                    onClick={handleSaveDevice}
-                    disabled={loading}
+                    onClick={handleSaveAccessory}
                   >
-                    {loading
-                      ? "Salvando..."
-                      : modalMode === "add"
-                      ? "Aggiungi"
-                      : "Salva Modifiche"}
+                    {modalMode === "add" ? "Aggiungi" : "Salva Modifiche"}
                   </button>
                 )}
               </div>
@@ -1477,4 +1352,4 @@ const MagazzinoApparati: React.FC = () => {
   );
 };
 
-export default MagazzinoApparati;
+export default MagazzinoAccessori;

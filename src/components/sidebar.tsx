@@ -111,6 +111,13 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
           <Boxes className="icon" />
           <span className="item-text">Magazzino Apparati</span>
         </button>
+        <button
+          className="list-group-item"
+          onClick={() => navigate("/magazzino-accessori")}
+        >
+          <ShoppingCart className="icon" />
+          <span className="item-text">Magazzino Accessori</span>
+        </button>
         {/* <button
           className="list-group-item"
           onClick={() => navigate("/ordini-ricambi")}
@@ -124,6 +131,13 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         >
           <Store className="icon" />
           <span className="item-text">Vendite</span>
+        </button>
+        <button
+          className="list-group-item"
+          onClick={() => navigate("/vendita-accessori")}
+        >
+          <Store className="icon" />
+          <span className="item-text">Vendita Accessori</span>
         </button>
         <button
           className="list-group-item"

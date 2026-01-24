@@ -28,6 +28,8 @@ import Vendite from "./pages/Vendite";
 import PagamentoVendite from "./pages/PagamentoVendite";
 import RicercaVendite from "./pages/RicercaVendite";
 import ModificaVendite from "./pages/ModificaVendite";
+import MagazzinoAccessori from "./pages/MagazzinoAccessori";
+import VenditeAccessori from "./pages/VenditeAccessori";
 import Prenotazioni from "./pages/Prenotazioni";
 import RicercaPrenotazioni from "./pages/RicercaPrenotazioni";
 import CalendarioPrenotazioni from "./pages/RicercaPrenotazioni/CalendarioPrenotazioni";
@@ -234,10 +236,26 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/magazzino-accessori"
+        element={
+          <ProtectedRoute>
+            <MagazzinoAccessori />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/vendite-apparati"
         element={
           <ProtectedRoute>
             <Vendite />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vendita-accessori"
+        element={
+          <ProtectedRoute>
+            <VenditeAccessori />
           </ProtectedRoute>
         }
       />

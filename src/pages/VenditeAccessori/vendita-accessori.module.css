@@ -1,0 +1,301 @@
+.mainLayout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.contentArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageBody {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  min-height: 0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.centerBox {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  max-width: 900px;
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.boxHeader {
+  background: #2c2c2c;
+  padding: 18px 32px;
+  text-align: right;
+  border-radius: 8px 8px 0 0;
+}
+
+.boxHeader h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.boxBody {
+  padding: 24px 32px 28px 32px;
+  border-radius: 0 0 8px 8px;
+}
+
+.formRow {
+  margin-bottom: 14px;
+  width: 100%;
+  position: relative;
+}
+
+.formRow label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.formRowDouble {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.formField label {
+  margin-bottom: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.formControl {
+  width: 100%;
+  padding: 9px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  background: #fff;
+}
+
+.formControl:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.formControl::placeholder {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.formControl[readonly] {
+  background: #f8f9fa;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.suggestionItem {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: #fff;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.suggestionItem:hover {
+  background: #f7f7fb;
+}
+
+.suggestionItem:last-child {
+  border-bottom: none;
+}
+
+.suggestionTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.suggestionMeta {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.suggestionEmpty {
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.priceInput {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.priceInput .formControl {
+  padding-right: 50px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.currency {
+  position: absolute;
+  right: 12px;
+  color: #666;
+  font-weight: 600;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.btnCreaVendita {
+  width: 100%;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 16px;
+  box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.btnCreaVendita:hover {
+  background: linear-gradient(135deg, #218838 0%, #1ba87d 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(40, 167, 69, 0.4);
+}
+
+.btnCreaVendita:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 1024px) {
+  .pageBody {
+    padding: 16px;
+  }
+
+  .centerBox {
+    max-width: 100%;
+  }
+
+  .formRowDouble {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .centerBox {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+
+  .boxHeader {
+    padding: 16px 24px;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .boxHeader h2 {
+    font-size: 1.3rem;
+  }
+
+  .boxBody {
+    padding: 20px;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .formRowDouble {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageBody {
+    padding: 12px;
+  }
+
+  .boxBody {
+    padding: 16px;
+  }
+
+  .boxHeader {
+    padding: 14px 20px;
+  }
+
+  .boxHeader h2 {
+    font-size: 1.2rem;
+  }
+
+  .formRow,
+  .formRowDouble {
+    margin-bottom: 12px;
+  }
+
+  .formControl {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .btnCreaVendita {
+    padding: 11px 20px;
+    font-size: 0.9rem;
+  }
+}

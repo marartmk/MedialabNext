@@ -450,6 +450,10 @@ const Modifica: React.FC = () => {
     iban: "",
   });
   const [savingCustomer, setSavingCustomer] = useState(false);
+  const [showOutOfStockModal, setShowOutOfStockModal] = useState(false);
+  const [outOfStockPart, setOutOfStockPart] = useState<PartSearchItem | null>(
+    null
+  );
 
   // Totale IVA inclusa
   // const finalTotal = useMemo(
@@ -1895,6 +1899,11 @@ const Modifica: React.FC = () => {
 
   // Aggiunge una riga ricambio alla scheda
   const addPartLine = (item: PartSearchItem) => {
+    if ((item.quantity ?? 0) <= 0) {
+      setOutOfStockPart(item);
+      setShowOutOfStockModal(true);
+      return;
+    }
     setUsedParts((prev) => {
       // item.id è numerico (warehouse item id)
       const idx = prev.findIndex((p) => p.warehouseItemId === item.id);
@@ -3323,6 +3332,58 @@ const Modifica: React.FC = () => {
                 disabled={savingCustomer}
               >
                 {savingCustomer ? "Salvando..." : "💾 Salva Modifiche"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showOutOfStockModal && outOfStockPart && (
+        <div
+          className="modal-overlay-stock"
+          onClick={() => setShowOutOfStockModal(false)}
+        >
+          <div
+            className="modal-content-stock"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header-stock">
+              <h4>Ricambio esaurito</h4>
+              <button
+                type="button"
+                className="modal-close-button"
+                onClick={() => setShowOutOfStockModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body-stock">
+              <p className="stock-warning">
+                Non abbiamo giacenza disponibile per questo ricambio, quindi non
+                puo essere inserito.
+              </p>
+              <div className="stock-card">
+                <div className="stock-title">
+                  {outOfStockPart.name} ({outOfStockPart.brand}{" "}
+                  {outOfStockPart.model})
+                </div>
+                <div className="stock-meta">
+                  <span>Codice: {outOfStockPart.code}</span>
+                  <span>Giacenza: {outOfStockPart.quantity ?? 0}</span>
+                  <span>
+                    Prezzo: €
+                    {outOfStockPart.unitPrice?.toFixed(2) ?? "0.00"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer-stock">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setShowOutOfStockModal(false)}
+              >
+                Ok
               </button>
             </div>
           </div>
