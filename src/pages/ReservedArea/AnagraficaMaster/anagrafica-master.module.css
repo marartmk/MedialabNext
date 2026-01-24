@@ -207,6 +207,12 @@
   font-weight: 500;
 }
 
+.rightBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* Modal Styles */
 .modalOverlay {
   position: fixed;

@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import "./dashboard.css";
 import Sidebar from "../../components/sidebar"; // Assicurati che il percorso sia corretto
 import Topbar from "../../components/topbar"; // Assicurati che il percorso sia corretto
+import {
+  newsService,
+  type ServiceNewsDetailDto,
+} from "../../services/newsService";
 
 interface AIMessage {
   id: number;
@@ -12,8 +16,11 @@ interface AIMessage {
 
 const Dashboard: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
-  const [selectedNews, setSelectedNews] = useState<any>(null);
-  const [newsData, setNewsData] = useState<any[]>([]);
+  const [selectedNews, setSelectedNews] = useState<ServiceNewsDetailDto | null>(null);
+  const [newsData, setNewsData] = useState<ServiceNewsDetailDto[]>([]);
+  const [newsSearch, setNewsSearch] = useState("");
+  const [isNewsLoading, setIsNewsLoading] = useState(false);
+  const [newsError, setNewsError] = useState<string | null>(null);
 
   const AI_ASSISTANT_ENABLED = true; // 👈 Flag per attivare/disattivare AI
 
@@ -46,40 +53,38 @@ const Dashboard: React.FC = () => {
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // Simula il caricamento delle notizie
   useEffect(() => {
-    const loadNews = () => {
-      const mockNews = [
-        {
-          id: 1,
-          title: "Alcuni computer Mac con l'aggiornamento....",
-          date: new Date(Date.now() - 86400000),
-          content:
-            "Alcuni modelli di Mac potrebbero riscontrare ritardi nel caricamento di Diagnosi Apple o delle diagnostiche EFI di AST 2 dopo i seguenti aggiornamenti: Aggiornamento a macOS Big Sur 11.3 Aggiornamento del firmware del chip di sicurezza Apple T2 alla versione più recente dopo aver eseguito correttamente le suite Configurazione di sistema, Riattiva dispositivo o un ripristino con Apple Configurator 2 I modelli di Mac interessati si collegheranno alla Console di diagnostica di AST 2 e possono visualizzare il messaggio 'Attendo il supporto...' per diversi minuti.",
-        },
-        {
-          id: 2,
-          title: "Trasformazione di GSX - Fase 2: ...",
-          date: new Date(Date.now() - 172800000),
-          content: "Informazioni sulla fase 2......",
-        },
-        {
-          id: 3,
-          title: "Suggerimenti per ridurre l'impatto ambiantale ...",
-          date: new Date(Date.now() - 259200000),
-          content: "Suggerimenti per ridurre l'impatto ambientale...",
-        },
-      ];
-      setNewsData(mockNews);
-    };
-
-    loadNews();
-
     // Carica lo stato del menu dal sessionStorage
     const savedMenuState = sessionStorage.getItem("menuState");
     if (savedMenuState === "closed") {
       setMenuState("closed");
     }
+  }, []);
+
+  useEffect(() => {
+    const loadNews = async () => {
+      setIsNewsLoading(true);
+      setNewsError(null);
+      try {
+        const multitenantId = newsService.getMultitenantId();
+        const allNews = await newsService.getAllNews(multitenantId || undefined);
+        const visibleNews = allNews
+          .filter((news) => news.isVisible)
+          .sort(
+            (a, b) =>
+              new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
+          );
+        setNewsData(visibleNews);
+        setSelectedNews(visibleNews[0] || null);
+      } catch (err) {
+        console.error("Errore nel caricamento news:", err);
+        setNewsError("Errore nel caricamento delle news");
+      } finally {
+        setIsNewsLoading(false);
+      }
+    };
+
+    loadNews();
   }, []);
 
   useEffect(() => {
@@ -295,10 +300,27 @@ const Dashboard: React.FC = () => {
   };
 
   // Gestione della selezione di una notizia
-  const handleSelectNews = (newsId: number) => {
-    const newsItem = newsData.find((item) => item.id === newsId);
+  const handleSelectNews = (newsId: string) => {
+    const newsItem = newsData.find((item) => item.newsId === newsId);
     setSelectedNews(newsItem);
   };
+
+  const formatNewsDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("it-IT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+  const filteredNews = newsData.filter((news) => {
+    const search = newsSearch.trim().toLowerCase();
+    if (!search) return true;
+    return (
+      news.title.toLowerCase().includes(search) ||
+      news.content.toLowerCase().includes(search) ||
+      (news.summary || "").toLowerCase().includes(search)
+    );
+  });
 
   // Gestione data e ora
   const [currentDate, setCurrentDate] = useState({
@@ -760,26 +782,45 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
                         type="text"
                         className="search-input-news"
                         placeholder="Cerca Service News"
+                        value={newsSearch}
+                        onChange={(e) => setNewsSearch(e.target.value)}
                       />
                     </div>
                   </div>
                   <div className="card-body">
                     <div className="service-news-box">
                       <div className="news-list">
-                        {newsData.map((news) => (
-                          <div key={news.id} className="news-item">
-                            <button
-                              className="news-link"
-                              onClick={() => handleSelectNews(news.id)}
-                            >
-                              <strong>{news.title}</strong>
-                              <br />
-                              <small className="text-muted">
-                                {news.date.toLocaleDateString("it-IT")}
-                              </small>
-                            </button>
+                        {isNewsLoading && (
+                          <div className="news-item">
+                            <span className="text-muted">Caricamento news...</span>
                           </div>
-                        ))}
+                        )}
+                        {!isNewsLoading && newsError && (
+                          <div className="news-item">
+                            <span className="text-muted">{newsError}</span>
+                          </div>
+                        )}
+                        {!isNewsLoading && !newsError && filteredNews.length === 0 && (
+                          <div className="news-item">
+                            <span className="text-muted">Nessuna news disponibile</span>
+                          </div>
+                        )}
+                        {!isNewsLoading &&
+                          !newsError &&
+                          filteredNews.map((news) => (
+                            <div key={news.newsId} className="news-item">
+                              <button
+                                className="news-link"
+                                onClick={() => handleSelectNews(news.newsId)}
+                              >
+                                <strong>{news.title}</strong>
+                                <br />
+                                <small className="text-muted">
+                                  {formatNewsDate(news.publishDate)}
+                                </small>
+                              </button>
+                            </div>
+                          ))}
                       </div>
 
                       <div className="news-detail">
@@ -787,7 +828,7 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
                           <div className="news-content">
                             <h4 className="fw-bold">{selectedNews.title}</h4>
                             <small className="text-muted">
-                              {selectedNews.date.toLocaleDateString("it-IT")}
+                              {formatNewsDate(selectedNews.publishDate)}
                             </small>
                             <hr />
                             <p>{selectedNews.content}</p>
@@ -1028,3 +1069,5 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
 };
 
 export default Dashboard;
+
+

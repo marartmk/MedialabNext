@@ -4,13 +4,14 @@ import {
   ArrowLeft,
   FilePlus,
   Search,
-  Calendar,  
+  Calendar,
   Warehouse,
-  ShoppingCart,  
+  ShoppingCart,
   Users,
   BarChart,
-  Settings,  
+  Settings,
   Store,
+  Newspaper,
 } from "lucide-react";
 
 import "./Sidebar.css";
@@ -78,6 +79,13 @@ const Sidebar: React.FC<SidebarProps> = ({ menuState, toggleMenu }) => {
         >
           <ShoppingCart className="icon" />
           <span className="item-text">Ordini Ricambi</span>
+        </button>
+        <button
+          className="list-group-item"
+          onClick={() => navigate("/gestione-news")}
+        >
+          <Newspaper className="icon" />
+          <span className="item-text">Gestione News Rete</span>
         </button>
         <button
           className="list-group-item"

@@ -10,6 +10,7 @@ import AreaRiservata from "./pages/ReservedArea";
 import DashboardAdmin from "./pages/ReservedArea/DashboardAdmin";
 import MasterCompany from "./pages/ReservedArea/AnagraficaMaster";
 import AffiliateManagement from "./pages/ReservedArea/AffiliateManagement";
+import AreaServizi from "./pages/ReservedArea/AreaServizi";
 import DashboarLocaldAdmin from "./pages/LocalAreaConfig/DashboardLocalAdmin";
 import LoginLocalAdmin from "./pages/LoginLocalAdmin";
 import Device from "./pages/DeviceRegistry";
@@ -36,6 +37,7 @@ import RicercaPreventivi from "./pages/RicercaPreventivi";
 import Preventivi from "./pages/Preventivi";
 import FirmaPreventivoExt from "./pages/Preventivi/FirmaPreventivoExt";
 import FirmaAccettazioneExt from "./pages/Accettazione/FirmaAccettazioneExt";
+import GestioneNews from "./pages/News";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -116,6 +118,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <AffiliateManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/area-servizi"
+        element={
+          <ProtectedRoute>
+            <AreaServizi />
           </ProtectedRoute>
         }
       />
@@ -316,6 +326,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Preventivi />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/gestione-news"
+        element={
+          <ProtectedRoute>
+            <GestioneNews />
           </ProtectedRoute>
         }
       />

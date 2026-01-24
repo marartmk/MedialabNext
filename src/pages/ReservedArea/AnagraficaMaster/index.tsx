@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../../components/sidebar-admin";
 import Topbar from "../../../components/topbar-admin";
 import styles from "./anagrafica-master.module.css";
@@ -94,6 +94,7 @@ interface GeolocationRequest {
 
 const CompanyMaster: React.FC = () => {
   const [menuState, setMenuState] = useState<"open" | "closed">("open");
+  const navigate = useNavigate();
   const { id: customerIdFromUrl } = useParams<{ id: string }>(); // AGGIUNTO
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -1026,12 +1027,21 @@ const CompanyMaster: React.FC = () => {
               </button>
             </div>
 
-            <div className={styles.breadcrumb}>
-              <span className={styles.breadcrumbItem}>Home</span>
-              <span className={styles.breadcrumbSeparator}> &gt; </span>
-              <span className={styles.breadcrumbItem}>Anagrafica</span>
-              <span className={styles.breadcrumbSeparator}> &gt; </span>
-              <span className={styles.breadcrumbCurrent}>Aggiungi</span>
+            <div className={styles.rightBlock}>
+              <div className={styles.breadcrumb}>
+                <span className={styles.breadcrumbItem}>Home</span>
+                <span className={styles.breadcrumbSeparator}> &gt; </span>
+                <span className={styles.breadcrumbItem}>Anagrafica</span>
+                <span className={styles.breadcrumbSeparator}> &gt; </span>
+                <span className={styles.breadcrumbCurrent}>Aggiungi</span>
+              </div>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => navigate("/area-servizi")}
+              >
+                Gestione Servizi Piattaforma
+              </button>
             </div>
           </div>
 
