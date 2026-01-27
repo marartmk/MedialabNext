@@ -1,0 +1,477 @@
+/* Layout principale */
+.mainLayout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.contentArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageBody {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  min-height: 0;
+  background-color: #f5f5f5;
+}
+
+/* Header */
+.schedaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #ccc;
+  margin: 0 24px;
+}
+
+.breadcrumb {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbItem {
+  color: #007bff;
+}
+
+.breadcrumbCurrent {
+  font-weight: bold;
+}
+
+.breadcrumbSeparator {
+  margin: 0 5px;
+}
+
+/* Loading */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #666;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e0e0e0;
+  border-top: 4px solid #333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Riga grafici affiancati */
+.chartsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* Card grafici */
+.chartCard {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  border: 1px solid #e5e5e5;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chartCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.chartCardFull {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  border: 1px solid #e5e5e5;
+  width: 100%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chartCardFull:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Header del grafico con titolo e bottone expand */
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.chartTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Bottone espandi */
+.expandButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.expandButton:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+}
+
+.expandButton:active {
+  transform: scale(0.95);
+}
+
+.chartContainer {
+  width: 100%;
+  height: 300px;
+}
+
+.chartContainerLarge {
+  width: 100%;
+  height: 350px;
+}
+
+/* Sezione a larghezza piena */
+.fullWidthSection {
+  width: 100%;
+}
+
+/* Selettore anno */
+.yearSelectorContainer {
+  margin-bottom: 16px;
+}
+
+.yearSelector {
+  padding: 10px 16px;
+  border: 2px solid #d1d1d1;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.yearSelector:focus {
+  outline: none;
+  border-color: #666666;
+  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+}
+
+.yearSelector:hover {
+  border-color: #999999;
+}
+
+/* ==================== FULLSCREEN MODAL ==================== */
+
+/* Overlay sfondo scuro */
+.fullscreenOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal contenitore */
+.fullscreenModal {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 95vw;
+  max-width: 1400px;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Header del modal */
+.fullscreenHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 28px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fullscreenTitle {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.fullscreenControls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Controlli zoom */
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.zoomButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zoomButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.zoomButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.zoomLevel {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Bottone chiudi */
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: #ffffff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4);
+}
+
+.closeButton:hover {
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 4px 16px rgba(231, 76, 60, 0.6);
+}
+
+/* Contenuto del grafico fullscreen */
+.fullscreenContent {
+  flex: 1;
+  padding: 24px 32px;
+  overflow: auto;
+  background: #fafafa;
+  transition: transform 0.3s ease;
+}
+
+/* Footer del modal */
+.fullscreenFooter {
+  padding: 12px 28px;
+  background: #f0f0f0;
+  text-align: center;
+  border-top: 1px solid #e0e0e0;
+}
+
+.fullscreenFooter span {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 1200px) {
+  .chartsRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageBody {
+    padding: 16px;
+  }
+
+  .schedaHeader {
+    margin: 0 16px;
+  }
+
+  .chartCard,
+  .chartCardFull {
+    padding: 16px;
+  }
+
+  .chartTitle {
+    font-size: 1rem;
+  }
+
+  .chartContainer {
+    height: 250px;
+  }
+
+  .chartContainerLarge {
+    height: 300px;
+  }
+
+  .fullscreenModal {
+    width: 98vw;
+    max-height: 98vh;
+    border-radius: 12px;
+  }
+
+  .fullscreenHeader {
+    padding: 16px 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .fullscreenTitle {
+    font-size: 1.2rem;
+    width: 100%;
+  }
+
+  .fullscreenControls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .fullscreenContent {
+    padding: 16px;
+  }
+
+  .zoomControls {
+    padding: 4px 8px;
+  }
+
+  .zoomButton {
+    width: 32px;
+    height: 32px;
+  }
+
+  .closeButton {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageBody {
+    padding: 12px;
+  }
+
+  .chartCard,
+  .chartCardFull {
+    padding: 12px;
+  }
+
+  .chartHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .expandButton {
+    align-self: flex-end;
+  }
+
+  .chartTitle {
+    font-size: 0.9rem;
+  }
+
+  .chartContainer {
+    height: 220px;
+  }
+
+  .chartContainerLarge {
+    height: 260px;
+  }
+
+  .yearSelector {
+    width: 100%;
+  }
+
+  .fullscreenTitle {
+    font-size: 1rem;
+  }
+
+  .zoomLevel {
+    font-size: 0.8rem;
+    min-width: 40px;
+  }
+}

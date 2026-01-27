@@ -1,4 +1,4 @@
-// src/components/Topbar.tsx
+﻿// src/components/Topbar.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./topbar.css";
@@ -43,7 +43,7 @@ const Topbar: React.FC<TopbarProps> = () => {
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           {/* Main Navigation */}
           <ul className="navbar-nav me-auto">
-            {/* 👈 Aggiungi navigazione solo qui */}
+            {/* ðŸ‘ˆ Aggiungi navigazione solo qui */}
             <li className="nav-item">
               <button
                 className="nav-link"
@@ -269,18 +269,54 @@ const Topbar: React.FC<TopbarProps> = () => {
               </ul>
             </li>
 
-            {/* Fatture */}
-            <li className="nav-item">
-              <button className="nav-link" onClick={() => navigate("/fatture")}>
+            {/* Fatture Dropdown */}
+            <li className="nav-item dropdown">
+              <button
+                className="nav-link dropdown-toggle"
+                id="navbarFatture"
+                data-bs-toggle="dropdown"
+              >
                 Fatture
               </button>
+              <ul className="dropdown-menu" aria-labelledby="navbarFatture">
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/ricerca-fatture")}
+                  >
+                    Ricerca Fatture
+                  </button>
+                </li>
+              </ul>
             </li>
 
-            {/* Spese */}
-            <li className="nav-item">
-              <button className="nav-link" onClick={() => navigate("/fatture")}>
+            {/* Spese Dropdown */}
+            <li className="nav-item dropdown">
+              <button
+                className="nav-link dropdown-toggle"
+                id="navbarSpese"
+                data-bs-toggle="dropdown"
+              >
                 Spese
               </button>
+              <ul className="dropdown-menu" aria-labelledby="navbarSpese">
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/crea-spesa")}
+                  >
+                    Crea Spesa
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/spese?tab=completate")}
+                  >
+                    Spese Completate
+                  </button>
+                </li>
+              </ul>
             </li>
           </ul>
 

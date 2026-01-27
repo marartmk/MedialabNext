@@ -1,4 +1,4 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
@@ -84,16 +84,16 @@ const Accettazione: React.FC = () => {
   });
 
   // Funzione per ottenere i parametri di query
-  // ✅ USA QUESTO
+  // âœ… USA QUESTO
   const [searchParams] = useSearchParams();
   const noteIdFromQuery = searchParams.get("noteId");
   const bookingIdFromQuery = searchParams.get("bookingId");
   const quotationIdFromQuery = searchParams.get("quotationId");
 
-  // 🆕 Stato per sapere se stiamo caricando i dati da una nota
+  // ðŸ†• Stato per sapere se stiamo caricando i dati da una nota
   const [isLoadingFromNote, setIsLoadingFromNote] = useState(false);
 
-  // 🆕 Stato per sapere se stiamo caricando i dati da un booking
+  // ðŸ†• Stato per sapere se stiamo caricando i dati da un booking
   const [isLoadingFromBooking, setIsLoadingFromBooking] = useState(false);
   const [isLoadingFromQuotation, setIsLoadingFromQuotation] = useState(false);
 
@@ -131,7 +131,7 @@ const Accettazione: React.FC = () => {
     null
   );
 
-  // 🆕 Stato per il modal telefoni di cortesia
+  // ðŸ†• Stato per il modal telefoni di cortesia
   const [showCourtesyPhoneModal, setShowCourtesyPhoneModal] = useState(false);
   const [courtesyPhonesList, setCourtesyPhonesList] = useState<
     DeviceInventoryItem[]
@@ -145,6 +145,9 @@ const Accettazione: React.FC = () => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [showSignatureQrModal, setShowSignatureQrModal] = useState(false);
   const [signatureAccessUrl, setSignatureAccessUrl] = useState<string | null>(
+    null,
+  );
+  const [, setSignatureAccessKey] = useState<string | null>(
     null,
   );
   const [isCreatingAccessKey, setIsCreatingAccessKey] = useState(false);
@@ -194,7 +197,7 @@ const Accettazione: React.FC = () => {
   const companyAddr =
     (typeof window !== "undefined" &&
       sessionStorage.getItem("companyAddress")) ||
-    "Via Prova 1 – 73100 Lecce (LE)";
+    "Via Prova 1 â€“ 73100 Lecce (LE)";
   const companyVat =
     (typeof window !== "undefined" && sessionStorage.getItem("companyVat")) ||
     "P.IVA 01234567890";
@@ -314,9 +317,9 @@ const Accettazione: React.FC = () => {
 
   // Tipi di dispositivo
   const deviceTypes = [
-    { value: "Mobile", label: "📱 Mobile" },
-    { value: "TV", label: "📺 TV" },
-    { value: "Other", label: "🔧 Altro" },
+    { value: "Mobile", label: "ðŸ“± Mobile" },
+    { value: "TV", label: "ðŸ“º TV" },
+    { value: "Other", label: "ðŸ”§ Altro" },
   ];
 
   // Stato per gli elementi diagnostici
@@ -325,49 +328,49 @@ const Accettazione: React.FC = () => {
     // 1. Telefono Spento
     {
       id: "telefono-spento",
-      icon: "📴",
+      icon: "ðŸ“´",
       label: "Telefono spento",
       active: true,
     },
 
     // 2. Vetro Rotto
-    { id: "vetro-rotto", icon: "🔨", label: "Vetro rotto", active: true },
+    { id: "vetro-rotto", icon: "ðŸ”¨", label: "Vetro rotto", active: true },
 
     // 3. Touchscreen
-    { id: "touchscreen", icon: "👆", label: "Touchscreen", active: true },
+    { id: "touchscreen", icon: "ðŸ‘†", label: "Touchscreen", active: true },
 
     // 4. LCD
-    { id: "lcd", icon: "📱", label: "LCD", active: true },
+    { id: "lcd", icon: "ðŸ“±", label: "LCD", active: true },
 
     // 5. Frame Scollato
     {
       id: "frame-scollato",
-      icon: "🔲",
+      icon: "ðŸ”²",
       label: "Frame scollato",
       active: true,
     },
 
     // 6. Batteria
-    { id: "batteria", icon: "🔋", label: "Batteria", active: true },
+    { id: "batteria", icon: "ðŸ”‹", label: "Batteria", active: true },
 
     // 7. Dock di Ricarica
     {
       id: "dock-ricarica",
-      icon: "🔌",
+      icon: "ðŸ”Œ",
       label: "Dock di ricarica",
       active: true,
     },
 
     // 8. Back Cover
-    { id: "back-cover", icon: "📲", label: "Back cover", active: true },
+    { id: "back-cover", icon: "ðŸ“²", label: "Back cover", active: true },
 
     // 9. Telaio
-    { id: "telaio", icon: "🔧", label: "Telaio", active: true },
+    { id: "telaio", icon: "ðŸ”§", label: "Telaio", active: true },
 
     // 10. Tasti Volume/Muto
     {
       id: "tasti-volume-muto",
-      icon: "🔊",
+      icon: "ðŸ”Š",
       label: "Tasti volume/muto",
       active: true,
     },
@@ -375,23 +378,23 @@ const Accettazione: React.FC = () => {
     // 11. Tasto Standby/Power
     {
       id: "tasto-standby-power",
-      icon: "⻏",
+      icon: "â»",
       label: "Tasto standby/power",
       active: true,
     },
 
-    // 12. Sensore di Prossimità
+    // 12. Sensore di ProssimitÃ 
     {
       id: "sensore-prossimita",
-      icon: "📡",
-      label: "Sensore di prossimità",
+      icon: "ðŸ“¡",
+      label: "Sensore di prossimitÃ ",
       active: true,
     },
 
     // 13. Microfono Chiamate
     {
       id: "microfono-chiamate",
-      icon: "🎤",
+      icon: "ðŸŽ¤",
       label: "Microfono chiamate",
       active: true,
     },
@@ -399,7 +402,7 @@ const Accettazione: React.FC = () => {
     // 14. Microfono Ambientale
     {
       id: "microfono-ambientale",
-      icon: "🎙️",
+      icon: "ðŸŽ™ï¸",
       label: "Microfono ambientale",
       active: true,
     },
@@ -407,18 +410,18 @@ const Accettazione: React.FC = () => {
     // 15. Altoparlante Chiamata
     {
       id: "altoparlante-chiamata",
-      icon: "🔉",
+      icon: "ðŸ”‰",
       label: "Altoparlante chiamata",
       active: true,
     },
 
     // 16. Speaker/Buzzer
-    { id: "speaker-buzzer", icon: "🔔", label: "Speaker/buzzer", active: true },
+    { id: "speaker-buzzer", icon: "ðŸ””", label: "Speaker/buzzer", active: true },
 
     // 17. Vetro Fotocamera Posteriore
     {
       id: "vetro-fotocamera-posteriore",
-      icon: "📸",
+      icon: "ðŸ“¸",
       label: "Vetro fotocamera posteriore",
       active: true,
     },
@@ -426,7 +429,7 @@ const Accettazione: React.FC = () => {
     // 18. Fotocamera Posteriore
     {
       id: "fotocamera-posteriore",
-      icon: "📷",
+      icon: "ðŸ“·",
       label: "Fotocamera posteriore",
       active: true,
     },
@@ -434,36 +437,36 @@ const Accettazione: React.FC = () => {
     // 19. Fotocamera Anteriore
     {
       id: "fotocamera-anteriore",
-      icon: "🤳",
+      icon: "ðŸ¤³",
       label: "Fotocamera anteriore",
       active: true,
     },
 
     // 20. Tasto Home
-    { id: "tasto-home", icon: "🏠", label: "Tasto home", active: true },
+    { id: "tasto-home", icon: "ðŸ ", label: "Tasto home", active: true },
 
     // 21. Touch ID
-    { id: "touch-id", icon: "👆", label: "Touch ID", active: true },
+    { id: "touch-id", icon: "ðŸ‘†", label: "Touch ID", active: true },
 
     // 22. Face ID
-    { id: "face-id", icon: "😊", label: "Face ID", active: true },
+    { id: "face-id", icon: "ðŸ˜Š", label: "Face ID", active: true },
 
     // 23. Wi-Fi
-    { id: "wifi", icon: "📶", label: "Wi-Fi", active: true },
+    { id: "wifi", icon: "ðŸ“¶", label: "Wi-Fi", active: true },
 
     // 24. Rete
-    { id: "rete", icon: "📡", label: "Rete cellulare", active: true },
+    { id: "rete", icon: "ðŸ“¡", label: "Rete cellulare", active: true },
 
     // 25. Chiamata
-    { id: "chiamata", icon: "📞", label: "Chiamata", active: true },
+    { id: "chiamata", icon: "ðŸ“ž", label: "Chiamata", active: true },
 
     // 26. Scheda Madre
-    { id: "scheda-madre", icon: "💻", label: "Scheda madre", active: true },
+    { id: "scheda-madre", icon: "ðŸ’»", label: "Scheda madre", active: true },
 
     // 27. Vetro Posteriore
     {
       id: "vetro-posteriore",
-      icon: "📳",
+      icon: "ðŸ“³",
       label: "Vetro posteriore",
       active: true,
     },
@@ -475,7 +478,7 @@ const Accettazione: React.FC = () => {
   );
 
   const [isRepairCreated, setIsRepairCreated] = useState(false);
-  const [repairGuid, setRepairGuid] = useState<string | null>(null); // 🆕 Usa GUID
+  const [repairGuid, setRepairGuid] = useState<string | null>(null); // ðŸ†• Usa GUID
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -520,7 +523,7 @@ const Accettazione: React.FC = () => {
         setShowDeviceDropdown(false);
       }
 
-      // 🆕 Dropdown telefono di cortesia
+      // ðŸ†• Dropdown telefono di cortesia
       if (
         courtesyPhoneDropdownRef.current &&
         !courtesyPhoneDropdownRef.current.contains(event.target as Node) &&
@@ -535,18 +538,18 @@ const Accettazione: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 🆕 useEffect per caricare i dati della nota quando arriva il noteId
+  // ðŸ†• useEffect per caricare i dati della nota quando arriva il noteId
   useEffect(() => {
     if (noteIdFromQuery && !isLoadingFromNote) {
-      console.log("📝 Caricamento nota con GUID:", noteIdFromQuery);
+      console.log("ðŸ“ Caricamento nota con GUID:", noteIdFromQuery);
       loadNoteDataForRepair(noteIdFromQuery);
     }
   }, [noteIdFromQuery]);
 
-  // 🆕 useEffect per caricare i dati del booking quando arriva il bookingId
+  // ðŸ†• useEffect per caricare i dati del booking quando arriva il bookingId
   useEffect(() => {
     if (bookingIdFromQuery && !isLoadingFromBooking) {
-      console.log("� Caricamento booking con ID:", bookingIdFromQuery);
+      console.log("ï¿½ Caricamento booking con ID:", bookingIdFromQuery);
       loadBookingDataForRepair(bookingIdFromQuery);
     }
   }, [bookingIdFromQuery]);
@@ -628,13 +631,13 @@ const Accettazione: React.FC = () => {
     setSignatureData(dataUrl);
     setShowSignatureModal(false);
 
-    alert("✅ Firma acquisita con successo!");
+    alert("âœ… Firma acquisita con successo!");
   };
 
   const openSignatureModal = () => {
     setShowSignatureModal(true);
 
-    // Inizializza il canvas dopo che il modal è stato renderizzato
+    // Inizializza il canvas dopo che il modal Ã¨ stato renderizzato
     setTimeout(() => {
       const canvas = signatureCanvasRef.current;
       if (!canvas) return;
@@ -736,7 +739,7 @@ const Accettazione: React.FC = () => {
     }, 300);
   };
 
-  // 🆕 Funzione per eseguire la ricerca telefono di cortesia (con filtro lato client)
+  // ðŸ†• Funzione per eseguire la ricerca telefono di cortesia (con filtro lato client)
   const performCourtesyPhoneSearch = async (query: string) => {
     if (!query.trim()) return;
 
@@ -744,14 +747,14 @@ const Accettazione: React.FC = () => {
     const multitenantId = sessionStorage.getItem("IdCompany");
 
     try {
-      // 🎯 Usiamo lo stesso endpoint dedicato
+      // ðŸŽ¯ Usiamo lo stesso endpoint dedicato
       const url = new URL(`${API_URL}/api/DeviceInventory/courtesy-available`);
 
       if (multitenantId) {
         url.searchParams.append("multitenantId", multitenantId);
       }
 
-      console.log("🔍 Ricerca telefono cortesia:", query);
+      console.log("ðŸ” Ricerca telefono cortesia:", query);
 
       const response = await fetch(url.toString(), {
         method: "GET",
@@ -765,7 +768,7 @@ const Accettazione: React.FC = () => {
         const data = await response.json();
         const devices: DeviceInventoryItem[] = Array.isArray(data) ? data : [];
 
-        // 🔎 Filtro lato client per la ricerca testuale
+        // ðŸ”Ž Filtro lato client per la ricerca testuale
         const searchLower = query.toLowerCase().trim();
         const filteredDevices = devices.filter((phone) => {
           const brandMatch = phone.brand?.toLowerCase().includes(searchLower);
@@ -780,20 +783,20 @@ const Accettazione: React.FC = () => {
         });
 
         console.log(
-          `✅ Trovati ${filteredDevices.length} risultati per "${query}"`
+          `âœ… Trovati ${filteredDevices.length} risultati per "${query}"`
         );
 
         setCourtesyPhoneSearchResults(filteredDevices);
         setShowCourtesyPhoneDropdown(filteredDevices.length > 0);
       } else {
         const errorText = await response.text();
-        console.error("❌ Errore ricerca:", response.status, errorText);
+        console.error("âŒ Errore ricerca:", response.status, errorText);
         setCourtesyPhoneSearchResults([]);
         setShowCourtesyPhoneDropdown(false);
       }
     } catch (error) {
       console.error(
-        "❌ Errore durante la ricerca telefono di cortesia:",
+        "âŒ Errore durante la ricerca telefono di cortesia:",
         error
       );
       setCourtesyPhoneSearchResults([]);
@@ -803,20 +806,20 @@ const Accettazione: React.FC = () => {
     }
   };
 
-  // 🆕 Funzione per caricare tutti i telefoni di cortesia disponibili
+  // ðŸ†• Funzione per caricare tutti i telefoni di cortesia disponibili
   const loadCourtesyPhonesList = async () => {
     setLoadingCourtesyList(true);
     const multitenantId = sessionStorage.getItem("IdCompany");
 
     try {
-      // 🎯 Costruiamo l'URL con il parametro multitenantId
+      // ðŸŽ¯ Costruiamo l'URL con il parametro multitenantId
       const url = new URL(`${API_URL}/api/DeviceInventory/courtesy-available`);
 
       if (multitenantId) {
         url.searchParams.append("multitenantId", multitenantId);
       }
 
-      console.log("📞 Chiamata API:", url.toString());
+      console.log("ðŸ“ž Chiamata API:", url.toString());
 
       const response = await fetch(url.toString(), {
         method: "GET",
@@ -828,28 +831,28 @@ const Accettazione: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("✅ Telefoni di cortesia caricati:", data);
+        console.log("âœ… Telefoni di cortesia caricati:", data);
 
         // L'endpoint restituisce direttamente l'array
         setCourtesyPhonesList(Array.isArray(data) ? data : []);
 
         if (data.length === 0) {
-          console.warn("⚠️ Nessun telefono di cortesia disponibile");
+          console.warn("âš ï¸ Nessun telefono di cortesia disponibile");
         }
       } else {
         const errorText = await response.text();
-        console.error("❌ Errore caricamento:", response.status, errorText);
+        console.error("âŒ Errore caricamento:", response.status, errorText);
 
-        // Mostra messaggio più specifico in base allo status
+        // Mostra messaggio piÃ¹ specifico in base allo status
         if (response.status === 401) {
-          alert("⚠️ Sessione scaduta. Effettua nuovamente il login.");
+          alert("âš ï¸ Sessione scaduta. Effettua nuovamente il login.");
         } else if (response.status === 403) {
           alert(
-            "⚠️ Non hai i permessi per visualizzare i telefoni di cortesia."
+            "âš ï¸ Non hai i permessi per visualizzare i telefoni di cortesia."
           );
         } else {
           alert(
-            `⚠️ Errore nel caricamento dei telefoni di cortesia (${response.status})`
+            `âš ï¸ Errore nel caricamento dei telefoni di cortesia (${response.status})`
           );
         }
 
@@ -857,18 +860,18 @@ const Accettazione: React.FC = () => {
       }
     } catch (error) {
       console.error(
-        "❌ Errore durante il caricamento telefoni di cortesia:",
+        "âŒ Errore durante il caricamento telefoni di cortesia:",
         error
       );
 
-      // Messaggio di errore più user-friendly
+      // Messaggio di errore piÃ¹ user-friendly
       if (error instanceof TypeError && error.message.includes("fetch")) {
         alert(
-          "❌ Errore di connessione al server. Verifica la tua connessione internet."
+          "âŒ Errore di connessione al server. Verifica la tua connessione internet."
         );
       } else {
         alert(
-          "❌ Errore imprevisto durante il caricamento. Riprova più tardi."
+          "âŒ Errore imprevisto durante il caricamento. Riprova piÃ¹ tardi."
         );
       }
 
@@ -878,7 +881,7 @@ const Accettazione: React.FC = () => {
     }
   };
 
-  // 🆕 Carica la lista quando si apre il modal
+  // ðŸ†• Carica la lista quando si apre il modal
   useEffect(() => {
     if (showCourtesyPhoneModal) {
       loadCourtesyPhonesList();
@@ -910,14 +913,14 @@ const Accettazione: React.FC = () => {
     });
   };
 
-  // 🆕 Funzione per caricare i dati della nota tramite GUID
+  // ðŸ†• Funzione per caricare i dati della nota tramite GUID
   const loadNoteDataForRepair = async (noteGuid: string) => {
     setIsLoadingFromNote(true);
 
     try {
       const token = sessionStorage.getItem("token");
 
-      console.log("🔍 Chiamata API per nota:", noteGuid);
+      console.log("ðŸ” Chiamata API per nota:", noteGuid);
 
       const response = await fetch(
         `${API_URL}/api/Repair/quick-note/guid/${noteGuid}`,
@@ -935,32 +938,32 @@ const Accettazione: React.FC = () => {
       }
 
       const noteData = await response.json();
-      console.log("✅ Dati nota caricati:", noteData);
+      console.log("âœ… Dati nota caricati:", noteData);
 
       // Pre-compila il form con i dati della nota
       await prePopulateFormFromNote(noteData);
 
       alert(
-        "✅ Dati della nota caricati con successo!\n\nControlla i campi pre-compilati."
+        "âœ… Dati della nota caricati con successo!\n\nControlla i campi pre-compilati."
       );
     } catch (error) {
-      console.error("❌ Errore durante il caricamento nota:", error);
+      console.error("âŒ Errore durante il caricamento nota:", error);
       alert(
-        "❌ Impossibile caricare i dati della nota.\n\nVerifica che la nota esista."
+        "âŒ Impossibile caricare i dati della nota.\n\nVerifica che la nota esista."
       );
     } finally {
       setIsLoadingFromNote(false);
     }
   };
 
-  // 🆕 Funzione per caricare i dati della nota tramite GUID
+  // ðŸ†• Funzione per caricare i dati della nota tramite GUID
   const loadBookingDataForRepair = async (bookingGuid: string) => {
     setIsLoadingFromBooking(true);
 
     try {
       const token = sessionStorage.getItem("token");
 
-      console.log("🔍 Chiamata API per booking:", bookingGuid);
+      console.log("ðŸ” Chiamata API per booking:", bookingGuid);
 
       const response = await fetch(
         `${API_URL}/api/Booking/guid/${bookingGuid}`,
@@ -978,18 +981,18 @@ const Accettazione: React.FC = () => {
       }
 
       const bookingData = await response.json();
-      console.log("✅ Dati prenotazione caricati:", bookingData);
+      console.log("âœ… Dati prenotazione caricati:", bookingData);
 
       // Pre-compila il form con i dati della prenotazione
       await prePopulateFormFromBooking(bookingData);
 
       alert(
-        "✅ Dati della nota caricati con successo!\n\nControlla i campi pre-compilati."
+        "âœ… Dati della nota caricati con successo!\n\nControlla i campi pre-compilati."
       );
     } catch (error) {
-      console.error("❌ Errore durante il caricamento nota:", error);
+      console.error("âŒ Errore durante il caricamento nota:", error);
       alert(
-        "❌ Impossibile caricare i dati della nota.\n\nVerifica che la nota esista."
+        "âŒ Impossibile caricare i dati della nota.\n\nVerifica che la nota esista."
       );
     } finally {
       setIsLoadingFromBooking(false);
@@ -1037,7 +1040,7 @@ const Accettazione: React.FC = () => {
     }
   };
 
-  // 🆕 Funzione per pre-compilare il form con i dati della nota
+  // ðŸ†• Funzione per pre-compilare il form con i dati della nota
   interface QuickNoteData {
     customerId?: string;
     cognome?: string;
@@ -1057,7 +1060,7 @@ const Accettazione: React.FC = () => {
     [key: string]: unknown;
   }
 
-  // 🆕 Funzione per pre-compilare il form con i dati dell booking
+  // ðŸ†• Funzione per pre-compilare il form con i dati dell booking
   interface QuickBookingData {
     customerId?: string;
     customerName?: string;
@@ -1100,16 +1103,16 @@ const Accettazione: React.FC = () => {
   }
 
   const prePopulateFormFromNote = async (noteData: QuickNoteData) => {
-    console.log("📝 Pre-compilazione form da nota:", noteData);
+    console.log("ðŸ“ Pre-compilazione form da nota:", noteData);
 
     // ==================== CLIENTE ====================
     if (noteData.customerId) {
-      // ✅ CASO 1: Ha customerId → carica e seleziona il cliente
-      console.log("👤 Caricamento cliente con ID:", noteData.customerId);
+      // âœ… CASO 1: Ha customerId â†’ carica e seleziona il cliente
+      console.log("ðŸ‘¤ Caricamento cliente con ID:", noteData.customerId);
       await loadAndSelectCustomer(noteData.customerId);
     } else {
-      // ✅ CASO 2: NON ha customerId → inserisci solo come testo
-      console.log("👤 Inserimento dati cliente come testo (nessun ID)");
+      // âœ… CASO 2: NON ha customerId â†’ inserisci solo come testo
+      console.log("ðŸ‘¤ Inserimento dati cliente come testo (nessun ID)");
 
       const fullName = `${noteData.cognome || ""} ${
         noteData.nome || ""
@@ -1127,12 +1130,12 @@ const Accettazione: React.FC = () => {
 
     // ==================== DISPOSITIVO ====================
     if (noteData.deviceId) {
-      // ✅ CASO 1: Ha deviceId → carica e seleziona il dispositivo
-      console.log("📱 Caricamento dispositivo con ID:", noteData.deviceId);
+      // âœ… CASO 1: Ha deviceId â†’ carica e seleziona il dispositivo
+      console.log("ðŸ“± Caricamento dispositivo con ID:", noteData.deviceId);
       await loadAndSelectDevice(noteData.deviceId);
     } else {
-      // ✅ CASO 2: NON ha deviceId → inserisci solo come testo
-      console.log("📱 Inserimento dati dispositivo come testo (nessun ID)");
+      // âœ… CASO 2: NON ha deviceId â†’ inserisci solo come testo
+      console.log("ðŸ“± Inserimento dati dispositivo come testo (nessun ID)");
 
       const deviceName = `${noteData.brand || ""} ${
         noteData.model || ""
@@ -1157,21 +1160,21 @@ const Accettazione: React.FC = () => {
       estimatedPrice: (noteData.prezzoPreventivo as number) || 0,
     });
 
-    console.log("✅ Pre-compilazione completata");
+    console.log("âœ… Pre-compilazione completata");
   };
 
-  // 🆕 Funzione per pre-compilare il form con i dati del booking
+  // ðŸ†• Funzione per pre-compilare il form con i dati del booking
   const prePopulateFormFromBooking = async (bookingData: QuickBookingData) => {
-    console.log("📝 Pre-compilazione form da nota:", bookingData);
+    console.log("ðŸ“ Pre-compilazione form da nota:", bookingData);
 
     // ==================== CLIENTE ====================
     if (bookingData.customerId) {
-      // ✅ CASO 1: Ha customerId → carica e seleziona il cliente
-      console.log("👤 Caricamento cliente con ID:", bookingData.customerId);
+      // âœ… CASO 1: Ha customerId â†’ carica e seleziona il cliente
+      console.log("ðŸ‘¤ Caricamento cliente con ID:", bookingData.customerId);
       await loadAndSelectCustomer(bookingData.customerId);
     } else {
-      // ✅ CASO 2: NON ha customerId → inserisci solo come testo
-      console.log("👤 Inserimento dati cliente come testo (nessun ID)");
+      // âœ… CASO 2: NON ha customerId â†’ inserisci solo come testo
+      console.log("ðŸ‘¤ Inserimento dati cliente come testo (nessun ID)");
 
       const fullName = `${bookingData.customerName || ""} ${
         bookingData.customerSurname || ""
@@ -1189,8 +1192,8 @@ const Accettazione: React.FC = () => {
 
     // ==================== DISPOSITIVO ====================
     if (bookingData.deviceType) {
-      // ✅ CASO 1: Ha deviceId → carica e seleziona il dispositivo
-      console.log("📱 Caricamento dispositivo con ID:", bookingData.deviceType);
+      // âœ… CASO 1: Ha deviceId â†’ carica e seleziona il dispositivo
+      console.log("ðŸ“± Caricamento dispositivo con ID:", bookingData.deviceType);
       //await loadAndSelectDevice(bookingData.deviceId);
       setDispositivoData({
         serialNumber: String(bookingData.serialNumber ?? ""),
@@ -1202,8 +1205,8 @@ const Accettazione: React.FC = () => {
         courtesyPhone: "",
       });    
     } else {
-      // ✅ CASO 2: NON ha deviceId → inserisci solo come testo
-      console.log("📱 Inserimento dati dispositivo come testo (nessun ID)");
+      // âœ… CASO 2: NON ha deviceId â†’ inserisci solo come testo
+      console.log("ðŸ“± Inserimento dati dispositivo come testo (nessun ID)");
 
       const deviceName = `${bookingData.brand || ""} ${
         bookingData.model || ""
@@ -1228,10 +1231,10 @@ const Accettazione: React.FC = () => {
       estimatedPrice: (bookingData.prezzoPreventivo as number) || 0,
     });
 
-    console.log("✅ Pre-compilazione completata");
+    console.log("âœ… Pre-compilazione completata");
   };
 
-  // 🆕 Carica e seleziona automaticamente un cliente esistente
+  // ðŸ†• Carica e seleziona automaticamente un cliente esistente
   const prePopulateFormFromQuotation = async (
     quotationData: QuickQuotationData
   ) => {
@@ -1318,17 +1321,17 @@ const Accettazione: React.FC = () => {
 
       if (response.ok) {
         const customerData = await response.json();
-        console.log("✅ Cliente caricato:", customerData);
+        console.log("âœ… Cliente caricato:", customerData);
         onSelectCustomer(customerData);
       } else {
-        console.error("❌ Cliente non trovato, inserisco come testo");
+        console.error("âŒ Cliente non trovato, inserisco come testo");
       }
     } catch (error) {
-      console.error("❌ Errore durante il caricamento cliente:", error);
+      console.error("âŒ Errore durante il caricamento cliente:", error);
     }
   };
 
-  // 🆕 Carica e seleziona automaticamente un dispositivo esistente
+  // ðŸ†• Carica e seleziona automaticamente un dispositivo esistente
   const loadAndSelectDevice = async (deviceId: string) => {
     try {
       const token = sessionStorage.getItem("token");
@@ -1345,13 +1348,13 @@ const Accettazione: React.FC = () => {
 
       if (response.ok) {
         const deviceData = await response.json();
-        console.log("✅ Dispositivo caricato:", deviceData);
+        console.log("âœ… Dispositivo caricato:", deviceData);
         onSelectDevice(deviceData);
       } else {
-        console.error("❌ Dispositivo non trovato, inserisco come testo");
+        console.error("âŒ Dispositivo non trovato, inserisco come testo");
       }
     } catch (error) {
-      console.error("❌ Errore durante il caricamento dispositivo:", error);
+      console.error("âŒ Errore durante il caricamento dispositivo:", error);
     }
   };
 
@@ -1395,7 +1398,7 @@ const Accettazione: React.FC = () => {
       // setOperators(fakeOperators);
       // console.log("Operatori fake caricati:", fakeOperators);
 
-      // Questo sarà il codice vero quando avremo l'API:
+      // Questo sarÃ  il codice vero quando avremo l'API:
       const response = await fetch(`${API_URL}/api/operator`, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -1890,8 +1893,8 @@ const Accettazione: React.FC = () => {
       billingInfo: repairData.billingInfo || null,
       unlockCode: dispositivoData.unlockCode || null,
       courtesyPhone:
-        selectedCourtesyPhone?.code || dispositivoData.courtesyPhone || null, // 🆕 Aggiungi telefono cortesia
-      courtesyPhoneId: selectedCourtesyPhone?.id || null, // 🆕 ID per tracking
+        selectedCourtesyPhone?.code || dispositivoData.courtesyPhone || null, // ðŸ†• Aggiungi telefono cortesia
+      courtesyPhoneId: selectedCourtesyPhone?.id || null, // ðŸ†• ID per tracking
     };
 
     return {
@@ -1911,7 +1914,7 @@ const Accettazione: React.FC = () => {
   ) => {
     if (isRepairCreated) {
       alert(
-        "La riparazione è già stata creata. Usa il pulsante Aggiorna per modificare la scheda."
+        "La riparazione Ã¨ giÃ  stata creata. Usa il pulsante Aggiorna per modificare la scheda."
       );
       return;
     }
@@ -1956,7 +1959,7 @@ const Accettazione: React.FC = () => {
           console.error(e);
           const message = e instanceof Error ? e.message : String(e);
           alert(
-            "⚠️ Riparazione creata, ma diagnostica NON salvata.\n" + message
+            "âš ï¸ Riparazione creata, ma diagnostica NON salvata.\n" + message
           );
         }
 
@@ -2061,7 +2064,7 @@ const Accettazione: React.FC = () => {
     }
 
     if (!newClientData.citta) {
-      alert("Inserire una città");
+      alert("Inserire una cittÃ ");
       return;
     }
 
@@ -2238,20 +2241,20 @@ const Accettazione: React.FC = () => {
   const getDeviceIcon = (deviceType: string) => {
     switch (deviceType) {
       case "Mobile":
-        return "📱";
+        return "ðŸ“±";
       case "TV":
-        return "📺";
+        return "ðŸ“º";
       case "Other":
-        return "🔧";
+        return "ðŸ”§";
       default:
-        return "📱";
+        return "ðŸ“±";
     }
   };
 
-  // Funzione per aggiornare la riparazione già creata
+  // Funzione per aggiornare la riparazione giÃ  creata
   const handleUpdateRepair = async () => {
     if (!repairGuid) {
-      // 🔧 Controlla il GUID invece dell'ID
+      // ðŸ”§ Controlla il GUID invece dell'ID
       alert("Nessuna riparazione da aggiornare.");
       return;
     }
@@ -2267,11 +2270,11 @@ const Accettazione: React.FC = () => {
     setIsCreatingRepair(true);
 
     try {
-      const payload = prepareUpdateRepairPayload(); // 🔧 Usa payload specifico per update
+      const payload = prepareUpdateRepairPayload(); // ðŸ”§ Usa payload specifico per update
       console.log("Payload aggiornamento:", payload);
 
       const response = await fetch(
-        `${API_URL}/api/repair/${repairGuid}`, // 🔧 FIX: Usa il GUID
+        `${API_URL}/api/repair/${repairGuid}`, // ðŸ”§ FIX: Usa il GUID
         {
           method: "PUT",
           headers: {
@@ -2422,7 +2425,7 @@ const Accettazione: React.FC = () => {
       printWindow.focus();
     } catch (error) {
       console.error("Errore durante la stampa:", error);
-      alert("Si è verificato un errore durante la preparazione della stampa.");
+      alert("Si Ã¨ verificato un errore durante la preparazione della stampa.");
     }
   };
 
@@ -2470,7 +2473,7 @@ const Accettazione: React.FC = () => {
 
           <div className={styles.breadcrumb}>
             <span className={styles.breadcrumbItem}>{companyName}</span>
-            <span className={styles.breadcrumbSeparator}> • </span>
+            <span className={styles.breadcrumbSeparator}> â€¢ </span>
             <span className={styles.breadcrumbItem}>{userName}</span>
           </div>
         </div>
@@ -2526,7 +2529,7 @@ const Accettazione: React.FC = () => {
                             onClick={clearSelection}
                             title="Cancella selezione"
                           >
-                            ×
+                            Ã—
                           </button>
                         )}
 
@@ -2554,7 +2557,7 @@ const Accettazione: React.FC = () => {
                                       <span>{customer.email}</span>
                                     )}
                                     {customer.telefono && (
-                                      <span> • {customer.telefono}</span>
+                                      <span> â€¢ {customer.telefono}</span>
                                     )}
                                   </div>
                                   <div className={styles.customerAddress}>
@@ -2737,7 +2740,7 @@ const Accettazione: React.FC = () => {
                             onClick={clearDeviceSelection}
                             title="Cancella selezione"
                           >
-                            ×
+                            Ã—
                           </button>
                         )}
 
@@ -2771,7 +2774,7 @@ const Accettazione: React.FC = () => {
                                       <span>
                                         Seriale: {device.serialNumber}
                                       </span>
-                                      <span> • Tipo: {device.deviceType}</span>
+                                      <span> â€¢ Tipo: {device.deviceType}</span>
                                     </div>
                                     <div className={styles.customerAddress}>
                                       {device.purchaseDate && (
@@ -2783,7 +2786,7 @@ const Accettazione: React.FC = () => {
                                         </>
                                       )}
                                       {device.retailer && (
-                                        <> • Rivenditore: {device.retailer}</>
+                                        <> â€¢ Rivenditore: {device.retailer}</>
                                       )}
                                     </div>
                                   </div>
@@ -2962,14 +2965,14 @@ const Accettazione: React.FC = () => {
                           readOnly={selectedCourtesyPhone !== null}
                         />
 
-                        {/* 🆕 ICONA PER APRIRE IL MODAL */}
+                        {/* ðŸ†• ICONA PER APRIRE IL MODAL */}
                         <button
                           type="button"
                           className={styles.addClientButton}
                           onClick={() => setShowCourtesyPhoneModal(true)}
                           title="Visualizza telefoni di cortesia disponibili"
                         >
-                          📱
+                          ðŸ“±
                         </button>
 
                         {selectedCourtesyPhone && (
@@ -2979,7 +2982,7 @@ const Accettazione: React.FC = () => {
                             onClick={clearCourtesyPhoneSelection}
                             title="Cancella selezione"
                           >
-                            ×
+                            Ã—
                           </button>
                         )}
 
@@ -2989,7 +2992,7 @@ const Accettazione: React.FC = () => {
                           </div>
                         )}
 
-                        {/* 🆕🆕🆕 AGGIUNGI QUESTO DROPDOWN QUI 🆕🆕🆕 */}
+                        {/* ðŸ†•ðŸ†•ðŸ†• AGGIUNGI QUESTO DROPDOWN QUI ðŸ†•ðŸ†•ðŸ†• */}
                         {showCourtesyPhoneDropdown &&
                           courtesyPhoneSearchResults.length > 0 && (
                             <div
@@ -3006,14 +3009,14 @@ const Accettazione: React.FC = () => {
                                     <div className={styles.customerName}>
                                       <strong>
                                         {phone.deviceType === "smartphone"
-                                          ? "📱"
-                                          : "📋"}{" "}
+                                          ? "ðŸ“±"
+                                          : "ðŸ“‹"}{" "}
                                         {phone.brand} {phone.model}
                                       </strong>
                                     </div>
                                     <div className={styles.customerDetails}>
                                       <span>IMEI: {phone.imei}</span>
-                                      <span> • Codice: {phone.code}</span>
+                                      <span> â€¢ Codice: {phone.code}</span>
                                     </div>
                                     <div className={styles.customerAddress}>
                                       <span
@@ -3038,16 +3041,16 @@ const Accettazione: React.FC = () => {
                                           ? "Usato"
                                           : "Rigenerato"}
                                       </span>
-                                      {phone.color} • 🤝 CORTESIA
+                                      {phone.color} â€¢ ðŸ¤ CORTESIA
                                       {phone.location &&
-                                        ` • 📍 ${phone.location}`}
+                                        ` â€¢ ðŸ“ ${phone.location}`}
                                     </div>
                                   </div>
                                 </div>
                               ))}
                             </div>
                           )}
-                        {/* 🆕🆕🆕 FINE DROPDOWN 🆕🆕🆕 */}
+                        {/* ðŸ†•ðŸ†•ðŸ†• FINE DROPDOWN ðŸ†•ðŸ†•ðŸ†• */}
                       </div>
 
                       {/* Info dispositivo selezionato */}
@@ -3061,7 +3064,7 @@ const Accettazione: React.FC = () => {
                             fontSize: "0.9em",
                           }}
                         >
-                          <strong>✓ Selezionato:</strong>{" "}
+                          <strong>âœ“ Selezionato:</strong>{" "}
                           {selectedCourtesyPhone.brand}{" "}
                           {selectedCourtesyPhone.model}
                           <span style={{ marginLeft: "8px", color: "#666" }}>
@@ -3205,13 +3208,13 @@ const Accettazione: React.FC = () => {
                       onChange={(e) => setRepairComponent(e.target.value)}
                     >
                       <option value="">-- Seleziona --</option>
-                      <option value="Schermo">📱 Schermo</option>
-                      <option value="Batteria">🔋 Batteria</option>
-                      <option value="Altri Danni">🔧 Altri Danni</option>
-                      <option value="Scheda Madre">💾 Scheda Madre</option>
-                      <option value="Software">⚙️ Software</option>
+                      <option value="Schermo">ðŸ“± Schermo</option>
+                      <option value="Batteria">ðŸ”‹ Batteria</option>
+                      <option value="Altri Danni">ðŸ”§ Altri Danni</option>
+                      <option value="Scheda Madre">ðŸ’¾ Scheda Madre</option>
+                      <option value="Software">âš™ï¸ Software</option>
                       <option value="Riparazione Completa">
-                        🛠️ Riparazione Completa
+                        ðŸ› ï¸ Riparazione Completa
                       </option>
                     </select>
                     {validationErrors.includes(
@@ -3292,7 +3295,7 @@ const Accettazione: React.FC = () => {
                         }
                         placeholder="0.00"
                       />
-                      <span className={styles.currencyLabel}>€</span>
+                      <span className={styles.currencyLabel}>â‚¬</span>
                     </div>
                     {validationErrors.includes(
                       "Inserire un prezzo preventivo valido"
@@ -3314,15 +3317,15 @@ const Accettazione: React.FC = () => {
                       }
                     >
                       <option value="">-- Seleziona --</option>
-                      <option value="Contanti">💵 Contanti</option>
+                      <option value="Contanti">ðŸ’µ Contanti</option>
                       <option value="Carta di Credito">
-                        💳 Carta di Credito
+                        ðŸ’³ Carta di Credito
                       </option>
-                      <option value="Bancomat">💳 Bancomat</option>
-                      <option value="Bonifico">🏦 Bonifico</option>
-                      <option value="Amex">💳 American Express</option>
-                      <option value="PayPal">💰 PayPal</option>
-                      <option value="Altro">🔄 Altro</option>
+                      <option value="Bancomat">ðŸ’³ Bancomat</option>
+                      <option value="Bonifico">ðŸ¦ Bonifico</option>
+                      <option value="Amex">ðŸ’³ American Express</option>
+                      <option value="PayPal">ðŸ’° PayPal</option>
+                      <option value="Altro">ðŸ”„ Altro</option>
                     </select>
                   </div>
 
@@ -3346,7 +3349,7 @@ const Accettazione: React.FC = () => {
                 {/* Mostra errori di validazione se presenti */}
                 {validationErrors.length > 0 && (
                   <div className={styles.validationErrorsContainer}>
-                    <h4>⚠️ Errori di validazione:</h4>
+                    <h4>âš ï¸ Errori di validazione:</h4>
                     <ul>
                       {validationErrors.map((error, index) => (
                         <li key={index} className={styles.validationError}>
@@ -3368,7 +3371,7 @@ const Accettazione: React.FC = () => {
                     onClick={() => handleCreateRepair("email")}
                     disabled={isCreatingRepair}
                   >
-                    {isCreatingRepair ? "Creando..." : "📧 Crea/Invia E-Mail"}
+                    {isCreatingRepair ? "Creando..." : "ðŸ“§ Crea/Invia E-Mail"}
                   </button>
 
                   <button
@@ -3376,7 +3379,7 @@ const Accettazione: React.FC = () => {
                     onClick={() => handleCreateRepair("print")}
                     disabled={isCreatingRepair}
                   >
-                    {isCreatingRepair ? "Creando..." : "🖨️ Crea/Stampa"}
+                    {isCreatingRepair ? "Creando..." : "ðŸ–¨ï¸ Crea/Stampa"}
                   </button>
 
                   <button
@@ -3386,7 +3389,7 @@ const Accettazione: React.FC = () => {
                   >
                     {isCreatingRepair
                       ? "Creando..."
-                      : "🏷️ Crea/Stampa etichetta"}
+                      : "ðŸ·ï¸ Crea/Stampa etichetta"}
                   </button>
 
                   <button
@@ -3396,7 +3399,7 @@ const Accettazione: React.FC = () => {
                   >
                     {isCreatingRepair
                       ? "Creando..."
-                      : "🔬 Crea/Stampa/Spedisci al Lab"}
+                      : "ðŸ”¬ Crea/Stampa/Spedisci al Lab"}
                   </button>
                 </>
               ) : (
@@ -3405,14 +3408,14 @@ const Accettazione: React.FC = () => {
                     className={`${styles.btn} ${styles.btnPrimary}`}
                     onClick={handleUpdateRepair}
                   >
-                    🔄 Aggiorna Scheda
+                    ðŸ”„ Aggiorna Scheda
                   </button>
 
                   <button
                     className={`${styles.btn} ${styles.btnInfo}`}
                     onClick={handleStampaAccettazione}
                   >
-                    🖨️ Stampa Accettazione
+                    ðŸ–¨ï¸ Stampa Accettazione
                   </button>
                   <button
                     className={`${styles.btn} ${styles.btnSignature}`}
@@ -3530,7 +3533,7 @@ const Accettazione: React.FC = () => {
                 className={styles.modalCloseButton}
                 onClick={() => setShowNewClientModal(false)}
               >
-                ×
+                Ã—
               </button>
             </div>
 
@@ -3706,7 +3709,7 @@ const Accettazione: React.FC = () => {
                     />
                   </div>
                   <div className={styles.formCol3}>
-                    <label>Città</label>
+                    <label>CittÃ </label>
                     <input
                       className={styles.formControl}
                       value={newClientData.citta}
@@ -3851,13 +3854,13 @@ const Accettazione: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className={styles.modalHeader}>
-              <h4>📱 Aggiungi Nuovo Dispositivo</h4>
+              <h4>ðŸ“± Aggiungi Nuovo Dispositivo</h4>
               <button
                 type="button"
                 className={styles.modalCloseButton}
                 onClick={() => setShowNewDeviceModal(false)}
               >
-                ×
+                Ã—
               </button>
             </div>
 
@@ -4054,7 +4057,7 @@ const Accettazione: React.FC = () => {
 
                   <div className="accCompanyDetails">
                     <div>{companyName}</div>
-                    <div>Città - AZIENDA</div>
+                    <div>CittÃ  - AZIENDA</div>
                     <div>{companyAddr}</div>
                     <div>Tel. {companyPhone}</div>
                     <div>{companyVat}</div>
@@ -4211,7 +4214,7 @@ const Accettazione: React.FC = () => {
                         className="accTableHeader"
                         style={{ width: "80px", textAlign: "center" }}
                       >
-                        Q.tà
+                        Q.tÃ 
                       </th>
                       <th
                         className="accTableHeader"
@@ -4236,7 +4239,7 @@ const Accettazione: React.FC = () => {
                         className="accTableCell"
                         style={{ textAlign: "right" }}
                       >
-                        € 0,00
+                        â‚¬ 0,00
                       </td>
                     </tr>
                     <tr>
@@ -4247,7 +4250,7 @@ const Accettazione: React.FC = () => {
                         className="accTableCell"
                         style={{ textAlign: "right" }}
                       >
-                        <strong>€ 0,00</strong>
+                        <strong>â‚¬ 0,00</strong>
                       </td>
                     </tr>
                   </tbody>
@@ -4263,12 +4266,12 @@ const Accettazione: React.FC = () => {
                   <p>
                     Accetto che i Termini e condizioni di riparazione riportati
                     sul retro di questa pagina verranno applicati al servizio di
-                    assistenza per il prodotto sopra indicato, che, poiché
-                    l'espletamento del servizio di assistenza può comportare
-                    l'accidentale perdita dei dati, sarà responsabilità
+                    assistenza per il prodotto sopra indicato, che, poichÃ©
+                    l'espletamento del servizio di assistenza puÃ² comportare
+                    l'accidentale perdita dei dati, sarÃ  responsabilitÃ 
                     esclusiva mia quella di backed archiviare i dati per
-                    recuperarli in caso di necessità e che quindi CLINICA IPHONE
-                    non è responsabile dell'eventuale perdita o danneggiamento
+                    recuperarli in caso di necessitÃ  e che quindi CLINICA IPHONE
+                    non Ã¨ responsabile dell'eventuale perdita o danneggiamento
                     dei dati archiviati sul prodotto che i componenti potranno
                     essere riparati o sostituiti con componenti nuovi o
                     ricondizionati e che gli eventuali componenti difettosi
@@ -4276,7 +4279,7 @@ const Accettazione: React.FC = () => {
                     recuperati dal Cliente.
                   </p>
                   <p>
-                    Ai sensi ed in conformità degli artt. 13 Dlgs 196/03 e 14
+                    Ai sensi ed in conformitÃ  degli artt. 13 Dlgs 196/03 e 14
                     del GDPR regolamento UE 2016/679, per il trattamento dei
                     dati personali, i dati raccolti con la presente scheda sono
                     destinati ad essere archiviati (sia manualmente su supporti
@@ -4331,7 +4334,7 @@ const Accettazione: React.FC = () => {
                               width: "100%",
                             }}
                           >
-                            ✍️ Clicca qui per firmare
+                            âœï¸ Clicca qui per firmare
                           </div>
                         )}
                       </div>
@@ -4363,20 +4366,20 @@ const Accettazione: React.FC = () => {
                   setPrintRepair(null);
                 }}
               >
-                ✕ Chiudi
+                âœ• Chiudi
               </button>
               <button
                 className="accBtnPrimary"
                 onClick={handlePrintRepairDocument}
               >
-                🖨️ Stampa Documento
+                ðŸ–¨ï¸ Stampa Documento
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 🆕 MODAL TELEFONI DI CORTESIA */}
+      {/* ðŸ†• MODAL TELEFONI DI CORTESIA */}
       {showCourtesyPhoneModal && (
         <div
           className={styles.modalOverlay}
@@ -4392,13 +4395,13 @@ const Accettazione: React.FC = () => {
             style={{ maxWidth: "900px" }}
           >
             <div className={styles.modalHeader}>
-              <h4>📱 Seleziona Telefono di Cortesia</h4>
+              <h4>ðŸ“± Seleziona Telefono di Cortesia</h4>
               <button
                 type="button"
                 className={styles.modalCloseButton}
                 onClick={() => setShowCourtesyPhoneModal(false)}
               >
-                ×
+                Ã—
               </button>
             </div>
 
@@ -4420,7 +4423,7 @@ const Accettazione: React.FC = () => {
                   }}
                 >
                   <p style={{ fontSize: "1.2rem", marginBottom: "8px" }}>
-                    📵 Nessun telefono di cortesia disponibile
+                    ðŸ“µ Nessun telefono di cortesia disponibile
                   </p>
                   <p style={{ fontSize: "0.9rem" }}>
                     Aggiungi dispositivi di cortesia nel magazzino apparati
@@ -4440,7 +4443,7 @@ const Accettazione: React.FC = () => {
                       gap: "12px",
                     }}
                   >
-                    <span style={{ fontSize: "1.5rem" }}>🤝</span>
+                    <span style={{ fontSize: "1.5rem" }}>ðŸ¤</span>
                     <div>
                       <strong style={{ display: "block", marginBottom: "4px" }}>
                         {courtesyPhonesList.length} dispositivi di cortesia
@@ -4523,7 +4526,7 @@ const Accettazione: React.FC = () => {
                               justifyContent: "center",
                             }}
                           >
-                            {phone.deviceType === "smartphone" ? "📱" : "📋"}
+                            {phone.deviceType === "smartphone" ? "ðŸ“±" : "ðŸ“‹"}
                           </div>
                           <div style={{ flex: 1 }}>
                             <div
@@ -4547,7 +4550,7 @@ const Accettazione: React.FC = () => {
                                 display: "inline-block",
                               }}
                             >
-                              🤝 CORTESIA
+                              ðŸ¤ CORTESIA
                             </div>
                           </div>
                         </div>
@@ -4636,7 +4639,7 @@ const Accettazione: React.FC = () => {
                               fontSize: "0.85rem",
                             }}
                           >
-                            ✓ Selezionato
+                            âœ“ Selezionato
                           </div>
                         )}
                       </div>
@@ -4659,7 +4662,7 @@ const Accettazione: React.FC = () => {
         </div>
       )}
 
-      {/* 🆕 MODAL FIRMA DIGITALE */}
+      {/* ðŸ†• MODAL FIRMA DIGITALE */}
       {showSignatureModal && (
         <div
           className={styles.signatureModalOverlay}
@@ -4675,13 +4678,13 @@ const Accettazione: React.FC = () => {
             style={{ maxWidth: "700px" }}
           >
             <div className={styles.modalHeader}>
-              <h4>✍️ Apponi la tua firma</h4>
+              <h4>âœï¸ Apponi la tua firma</h4>
               <button
                 type="button"
                 className={styles.modalCloseButton}
                 onClick={() => setShowSignatureModal(false)}
               >
-                ×
+                Ã—
               </button>
             </div>
 
@@ -4699,7 +4702,7 @@ const Accettazione: React.FC = () => {
                   gap: "8px",
                 }}
               >
-                <span style={{ fontSize: "1.2rem" }}>ℹ️</span>
+                <span style={{ fontSize: "1.2rem" }}>â„¹ï¸</span>
                 <span>
                   Firma nell'area sottostante utilizzando il mouse o il touch
                   screen
@@ -4762,14 +4765,14 @@ const Accettazione: React.FC = () => {
                 className={`${styles.btn} ${styles.btnSecondary}`}
                 onClick={clearSignature}
               >
-                🗑️ Cancella
+                ðŸ—‘ï¸ Cancella
               </button>
               <button
                 type="button"
                 className={`${styles.btn} ${styles.btnPrimary}`}
                 onClick={saveSignature}
               >
-                ✅ Salva Firma
+                âœ… Salva Firma
               </button>
             </div>
           </div>
@@ -4780,3 +4783,4 @@ const Accettazione: React.FC = () => {
 };
 
 export default Accettazione;
+

@@ -40,6 +40,9 @@ import Preventivi from "./pages/Preventivi";
 import FirmaPreventivoExt from "./pages/Preventivi/FirmaPreventivoExt";
 import FirmaAccettazioneExt from "./pages/Accettazione/FirmaAccettazioneExt";
 import GestioneNews from "./pages/News";
+import RicercaFatture from "./pages/RicercaFatture";
+import CreaSpesa from "./pages/Spese";
+import Statistiche from "./pages/Statistiche";
 
 // Componente per proteggere le route
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -353,6 +356,33 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <GestioneNews />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/ricerca-fatture"
+        element={
+          <ProtectedRoute>
+            <RicercaFatture />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/crea-spesa"
+        element={
+          <ProtectedRoute>
+            <CreaSpesa />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/report"
+        element={
+          <ProtectedRoute>
+            <Statistiche />
           </ProtectedRoute>
         }
       />

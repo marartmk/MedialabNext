@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import "./dashboard.css";
 import Sidebar from "../../components/sidebar"; // Assicurati che il percorso sia corretto
 import Topbar from "../../components/topbar"; // Assicurati che il percorso sia corretto
@@ -22,7 +22,7 @@ const Dashboard: React.FC = () => {
   const [isNewsLoading, setIsNewsLoading] = useState(false);
   const [newsError, setNewsError] = useState<string | null>(null);
 
-  const AI_ASSISTANT_ENABLED = true; // 👈 Flag per attivare/disattivare AI
+  const AI_ASSISTANT_ENABLED = true; // ðŸ‘ˆ Flag per attivare/disattivare AI
 
   // Stati AI
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
@@ -302,7 +302,7 @@ const Dashboard: React.FC = () => {
   // Gestione della selezione di una notizia
   const handleSelectNews = (newsId: string) => {
     const newsItem = newsData.find((item) => item.newsId === newsId);
-    setSelectedNews(newsItem);
+    setSelectedNews(newsItem ?? null);
   };
 
   const formatNewsDate = (dateString: string) =>
@@ -332,11 +332,11 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const days = [
       "Domenica",
-      "Lunedì",
-      "Martedì",
-      "Mercoledì",
-      "Giovedì",
-      "Venerdì",
+      "LunedÃ¬",
+      "MartedÃ¬",
+      "MercoledÃ¬",
+      "GiovedÃ¬",
+      "VenerdÃ¬",
       "Sabato",
     ];
     const now = new Date();
@@ -499,18 +499,18 @@ const Dashboard: React.FC = () => {
     try {
       const openaiApiKey = await getOpenAIApiKey();
 
-      const systemPrompt = `Sei l’assistente AI di MediaLab per assistenza Apple (iPhone/iPad/Watch). Fornisci diagnosi preliminari, check rapidi, istruzioni sicure e next-step nel flusso Medialab FE (crea ticket, preventivo, diagnosi, stampa consegna, note cliente).
+      const systemPrompt = `Sei lâ€™assistente AI di MediaLab per assistenza Apple (iPhone/iPad/Watch). Fornisci diagnosi preliminari, check rapidi, istruzioni sicure e next-step nel flusso Medialab FE (crea ticket, preventivo, diagnosi, stampa consegna, note cliente).
     
 EXPERTISE (Assistenza Apple)
-• Triage/diagnosi iOS-iPadOS: avvio, boot-loop, crash, performance, storage
-• Hardware: display, batteria, connettori (Lightning/USB-C), audio/foto/sensori, radio (Wi-Fi/BT/Cell)
-• Face ID/Touch ID: test funzionali, limiti di accoppiamento, criteri invio in laboratorio
-• Danni liquidi/urti: procedure conservative (no riaccensione/ricarica), LCI, bonifica
-• Backup & ripristino: iCloud/Finder, Recovery/DFU con avvertenze, preservazione dati
-• Account & servizi: Apple ID/iCloud/Activation Lock (no bypass), Find My, iMessage/FaceTime, profili/MDM
-• Conformità & privacy: no password/codici 2FA; maschera IMEI/seriale; flusso Medialab FE (ticket → diagnosi → preventivo → stampa)
+â€¢ Triage/diagnosi iOS-iPadOS: avvio, boot-loop, crash, performance, storage
+â€¢ Hardware: display, batteria, connettori (Lightning/USB-C), audio/foto/sensori, radio (Wi-Fi/BT/Cell)
+â€¢ Face ID/Touch ID: test funzionali, limiti di accoppiamento, criteri invio in laboratorio
+â€¢ Danni liquidi/urti: procedure conservative (no riaccensione/ricarica), LCI, bonifica
+â€¢ Backup & ripristino: iCloud/Finder, Recovery/DFU con avvertenze, preservazione dati
+â€¢ Account & servizi: Apple ID/iCloud/Activation Lock (no bypass), Find My, iMessage/FaceTime, profili/MDM
+â€¢ ConformitÃ  & privacy: no password/codici 2FA; maschera IMEI/seriale; flusso Medialab FE (ticket â†’ diagnosi â†’ preventivo â†’ stampa)
 
-Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazioni pratiche e azionabili. Evita gergo inutile. Se mancano dati, chiedi solo le 3–5 info minime per sbloccare il caso.`;
+Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazioni pratiche e azionabili. Evita gergo inutile. Se mancano dati, chiedi solo le 3â€“5 info minime per sbloccare il caso.`;
 
       const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
@@ -579,7 +579,7 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
         return error.message;
       }
 
-      return "Si è verificato un errore imprevisto. Riprova tra poco.";
+      return "Si Ã¨ verificato un errore imprevisto. Riprova tra poco.";
     }
   };
 
@@ -617,7 +617,7 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
     } catch (error) {
       console.error("Errore durante la risposta AI:", error);
 
-      let errorMessage = "Si è verificato un errore. Riprova tra poco.";
+      let errorMessage = "Si Ã¨ verificato un errore. Riprova tra poco.";
 
       if (error instanceof Error) {
         errorMessage = error.message;
@@ -628,7 +628,7 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
       const errorAIMessage: AIMessage = {
         id: Date.now() + 1,
         type: "ai",
-        message: `⚠️ ${errorMessage}`,
+        message: `âš ï¸ ${errorMessage}`,
         timestamp: new Date(),
       };
 
@@ -900,7 +900,7 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
                       {!AI_ASSISTANT_ENABLED && (
                         <div className="alert alert-info" role="alert">
                           <i className="fa-solid fa-info-circle"></i>{" "}
-                          L'assistente AI è attualmente disattivato.
+                          L'assistente AI Ã¨ attualmente disattivato.
                         </div>
                       )}
 
@@ -927,7 +927,7 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
                               <p className="text-muted">
                                 {AI_ASSISTANT_ENABLED
                                   ? "Sono qui per aiutarti con informazioni, supporto tecnico e analisi. Cosa vorresti sapere?"
-                                  : "L'assistente AI è temporaneamente disattivato. Tutte le funzionalità sono momentaneamente non disponibili."}
+                                  : "L'assistente AI Ã¨ temporaneamente disattivato. Tutte le funzionalitÃ  sono momentaneamente non disponibili."}
                               </p>
                               {AI_ASSISTANT_ENABLED && (
                                 <div className="quick-actions">
@@ -1069,5 +1069,6 @@ Rispondi in italiano, professionale, chiaro e conciso. Vai al sodo con indicazio
 };
 
 export default Dashboard;
+
 
 
