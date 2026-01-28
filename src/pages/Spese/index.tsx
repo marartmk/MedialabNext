@@ -6,17 +6,40 @@ import styles from "./spese.module.css";
 
 interface Operator {
   id: string;
-  name: string;
-  code?: string;
+  firstName: string;
+  lastName: string;
+  codiceDipendente?: string;
+  internalCode?: string;
+  email?: string;
+  phoneNumber?: string;
 }
 
-// Dati mock operatori (da sostituire con chiamata API)
+// Dati mock operatori (fallback se API non disponibile)
 const MOCK_OPERATORS: Operator[] = [
-  { id: "1", name: "Daniele", code: "OP001" },
-  { id: "2", name: "Marco", code: "OP002" },
-  { id: "3", name: "Luca", code: "OP003" },
-  { id: "4", name: "Giuseppe", code: "OP004" },
-  { id: "5", name: "Andrea", code: "OP005" },
+  {
+    id: "1",
+    firstName: "Mario",
+    lastName: "Rossi",
+    codiceDipendente: "TEC001",
+    email: "mario.rossi@medialab.it",
+    phoneNumber: "+39 333 1234567",
+  },
+  {
+    id: "2",
+    firstName: "Luigi",
+    lastName: "Verdi",
+    codiceDipendente: "TEC002",
+    email: "luigi.verdi@medialab.it",
+    phoneNumber: "+39 333 2345678",
+  },
+  {
+    id: "3",
+    firstName: "Giuseppe",
+    lastName: "Bianchi",
+    codiceDipendente: "TEC003",
+    email: "giuseppe.bianchi@medialab.it",
+    phoneNumber: "+39 333 3456789",
+  },
 ];
 
 const PAYMENT_TYPES = [
@@ -35,7 +58,7 @@ const CreaSpesa: React.FC = () => {
   });
 
   // Stati form
-  const [selectedOperator, setSelectedOperator] = useState<string>("");
+  const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
   const [importoSpesa, setImportoSpesa] = useState<string>("");
   const [tipoPagamento, setTipoPagamento] = useState<string>("Contanti");
   const [motivoSpesa, setMotivoSpesa] = useState<string>("");
@@ -69,21 +92,17 @@ const CreaSpesa: React.FC = () => {
   useEffect(() => {
     const fetchOperators = async () => {
       try {
-        const multitenantId = sessionStorage.getItem("IdCompany");
-        const response = await fetch(
-          `${API_URL}/api/operators?multitenantId=${multitenantId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-            },
-          }
-        );
+        const response = await fetch(`${API_URL}/api/operator`, {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        });
 
         if (response.ok) {
           const data = await response.json();
           setOperators(data);
         } else {
-          // Usa dati mock se l'API fallisce
+          console.error("Errore nel caricamento operatori");
           setOperators(MOCK_OPERATORS);
         }
       } catch (error) {
@@ -101,7 +120,7 @@ const CreaSpesa: React.FC = () => {
 
   const handleCreaSpesa = async () => {
     // Validazione
-    if (!selectedOperator) {
+    if (!selectedOperator?.id) {
       alert("Seleziona un operatore!");
       return;
     }
@@ -116,11 +135,14 @@ const CreaSpesa: React.FC = () => {
 
     setLoading(true);
 
-    const selectedOp = operators.find((op) => op.id === selectedOperator);
+    const selectedOp = operators.find((op) => op.id === selectedOperator.id);
+    const selectedOpName = selectedOp
+      ? `${selectedOp.firstName} ${selectedOp.lastName}`.trim()
+      : "";
 
     const requestData = {
-      operatorId: selectedOperator,
-      operatorName: selectedOp?.name || "",
+      operatorId: selectedOperator.id,
+      operatorName: selectedOpName,
       amount: parseFloat(importoSpesa),
       paymentType: tipoPagamento,
       reason: motivoSpesa,
@@ -144,13 +166,13 @@ const CreaSpesa: React.FC = () => {
         const result = await response.json();
         alert(
           `Spesa registrata con successo!\n\n` +
-            `Operatore: ${selectedOp?.name}\n` +
+            `Operatore: ${selectedOpName}\n` +
             `Importo: ${importoSpesa} EUR\n` +
             `Motivo: ${motivoSpesa}`
         );
 
         // Reset form
-        setSelectedOperator("");
+        setSelectedOperator(null);
         setImportoSpesa("");
         setTipoPagamento("Contanti");
         setMotivoSpesa("");
@@ -158,13 +180,13 @@ const CreaSpesa: React.FC = () => {
         // Simula successo per demo con dati mock
         alert(
           `Spesa registrata con successo!\n\n` +
-            `Operatore: ${selectedOp?.name}\n` +
+            `Operatore: ${selectedOpName}\n` +
             `Importo: ${importoSpesa} EUR\n` +
             `Motivo: ${motivoSpesa}`
         );
 
         // Reset form
-        setSelectedOperator("");
+        setSelectedOperator(null);
         setImportoSpesa("");
         setTipoPagamento("Contanti");
         setMotivoSpesa("");
@@ -174,13 +196,13 @@ const CreaSpesa: React.FC = () => {
       // Simula successo per demo
       alert(
         `Spesa registrata con successo!\n\n` +
-          `Operatore: ${selectedOp?.name}\n` +
+          `Operatore: ${selectedOpName}\n` +
           `Importo: ${importoSpesa} EUR\n` +
           `Motivo: ${motivoSpesa}`
       );
 
       // Reset form
-      setSelectedOperator("");
+      setSelectedOperator(null);
       setImportoSpesa("");
       setTipoPagamento("Contanti");
       setMotivoSpesa("");
@@ -220,13 +242,19 @@ const CreaSpesa: React.FC = () => {
                   <label>Operatore</label>
                   <select
                     className={styles.formControlSelect}
-                    value={selectedOperator}
-                    onChange={(e) => setSelectedOperator(e.target.value)}
+                    value={selectedOperator?.id || ""}
+                    onChange={(e) => {
+                      const operator = operators.find(
+                        (op) => op.id === e.target.value
+                      );
+                      setSelectedOperator(operator || null);
+                    }}
                   >
                     <option value="">Seleziona operatore...</option>
-                    {operators.map((op) => (
-                      <option key={op.id} value={op.id}>
-                        {op.name}
+                    {operators.map((operator) => (
+                      <option key={operator.id} value={operator.id}>
+                        {operator.firstName} {operator.lastName} (
+                        {operator.codiceDipendente || "N/A"})
                       </option>
                     ))}
                   </select>

@@ -13,7 +13,7 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { Maximize, Minimize, ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomIn, ZoomOut } from "lucide-react";
 import styles from "./statistiche.module.css";
 import Sidebar from "../../components/sidebar";
 import Topbar from "../../components/topbar";
@@ -339,8 +339,9 @@ const Statistiche: React.FC = () => {
                       className={styles.expandButton}
                       onClick={() => openFullscreen("ingressi")}
                       title="Espandi a schermo intero"
+                      aria-label="Espandi grafico a schermo intero"
                     >
-                      <Maximize size={18} />
+                      <i className="fa-solid fa-expand" aria-hidden="true"></i>
                     </button>
                   </div>
                   <div className={styles.chartContainer}>
@@ -356,8 +357,9 @@ const Statistiche: React.FC = () => {
                       className={styles.expandButton}
                       onClick={() => openFullscreen("lavorazioni")}
                       title="Espandi a schermo intero"
+                      aria-label="Espandi grafico a schermo intero"
                     >
-                      <Maximize size={18} />
+                      <i className="fa-solid fa-expand" aria-hidden="true"></i>
                     </button>
                   </div>
                   <div className={styles.chartContainer}>
@@ -391,8 +393,9 @@ const Statistiche: React.FC = () => {
                       className={styles.expandButton}
                       onClick={() => openFullscreen("ingressiUscite")}
                       title="Espandi a schermo intero"
+                      aria-label="Espandi grafico a schermo intero"
                     >
-                      <Maximize size={18} />
+                      <i className="fa-solid fa-expand" aria-hidden="true"></i>
                     </button>
                   </div>
                   <div className={styles.chartContainerLarge}>
@@ -443,8 +446,9 @@ const Statistiche: React.FC = () => {
                   className={styles.closeButton}
                   onClick={closeFullscreen}
                   title="Chiudi (ESC)"
+                  aria-label="Esci da schermo intero"
                 >
-                  <Minimize size={24} />
+                  <i className="fa-solid fa-compress" aria-hidden="true"></i>
                 </button>
               </div>
             </div>

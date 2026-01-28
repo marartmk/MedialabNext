@@ -1,0 +1,325 @@
+/* Stili per la pagina Ricerca Spese */
+
+.mainLayout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.contentArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageBody {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.schedaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #ccc;
+  margin: 0 24px;
+}
+
+.breadcrumb {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbItem {
+  color: #007bff;
+}
+
+.breadcrumbCurrent {
+  font-weight: bold;
+}
+
+.breadcrumbSeparator {
+  margin: 0 5px;
+}
+
+.tableSection {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin: 30px 0;
+  border: 1px solid #e5e5e5;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f5f5f5;
+}
+
+.tableHeader h3 {
+  margin: 0;
+  color: #1a1a1a;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.tableControls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filterSelect {
+  padding: 10px 15px;
+  border: 2px solid #d1d1d1;
+  border-radius: 6px;
+  background-color: #f8f8f8;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 160px;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: #666666;
+  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+  background-color: #ffffff;
+}
+
+.filterSelect:hover {
+  border-color: #999999;
+}
+
+.dateFilterContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: #f8f8f8;
+  border: 2px solid #d1d1d1;
+  border-radius: 6px;
+  padding: 0 12px;
+  min-width: 180px;
+  transition: all 0.3s ease;
+}
+
+.dateFilterContainer:focus-within {
+  border-color: #666666;
+  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+  background-color: #ffffff;
+}
+
+.dateFilterIcon {
+  color: #666666;
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.dateFilterSelect {
+  border: none;
+  background: transparent;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  flex: 1;
+  padding: 8px 0;
+}
+
+.searchContainerTable {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchTableInput {
+  padding: 12px 20px 12px 45px;
+  border: 2px solid #d1d1d1;
+  border-radius: 25px;
+  font-size: 14px;
+  outline: none;
+  width: 280px;
+  transition: all 0.3s ease;
+  background-color: #f8f8f8;
+  color: #333;
+}
+
+.searchTableInput:focus {
+  border-color: #666666;
+  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+  background-color: #ffffff;
+}
+
+.modernTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.modernTable thead {
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  color: white;
+}
+
+.modernTable th {
+  padding: 16px 20px !important;
+  text-align: left !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  border: none !important;
+}
+
+.modernTable tbody tr {
+  border-bottom: 1px solid #e8e8e8 !important;
+  transition: all 0.2s ease;
+}
+
+.modernTable tbody tr:hover {
+  background-color: #f5f5f5 !important;
+}
+
+.modernTable tbody tr:last-child {
+  border-bottom: none !important;
+}
+
+.modernTable td {
+  padding: 16px 20px !important;
+  font-size: 14px !important;
+  color: #2a2a2a !important;
+  vertical-align: middle !important;
+  border: none !important;
+}
+
+.modernTable tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.dateCell {
+  font-family: monospace;
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.operatorCell {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.paymentCell {
+  color: #333;
+  white-space: nowrap;
+}
+
+.reasonCell {
+  color: #333;
+  max-width: 260px;
+}
+
+.amountCell {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.actionsCell {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.receiptBtn {
+  padding: 8px 12px;
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.receiptBtn:hover {
+  background: #1b5e20;
+  transform: translateY(-1px);
+}
+
+.cancelBtn {
+  padding: 8px 12px;
+  background: #c62828;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelBtn:hover {
+  background: #b71c1c;
+  transform: translateY(-1px);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 80px 20px;
+  color: #666666;
+  background: #f8f8f8;
+  border-radius: 8px;
+  border: 2px dashed #cccccc;
+}
+
+.emptyState h4 {
+  margin: 0 0 12px 0;
+  color: #2a2a2a;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .tableControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchTableInput {
+    width: 100%;
+  }
+
+  .actionsCell {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+}

@@ -10,6 +10,8 @@ interface AccessRepairResponse {
   createdAt?: string;
   receivedAt?: string;
   receivedBy?: string;
+  companyId?: string;
+  multitenantId?: string;
   customer?: {
     name?: string;
     phone?: string;
@@ -126,6 +128,65 @@ const FirmaAccettazioneExt: React.FC = () => {
     fetchRepair();
   }, [API_URL, accessKey]);
 
+  useEffect(() => {
+    const serviceId = repairData?.repairGuid || repairData?.repairId;
+    if (!serviceId) return;
+
+    const controller = new AbortController();
+    const fetchSignature = async () => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/Signature/service/${serviceId}`,
+          { signal: controller.signal },
+        );
+
+        if (!response.ok) {
+          if (response.status === 404) return;
+          const errText = await response.text();
+          throw new Error(errText || "Errore nel caricamento della firma");
+        }
+
+        const data = await response.json();
+        if (data?.signatureBase64) {
+          setSignatureData(data.signatureBase64);
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        console.warn("Errore nel recupero della firma:", err);
+      }
+    };
+
+    fetchSignature();
+
+    return () => controller.abort();
+  }, [API_URL, repairData?.repairGuid, repairData?.repairId]);
+
+  const drawSignatureOnCanvas = (dataUrl: string) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const scale = Math.min(
+        canvas.width / img.width,
+        canvas.height / img.height,
+      );
+      const width = img.width * scale;
+      const height = img.height * scale;
+      const x = (canvas.width - width) / 2;
+      const y = (canvas.height - height) / 2;
+
+      ctx.drawImage(img, x, y, width, height);
+    };
+    img.src = dataUrl;
+  };
+
   const startDrawing = (
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
   ) => {
@@ -194,26 +255,63 @@ const FirmaAccettazioneExt: React.FC = () => {
     setSignatureData(dataUrl);
     setShowSignatureModal(false);
 
-    const repairIdentifier = repairData?.repairGuid || repairData?.repairId;
-    if (!repairIdentifier) {
+    const serviceId = repairData?.repairGuid || repairData?.repairId;
+    if (!serviceId) {
       alert("Impossibile associare la firma alla riparazione.");
       return;
     }
 
     try {
+      const companyId =
+        repairData?.companyId || sessionStorage.getItem("companyId") || null;
+      const multitenantId =
+        repairData?.multitenantId ||
+        sessionStorage.getItem("multitenantId") ||
+        sessionStorage.getItem("IdCompany") ||
+        null;
+      const signedBy =
+        sessionStorage.getItem("userName") ||
+        sessionStorage.getItem("username") ||
+        sessionStorage.getItem("userId") ||
+        "Sistema";
+      const createdBy =
+        sessionStorage.getItem("userId") ||
+        sessionStorage.getItem("username") ||
+        sessionStorage.getItem("userName") ||
+        signedBy;
+
+      if (!companyId || !multitenantId) {
+        alert("Mancano CompanyId o MultitenantId per salvare la firma.");
+        return;
+      }
+
+      const payload = {
+        serviceId,
+        areaId: "9b40e7a0-9b87-4c12-9d9c-9f5208f3f3f6",
+        areaName: "Accettazione",
+        companyId,
+        multitenantId,
+        signatureBase64: dataUrl,
+        signedAt: new Date().toISOString(),
+        signedBy,
+        accessKey,
+        notes: "",
+        createdBy,
+      };
+
+      console.log(
+        "Payload firma accettazione:\n",
+        JSON.stringify(payload, null, 2),
+      );
+
       const response = await fetch(
-        `${API_URL}/api/repair/${repairIdentifier}/signature`,
+        `${API_URL}/api/repair/${serviceId}/signature`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            repairId: repairData?.repairId,
-            repairGuid: repairData?.repairGuid,
-            accessKey,
-            signatureBase64: dataUrl,
-          }),
+          body: JSON.stringify(payload),
         },
       );
 
@@ -231,17 +329,24 @@ const FirmaAccettazioneExt: React.FC = () => {
 
   const openSignatureModal = () => {
     setShowSignatureModal(true);
-    setTimeout(() => {
-      const canvas = signatureCanvasRef.current;
-      if (!canvas) return;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }, 100);
   };
+
+  useEffect(() => {
+    if (!showSignatureModal) return;
+
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (signatureData) {
+      drawSignatureOnCanvas(signatureData);
+    }
+  }, [showSignatureModal, signatureData]);
 
   if (loading) {
     return <div style={{ padding: "24px" }}>Caricamento...</div>;

@@ -42,6 +42,7 @@ import FirmaAccettazioneExt from "./pages/Accettazione/FirmaAccettazioneExt";
 import GestioneNews from "./pages/News";
 import RicercaFatture from "./pages/RicercaFatture";
 import CreaSpesa from "./pages/Spese";
+import RicercaSpese from "./pages/RicercaSpese";
 import Statistiche from "./pages/Statistiche";
 
 // Componente per proteggere le route
@@ -374,6 +375,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <CreaSpesa />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/ricerca-spese"
+        element={
+          <ProtectedRoute>
+            <RicercaSpese />
           </ProtectedRoute>
         }
       />
